@@ -8,7 +8,7 @@
 
 ▶️ **Play / watch:** https://goums.github.io/chonk-doom/ <br>
 📊 **Project page:** https://goums.github.io/chonk-doom/about.html <br>
-🎬 **Video (2 min 20 s):** https://goums.github.io/chonk-doom/about.html#video
+🎬 **Video (2 min 16 s):** https://goums.github.io/chonk-doom/about.html#video
 
 [![Watch the video](public/video/poster.jpg)](https://goums.github.io/chonk-doom/about.html#video)
 

@@ -2,9 +2,9 @@
  {
   "id": "intro",
   "who": "narrator",
-  "text": "Okay, so... meet Le Chonk. He's a big, very proud orange cat. And today? He's playing DOOM.",
-  "file": "voice/intro-1f8b684bf9.mp3",
-  "sec": 10.04
+  "text": "Okay, so... Le Chonk wanted to play. So we gave him DOOM.",
+  "file": "voice/intro-c22d984d88.mp3",
+  "sec": 5.14
  },
  {
   "id": "game",
