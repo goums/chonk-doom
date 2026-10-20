@@ -7,6 +7,7 @@
 > Entry for the Mistral AI Discord challenge **"Le Chonk wants to play"** ([brief](docs/CHALLENGE.md)).
 
 ▶️ **Play it / watch Le Chonk play:** https://goums.github.io/chonk-doom/ <br>
+📊 **How it works + benchmark (project page):** https://goums.github.io/chonk-doom/about.html <br>
 🎬 **Video:** _coming soon_
 
 ![CHONK DOOM gameplay](docs/img/gameplay.png)
@@ -223,19 +224,28 @@ thinking helps in a fast-paced game.
 
 ## 📊 Results
 
-_Mistral Large 4 benchmark in progress: the table will be filled in from `runs/*/summary.md`._
+### Mistral family (Mistral Studio, instruct, Medium difficulty, 2 runs per level)
 
-Baselines (Medium difficulty):
+| Model | Levels cleared | Level 1 | Level 2 | Level 3 | Cost per level | s / decision | Aim error (median) | Hit rate |
+|---|---|---|---|---|---|---|---|---|
+| **Mistral Large 4** 🐱 | **5/6** | 2/2 | 1/2 | 2/2 | $0.15 | 5.5 | 6.7° | 35% |
+| Mistral Large 3 | **0/6** | 0/2 | 0/2 | 0/2 | $0.32 | 6.0 | 25.5° | 30% |
+| Mistral Small 4 | **0/6** | 0/2 | 0/2 | 0/2 | $0.08 | 1.5 | 19.8° | 22% |
+| Ministral 14B | **0/6** | 0/2 | 0/2 | 0/2 | $0.09 | 3.2 | 21.5° | 22% |
 
-| Policy | E1M1 | E1M2 | E1M3 | Notes |
-|---|---|---|---|---|
-| `bot:random` (random actions) | 0% | 0% | 0% | lower bound |
-| `bot:simple` (scripted, **cheats**: reads exact enemy positions from game memory) | 100% | 100% | 100% | upper reference, proves every level is beatable through the action API |
-| `mistral-large-4` · map | _tbd_ | _tbd_ | _tbd_ | |
-| `mistral-large-4` · vision only | _tbd_ | _tbd_ | _tbd_ | |
-| `mistral-large-4` · map · reasoning high | _tbd_ | _tbd_ | _tbd_ | |
+Per-level details for **clearing Level 1** (Mistral Large 4, mean of the cleared runs):
 
----
+| Turns | Actions | Game time | Wall time | Tokens in / out | Cost | Hit rate | Aim error | Damage taken | Deaths | Kills |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 28 | 74 | 1:43 | 2:15 | 149k / 6.6k | $0.105 | 48% | 8.1° | 148 | 0.0 | 100% |
+
+**Takeaways.** Mistral Large 4 clears **5 of 6** levels including the Rex boss fight; its predecessor (Large 3) and its smaller siblings clear **none**, even though they score only a little lower on the static evals below. Playing a real-time FPS end-to-end (perception + aiming + navigation + survival) separates the models much more than single-shot tests. Large 4 is also the **cheapest per cleared level**: Large 3 burns more turns and tokens without finishing.
+
+Scripted baselines: `bot:random` 0/3 levels; `bot:simple` (cheats: reads exact enemy positions) 3/3, which proves every level is beatable through the action API.
+
+> The open-weight comparison against Qwen3-VL, Llama 4, DeepSeek V4.1 and GLM-5.3 (OpenRouter, two leagues: instruct and reasoning) is wired up (`npm run bench -- --provider openrouter …`) and will be added here.
+
+Every cleared run can be **replayed** in the game (Let Le Chonk Play → Watch Replay): the engine is deterministic, so the recorded seed + decisions re-simulate the exact same game, with Le Chonk's original thoughts.
 
 ## 🧪 Evals
 
@@ -251,15 +261,14 @@ Vitest). They are scored unit tests of the two skills the harness depends on, on
   front → press it.
 - Every model runs as an Evalite **variant** on the same cases, with the same prompt and tool as the game.
 
-| Model | Aim (ruler reading) | Decisions | Overall | Avg latency | Cost (14 cases) |
-|---|---|---|---|---|---|
-| Gemini 3.8 Flash ¹ | 99% | 100% | **99%** | 8.3 s | $0.044 |
-| GPT-5.6 Luna | 95% | 94% | **94%** | 3.8 s | $0.008 |
-| **Mistral Large 4** | 90% | 94% | **92%** | 8.0 s | $0.032 |
-| Mistral Large 3 ² | 78% | 100% | **87%** | 59.8 s | $0.014 |
+| Model | Aim (ruler reading) | Decisions | Overall | Avg latency |
+|---|---|---|---|---|
+| **Mistral Large 4** | 95% | 88% | **92%** | 8.9 s |
+| Mistral Large 3 | 83% | 94% | **88%** | 7.4 s |
+| Mistral Small 4 | 74% | 90% | **81%** | 1.7 s |
+| Ministral 14B | 78% | 82% | **79%** | 3.0 s |
 
-<sub>Single trial per case via OpenRouter, reasoning off, 2026-10-20 ([raw export](evals/results/latest.json)). ¹ Gemini 3.8 Flash
-can't disable reasoning, so it runs with the lowest effort. ² 2 cases timed out on provider rate limits.</sub>
+<sub>Mistral Studio, 3 trials per case, reasoning off ([raw export](evals/results/mistral.json)).</sub>
 
 ```bash
 npm run eval:data                                   # regenerate the dataset from the game

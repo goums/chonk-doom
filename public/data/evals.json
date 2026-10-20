@@ -1,3 +1,41 @@
 {
- "leagues": []
+ "leagues": [
+  {
+   "title": "Mistral family (Mistral Studio)",
+   "rows": [
+    {
+     "model": "mistral-large-4",
+     "aim": 0.9518518518518518,
+     "decide": 0.875,
+     "overall": 0.9189153439153438,
+     "latency": 8.876692069452378,
+     "cost": 0
+    },
+    {
+     "model": "mistral-large-2512",
+     "aim": 0.8342592592592593,
+     "decide": 0.9375,
+     "overall": 0.878505291005291,
+     "latency": 7.364745536785715,
+     "cost": 0
+    },
+    {
+     "model": "mistral-small-2603",
+     "aim": 0.736111111111111,
+     "decide": 0.9027777777777778,
+     "overall": 0.8075396825396826,
+     "latency": 1.6592445922380954,
+     "cost": 0
+    },
+    {
+     "model": "ministral-14b-latest",
+     "aim": 0.7759259259259257,
+     "decide": 0.8194444444444444,
+     "overall": 0.7945767195767194,
+     "latency": 3.012915411666667,
+     "cost": 0
+    }
+   ]
+  }
+ ]
 }

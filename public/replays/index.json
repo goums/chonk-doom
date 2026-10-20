@@ -2,11 +2,26 @@
  {
   "file": "replay-1.json",
   "title": "Mistral Large 4 · Level 1",
-  "desc": "38 turns, instruct, instruct"
+  "desc": "28 turns, instruct, mistral"
  },
  {
   "file": "replay-2.json",
+  "title": "Mistral Large 4 · Level 1",
+  "desc": "27 turns, instruct, mistral"
+ },
+ {
+  "file": "replay-3.json",
   "title": "Mistral Large 4 · Level 2",
-  "desc": "25 turns, instruct, instruct"
+  "desc": "36 turns, instruct, mistral"
+ },
+ {
+  "file": "replay-4.json",
+  "title": "Mistral Large 4 · Level 3",
+  "desc": "44 turns, instruct, mistral"
+ },
+ {
+  "file": "replay-5.json",
+  "title": "Mistral Large 4 · Level 3",
+  "desc": "49 turns, instruct, mistral"
  }
 ]
