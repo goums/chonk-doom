@@ -2,7 +2,7 @@
 // pickups and shooting, exactly like the classic marine mugshot.
 import { makeCanvas, crisp, outline, ellipse, poly, px, line, type Ctx } from './pixel';
 
-export const FACE_W = 30;
+export const FACE_W = 36;
 export const FACE_H = 30;
 
 export type Expression = 'normal' | 'ouch' | 'grin' | 'angry' | 'happy' | 'dead' | 'blink';
@@ -13,28 +13,36 @@ const ORANGE_D = '#FA500F';
 const RED = '#E51300';
 const YELLOW = '#FEC63A';
 const DARK = '#171722';
-const CREAM = '#fff1d6';
+const CREAM = '#FFB45C'; // light orange muzzle (Le Chonk is orange all over)
+const WHISKER = '#FFE2B8';
 
 function drawFace(ctx: Ctx, tier: number, look: -1 | 0 | 1, expr: Expression) {
   const cx = 15;
+  ctx.save();
+  ctx.translate(3, 0); // draw in a 30px design space centred in the wider canvas
   // ears (left ear gets notched when beaten up)
-  poly(ctx, [3, 12, 5, 1, 12, 7], ORANGE);
-  poly(ctx, [27, 12, 25, 1, 18, 7], ORANGE);
-  poly(ctx, [5, 10, 6, 4, 10, 7], '#ffb3c1');
-  poly(ctx, [25, 10, 24, 4, 20, 7], '#ffb3c1');
-  // CHONKY head: very wide
-  ellipse(ctx, cx, 17, 14, 11.5, ORANGE);
-  // cheek fluff
-  poly(ctx, [1, 18, -1, 22, 3, 21], ORANGE);
-  poly(ctx, [29, 18, 31, 22, 27, 21], ORANGE);
-  // tabby "M" stripes
+  poly(ctx, [2, 12, 4, 1, 12, 7], ORANGE);
+  poly(ctx, [28, 12, 26, 1, 18, 7], ORANGE);
+  poly(ctx, [4, 10, 5, 4, 10, 7], '#ffb3c1');
+  poly(ctx, [26, 10, 25, 4, 20, 7], '#ffb3c1');
+  // MAXIMUM CHONK: very wide head + big jowls
+  ellipse(ctx, cx, 16.5, 16.5, 11.5, ORANGE);
+  ellipse(ctx, cx, 22.5, 16, 6.5, ORANGE);
+  // cheek fluff spikes
+  poly(ctx, [-1, 17, -3, 22, 1, 22], ORANGE);
+  poly(ctx, [31, 17, 33, 22, 29, 22], ORANGE);
+  poly(ctx, [0, 23, -2, 27, 3, 26], ORANGE);
+  poly(ctx, [30, 23, 32, 27, 27, 26], ORANGE);
+  // tabby "M" stripes + cheek stripes
   line(ctx, 11, 7, 12, 11, ORANGE_D);
   line(ctx, 15, 6, 15, 10, ORANGE_D);
   line(ctx, 19, 7, 18, 11, ORANGE_D);
-  line(ctx, 2, 15, 6, 16, ORANGE_D);
-  line(ctx, 28, 15, 24, 16, ORANGE_D);
-  // muzzle
-  ellipse(ctx, cx, 22, 7, 5, CREAM);
+  line(ctx, -1, 15, 4, 16, ORANGE_D);
+  line(ctx, 31, 15, 26, 16, ORANGE_D);
+  line(ctx, 0, 19, 4, 19, ORANGE_D);
+  line(ctx, 30, 19, 26, 19, ORANGE_D);
+  // small light-orange muzzle
+  ellipse(ctx, cx, 22, 5.5, 3.8, CREAM);
 
   // ---- eyes ----
   const ex = [9, 21];
@@ -108,13 +116,13 @@ function drawFace(ctx: Ctx, tier: number, look: -1 | 0 | 1, expr: Expression) {
   }
   // Mistral-red bandana with a golden bell (Le Chonk's signature look)
   if (expr !== 'dead') {
-    poly(ctx, [5, 27, 25, 27, 22, 30, 8, 30], RED);
+    poly(ctx, [3, 27, 27, 27, 23, 30, 7, 30], RED);
     px(ctx, 14, 28, YELLOW, 2, 2);
   }
   // whiskers
   for (const dy of [0, 2]) {
-    line(ctx, 0, 20 + dy, 7, 21 + dy / 2, '#fff');
-    line(ctx, 30, 20 + dy, 23, 21 + dy / 2, '#fff');
+    line(ctx, 2, 20 + dy, 8, 21 + dy / 2, WHISKER);
+    line(ctx, 28, 20 + dy, 22, 21 + dy / 2, WHISKER);
   }
 
   // ---- battle damage per health tier ----
@@ -138,6 +146,7 @@ function drawFace(ctx: Ctx, tier: number, look: -1 | 0 | 1, expr: Expression) {
     px(ctx, 6, 13, '#2b2d42', 7, 5); // black eye
     px(ctx, 25, 24, '#e5383b', 1, 3);
   }
+  ctx.restore();
 }
 
 /** Face cache keyed by `${tier}_${look}_${expr}`. tier: 0 (healthy) .. 4 (nearly dead). */

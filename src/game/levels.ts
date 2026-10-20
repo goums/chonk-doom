@@ -121,13 +121,13 @@ export const LEVELS: LevelDef[] = [
     subtitle: "Rex's Basement",
     music: 'rex',
     floor: 'darkconcrete',
-    ceil: 'metal',
+    ceil: 'beams',
     par: 300,
     objective: 'Take the LASER POINTER, survive the sewer, defeat REX in his arena, then press the EXIT switch.',
     areas: [
       { x0: 1, y0: 1, x1: 9, y1: 6, floor: 'concrete', ceil: 'darkconcrete' },
       { x0: 11, y0: 1, x1: 30, y1: 6, floor: 'water', ceil: 'darkconcrete' },
-      { x0: 9, y0: 13, x1: 30, y1: 26, floor: 'metal', ceil: 'metal' },
+      { x0: 9, y0: 13, x1: 29, y1: 24, floor: 'concrete', ceil: 'darkconcrete' },
     ],
     map: [
       'SSSSSSSSSSGGGGGGGGGGGGGGGGGGGGGG',

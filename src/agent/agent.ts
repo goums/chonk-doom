@@ -6,7 +6,7 @@ import { automapAscii, captureFrame, radarText, statusText, visibleEnemies, type
 import { chat, splitContent, PRICE, type Message, type ClientConfig, type ToolCall } from './mistral';
 import { systemPrompt, ACT_TOOL } from './prompt';
 import { WALL_CHARS } from '../game/world';
-import { botAct } from './bot';
+import { botAct, randomAct } from './bot';
 
 export interface AgentConfig {
   model: string;
@@ -18,6 +18,8 @@ export interface AgentConfig {
   imageScale: number;
   skill: number;
   speed: number; // playback speed multiplier for action execution
+  singleLevel: boolean; // benchmark episodes: stop when the first level ends
+  maxDeaths: number; // stop after this many deaths (0 = unlimited)
 }
 
 export const DEFAULT_CONFIG: AgentConfig = {
@@ -30,6 +32,8 @@ export const DEFAULT_CONFIG: AgentConfig = {
   imageScale: 2,
   skill: 1,
   speed: 1,
+  singleLevel: false,
+  maxDeaths: 0,
 };
 
 export interface TurnRecord {
@@ -72,6 +76,8 @@ export class ChonkAgent {
   private positions: [number, number][] = [];
   private pendingNote = '';
   onUpdate: (a: ChonkAgent, rec?: TurnRecord) => void = () => {};
+  /** Called right before a frame is captured, so turbo mode can render on demand. */
+  beforeCapture: () => void = () => {};
   startedAt = 0;
   lastError = '';
 
@@ -227,6 +233,8 @@ export class ChonkAgent {
       await this.waitWhilePaused();
       if (this.stopRequested) break;
       // handle non-gameplay screens
+      if (this.cfg.singleLevel && g.state !== 'playing') break;
+      if (this.cfg.maxDeaths && g.run.deaths >= this.cfg.maxDeaths) break;
       if (g.state === 'intermission') {
         await new Promise((r) => setTimeout(r, 2500 / this.cfg.speed));
         g.advance();
@@ -261,6 +269,7 @@ export class ChonkAgent {
       const note = this.pendingNote ? this.pendingNote + '\n\n' : '';
       this.pendingNote = '';
       const obs = note + (events.length ? `Events since your last turn:\n- ${events.join('\n- ')}\n\n` : '') + obsCore;
+      this.beforeCapture();
       const frame = captureFrame(this.screen, this.cfg.imageScale);
       const small = captureFrame(this.screen, 1, 0.7);
       const t0 = performance.now();
@@ -272,7 +281,7 @@ export class ChonkAgent {
       let resp;
       if (this.cfg.model.startsWith('bot:')) {
         // scripted baseline: no API call
-        const b = botAct(g.world);
+        const b = this.cfg.model === 'bot:random' ? randomAct(g.world) : botAct(g.world);
         await new Promise((r) => setTimeout(r, 150 / this.cfg.speed));
         resp = {
           id: 'bot', model: this.cfg.model,

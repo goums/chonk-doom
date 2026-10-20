@@ -156,26 +156,26 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   panel(ctx, 60, 76);
   bigNum(ctx, `${Math.max(0, p.hp)}%`, 98, VIEW_H + 7);
   text(ctx, 'HEALTH', 86, VIEW_H + 29, '#d8c8e0');
-  panel(ctx, 136, 50);
-  text(ctx, 'ARMS', 154, VIEW_H + 29, '#d8c8e0');
+  panel(ctx, 128, 44);
+  text(ctx, 'ARMS', 143, VIEW_H + 29, '#d8c8e0');
   ['claws', 'hairball', 'shotgun', 'laser'].forEach((id, i) => {
     const has = p.weapons.has(id as never);
     const cur = p.weapon === id;
-    text(ctx, String(i + 1), 143 + i * 10, VIEW_H + 10, cur ? '#fff' : has ? '#ffd23f' : '#5a4c60', 2);
+    text(ctx, String(i + 1), 133 + i * 10, VIEW_H + 10, cur ? '#fff' : has ? '#ffd23f' : '#5a4c60', 2);
   });
   // face
   ctx.fillStyle = '#1a1220';
-  ctx.fillRect(SCREEN_W / 2 - FACE_W / 2 - 3 + 4, VIEW_H + 2, FACE_W + 6, BAR_H - 4);
+  ctx.fillRect(172, VIEW_H + 2, 42, BAR_H - 4);
   const face = faces.get(faceAnim.pick(w))!;
-  ctx.drawImage(face, SCREEN_W / 2 - FACE_W / 2 + 4, VIEW_H + (BAR_H - FACE_H) / 2);
-  panel(ctx, 230, 76);
-  bigNum(ctx, `${p.armor}%`, 268, VIEW_H + 7);
-  text(ctx, 'ARMOR', 258, VIEW_H + 29, '#d8c8e0');
-  panel(ctx, 306, 20);
+  ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2);
+  panel(ctx, 214, 72);
+  bigNum(ctx, `${p.armor}%`, 250, VIEW_H + 7);
+  text(ctx, 'ARMOR', 240, VIEW_H + 29, '#d8c8e0');
+  panel(ctx, 286, 20);
   (['red', 'blue', 'yellow'] as KeyColor[]).forEach((k, i) => {
-    if (p.keys.has(k)) ctx.drawImage(items[`key_${k}` as const], 308, VIEW_H + 4 + i * 11, 16, 14);
+    if (p.keys.has(k)) ctx.drawImage(items[`key_${k}` as const], 288, VIEW_H + 4 + i * 11, 16, 14);
   });
-  panel(ctx, 326, 58);
+  panel(ctx, 306, 78);
   const rows: [string, number, number][] = [
     ['HAIR', p.ammo.hairballs, 200],
     ['SARD', p.ammo.sardines, 50],
@@ -183,8 +183,8 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   ];
   rows.forEach(([n, v, m], i) => {
     const y = VIEW_H + 7 + i * 9;
-    text(ctx, n, 330, y, '#d8c8e0');
-    text(ctx, `${v}/${m}`, 349, y, '#ffd23f');
+    text(ctx, n, 312, y, '#d8c8e0');
+    text(ctx, `${v}/${m}`, 334, y, '#ffd23f');
   });
 }
 

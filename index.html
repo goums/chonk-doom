@@ -21,6 +21,7 @@
           <button id="btn-human" class="btn">🎮 Play yourself</button>
           <button id="btn-agent" class="btn hot">🐱 Let Le Chonk play</button>
           <button id="btn-replay" class="btn">📼 Replay a run</button>
+          <button id="btn-sound" class="btn" title="Toggle sound (M)">🔊 SOUND ON</button>
           <a class="btn ghost" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
         </nav>
       </header>
@@ -34,7 +35,15 @@
             <div id="click-hint" class="hidden">CLICK TO CAPTURE MOUSE</div>
           </div>
           <div id="help">
-            <b>Controls:</b> WASD / arrows move &middot; mouse or ←→ turn &middot; click / Ctrl fire &middot; E / Space use &middot; 1-4 weapons &middot; Shift run &middot; Tab automap &middot; M mute &middot; Esc menu
+            <div class="keys"><span class="k"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>move</span></div>
+            <div class="keys"><span class="k"><kbd>←</kbd><kbd>→</kbd><em>or</em><kbd class="wide">🖱 mouse</kbd></span><span>turn</span></div>
+            <div class="keys"><span class="k"><kbd class="wide">🖱 click</kbd><em>or</em><kbd>Ctrl</kbd></span><span>fire</span></div>
+            <div class="keys"><span class="k"><kbd>E</kbd><em>or</em><kbd class="wide">Space</kbd></span><span>use / open</span></div>
+            <div class="keys"><span class="k"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><span>weapons</span></div>
+            <div class="keys"><span class="k"><kbd class="wide">Shift</kbd></span><span>run</span></div>
+            <div class="keys"><span class="k"><kbd class="wide">Tab</kbd></span><span>automap</span></div>
+            <div class="keys"><span class="k"><kbd>M</kbd></span><span>mute</span></div>
+            <div class="keys"><span class="k"><kbd class="wide">Esc</kbd></span><span>menu</span></div>
           </div>
         </section>
 

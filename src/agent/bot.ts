@@ -34,6 +34,20 @@ function useTile(w: World, tx: number, ty: number): Action[] | null {
   return [{ type: 'go_to', x: t.x, y: t.y }];
 }
 
+/** Random baseline: uniformly random macro-actions (lower bound). */
+export function randomAct(w: World): { thought: string; actions: Action[] } {
+  const r = Math.random;
+  const pick = [
+    (): Action => ({ type: 'turn', degrees: Math.round((r() - 0.5) * 180) }),
+    (): Action => ({ type: 'move', tiles: Math.round(r() * 4) }),
+    (): Action => ({ type: 'strafe', tiles: Math.round((r() - 0.5) * 4) }),
+    (): Action => ({ type: 'attack', degrees: Math.round((r() - 0.5) * 60), shots: 2 }),
+    (): Action => ({ type: 'use' }),
+    (): Action => ({ type: 'go_to', x: Math.floor(r() * w.W), y: Math.floor(r() * w.H) }),
+  ];
+  return { thought: 'Random paw-ssibilities.', actions: [pick[Math.floor(r() * pick.length)](), pick[Math.floor(r() * pick.length)]()] };
+}
+
 export function botAct(w: World): { thought: string; actions: Action[] } {
   const p = w.player;
   const vis = visibleEnemies(w);

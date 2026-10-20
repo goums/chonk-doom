@@ -45,7 +45,7 @@ window.addEventListener('keydown', (e) => {
   if (mode === 'menu' && !currentMusic()) playMusic('title');
   keys.add(e.code);
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
-  if (e.code === 'KeyM') { audioSettings.muted = !audioSettings.muted; applyVolumes(); }
+  if (e.code === 'KeyM') toggleSound();
   if (mode === 'menu') {
     if (e.code === 'ArrowDown' || e.code === 'KeyS') menuSel = (menuSel + 1) % MENU.length;
     if (e.code === 'ArrowUp' || e.code === 'KeyW') menuSel = (menuSel + MENU.length - 1) % MENU.length;
@@ -89,6 +89,16 @@ function humanIntent(): Intent {
   return it;
 }
 
+function toggleSound(force?: boolean) {
+  initAudio();
+  audioSettings.muted = force ?? !audioSettings.muted;
+  applyVolumes();
+  $('btn-sound').textContent = audioSettings.muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+  try { localStorage.setItem('chonk.muted', audioSettings.muted ? '1' : '0'); } catch { /* ignore */ }
+}
+$('btn-sound').addEventListener('click', () => toggleSound());
+try { if (localStorage.getItem('chonk.muted') === '1') { audioSettings.muted = true; $('btn-sound').textContent = '🔇 SOUND OFF'; } } catch { /* ignore */ }
+
 // ---------------- modes ----------------
 function toMenu() {
   if (agent) agent.stop();
@@ -112,7 +122,7 @@ function menuPick() {
   if (menuSel === 0) startHuman();
   else if (menuSel === 1) startAgent();
   else if (menuSel === 2) menuSkill = (menuSkill + 1) % 4;
-  else { audioSettings.muted = !audioSettings.muted; applyVolumes(); }
+  else toggleSound();
 }
 
 function lockPointer() {
@@ -177,6 +187,7 @@ function startAgent() {
     speed: Number(($('speed') as HTMLSelectElement).value),
   }, { apiKey: key || null });
   agent.onUpdate = onAgentUpdate;
+  agent.beforeCapture = drawGameFrame;
   setAgentButtons(true);
   ($('setup') as HTMLDetailsElement).open = false;
   agent.run();
@@ -273,7 +284,29 @@ renderStats();
 interface RunFile { config: { model: string; obsMode: string }; turns: TurnRecord[]; run: unknown; costUSD: number }
 let replay: { run: RunFile; idx: number; img: HTMLImageElement; playing: boolean; t: number } | null = null;
 
-$('btn-replay').addEventListener('click', () => ($('replay-dialog') as HTMLDialogElement).showModal());
+$('btn-replay').addEventListener('click', async () => {
+  ($('replay-dialog') as HTMLDialogElement).showModal();
+  const list = $('replay-list');
+  list.innerHTML = '<p>Loading featured runs…</p>';
+  try {
+    const idx: { file: string; title: string; desc: string }[] = await (await fetch('runs/index.json')).json();
+    list.innerHTML = '<h4>Featured runs by Mistral Large 4</h4>';
+    for (const r of idx) {
+      const b = document.createElement('button');
+      b.className = 'btn small replay-item';
+      b.innerHTML = `${esc(r.title)}<small>${esc(r.desc)}</small>`;
+      b.addEventListener('click', async (ev) => {
+        ev.preventDefault();
+        b.textContent = 'Loading…';
+        startReplay(await (await fetch('runs/' + r.file)).json());
+        ($('replay-dialog') as HTMLDialogElement).close();
+      });
+      list.appendChild(b);
+    }
+  } catch {
+    list.innerHTML = '<p>No featured runs bundled yet.</p>';
+  }
+});
 $<HTMLInputElement>('replay-file').addEventListener('change', async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (!f) return;
@@ -318,6 +351,18 @@ function showReplayTurn(i: number) {
 }
 
 // ---------------- main loop ----------------
+let turboFrame = 0;
+function drawGameFrame() {
+  renderer.render();
+  sctx.drawImage(renderer.canvas, 0, 0);
+  drawHud(sctx, game.world, {
+    automap: showAutomap,
+    ruler: mode === 'agent',
+    showMessages: true,
+    agentBanner: mode === 'agent' ? `${(agent?.cfg.model ?? '').toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
+  });
+}
+
 let acc = 0;
 let last = performance.now();
 let titleT = 0;
@@ -352,24 +397,19 @@ function frame(now: number) {
         }
       } else if (mode === 'agent' && agent) {
         // time only flows while one of Le Chonk's actions is executing
-        const speed = agent.cfg.speed;
+        // turbo (benchmarks): simulate as fast as possible, render only when a frame is captured
+        const speed = agent.cfg.speed >= 16 ? 6000 : agent.cfg.speed;
         for (let i = 0; i < speed; i++) {
-          if (game.state !== 'playing' || game.world.completeT >= 0 || game.world.player.dead) { game.tick(emptyIntent()); break; }
+          if (game.state !== 'playing' || game.world.completeT >= 0 || game.world.player.dead) { agent.tickIntent(); game.tick(emptyIntent()); break; }
           const it = agent.tickIntent();
           if (!it) break;
           game.tick(it);
         }
       }
     }
+    const turbo = mode === 'agent' && agent && agent.cfg.speed >= 16;
     if (game.state === 'playing') {
-      renderer.render();
-      sctx.drawImage(renderer.canvas, 0, 0);
-      drawHud(sctx, game.world, {
-        automap: showAutomap,
-        ruler: mode === 'agent',
-        showMessages: true,
-        agentBanner: mode === 'agent' ? `${(agent?.cfg.model ?? '').toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
-      });
+      if (!turbo || ++turboFrame % 30 === 0) drawGameFrame();
     } else if (game.state === 'intermission') {
       drawIntermission(sctx, game.world, game.nextLevelName, game.stateT);
     } else if (game.state === 'victory') {
@@ -389,5 +429,44 @@ function frame(now: number) {
 }
 requestAnimationFrame(frame);
 
+export interface EpisodeOptions {
+  model: string; obsMode: ObsMode; reasoning: 'none' | 'high'; skill: number; level: number;
+  maxTurns: number; seed: number; speed: number; maxDeaths: number; apiKey?: string;
+}
+
+/** Run one benchmark episode (one level) and resolve with the exported run. Used by bench/bench.mjs. */
+async function runEpisode(o: EpisodeOptions) {
+  if (agent) agent.stop();
+  hideOverlays();
+  $('log').innerHTML = '';
+  mode = 'agent';
+  game.newGame(o.skill, o.level, o.seed);
+  agent = new ChonkAgent(game, screen, {
+    model: o.model, obsMode: o.obsMode, reasoning: o.reasoning, maxTurns: o.maxTurns, skill: o.skill,
+    speed: o.speed, singleLevel: true, maxDeaths: o.maxDeaths,
+  }, { apiKey: o.apiKey || null });
+  agent.onUpdate = onAgentUpdate;
+  agent.beforeCapture = drawGameFrame;
+  await agent.run();
+  const w = game.world;
+  const completed = game.run.levelsCompleted > 0;
+  return {
+    ...agent.exportRun(),
+    episode: {
+      ...o, apiKey: undefined, completed,
+      kills: completed ? game.run.kills : w.stats.kills,
+      totalKills: completed ? game.run.totalKills : w.stats.totalKills,
+      items: completed ? game.run.items : w.stats.items,
+      totalItems: w.stats.totalItems,
+      secrets: completed ? game.run.secrets : w.stats.secrets,
+      deaths: game.run.deaths,
+      gameTime: completed ? game.run.time : w.time,
+      turns: agent.turns.length,
+      hpEnd: w.player.hp,
+      error: agent.status === 'error' ? agent.lastError : null,
+    },
+  };
+}
+
 // Expose for automation (benchmark runner / debugging).
-Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, startReplay } });
+Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, startReplay, runEpisode } });

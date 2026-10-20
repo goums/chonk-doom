@@ -95,7 +95,7 @@ export function automapAscii(w: World, withEnemies: boolean) {
 }
 
 export const MAP_LEGEND =
-  "Legend: '^ > v <' = YOU (pointing where you face), '#' wall, '.' floor, ' ' unexplored, 'D' door (closed), " +
+  "Legend: '^ > v <' = YOU (pointing where you face), '#' wall, '.' floor, ' ' unexplored, 'D' plain door (closed, NOT locked: just face it and use), " +
   "'R'/'B'/'Y' red/blue/yellow locked doors, '/' open door, 'E' EXIT switch, '+' health, 'A' armor, 'a' ammo, 'W' weapon, " +
   "'r'/'b'/'y' collar keys, 'x' explosive barrel, 'o' obstacle. Coordinates: x = column (grows EAST), y = row (grows SOUTH). North is up.";
 

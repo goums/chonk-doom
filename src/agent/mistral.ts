@@ -33,7 +33,8 @@ export interface ClientConfig {
   apiKey: string | null; // null => use dev proxy
 }
 
-export const PRICE = { input: 0.68, cachedInput: 0.07, output: 2.09 }; // USD per 1M tokens (mistral-large-4, Oct 2026)
+// USD per 1M tokens for mistral-large-4 (docs.mistral.ai, Oct 2026 launch pricing)
+export const PRICE = { input: 0.07, cachedInput: 0.07, output: 2.09 };
 
 export async function hasDevProxy(): Promise<boolean> {
   if (!import.meta.env.DEV) return false;
