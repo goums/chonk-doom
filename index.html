@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHONK DOOM</title>
+    <meta name="description" content="A retro DOOM-like FPS starring Le Chonk, and a harness that lets Mistral Large 4 play it by itself." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <div class="brand">
+          <span class="logo">CHONK DOOM</span>
+          <span class="tag">Le Chonk vs the dogs of hell, played by <b>Mistral Large 4</b></span>
+        </div>
+        <nav>
+          <button id="btn-human" class="btn">🎮 Play yourself</button>
+          <button id="btn-agent" class="btn hot">🐱 Let Le Chonk play</button>
+          <button id="btn-replay" class="btn">📼 Replay a run</button>
+          <a class="btn ghost" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <section id="stage">
+          <div id="screen-wrap">
+            <canvas id="screen" width="384" height="240"></canvas>
+            <div id="bubble" class="hidden"></div>
+            <div id="thinking" class="hidden"><span class="paw">🐾</span> LE CHONK IS THINKING<span class="dots"></span><small>time is frozen</small></div>
+            <div id="click-hint" class="hidden">CLICK TO CAPTURE MOUSE</div>
+          </div>
+          <div id="help">
+            <b>Controls:</b> WASD / arrows move &middot; mouse or ←→ turn &middot; click / Ctrl fire &middot; E / Space use &middot; 1-4 weapons &middot; Shift run &middot; Tab automap &middot; M mute &middot; Esc menu
+          </div>
+        </section>
+
+        <aside id="brain">
+          <div class="panel-title">🧠 CHONK'S BRAIN</div>
+
+          <details id="setup" open>
+            <summary>Setup</summary>
+            <label>Mistral API key
+              <input id="api-key" type="password" placeholder="paste your key (stored in this browser only)" autocomplete="off" />
+            </label>
+            <div id="proxy-note" class="note hidden">✅ Dev proxy detected: using MISTRAL_STUDIO_API_KEY from .env (leave the field empty).</div>
+            <div class="row">
+              <label>Model <input id="model" value="mistral-large-4" /></label>
+              <label>Skill
+                <select id="skill">
+                  <option value="0">I'm a kitten</option>
+                  <option value="1" selected>House cat</option>
+                  <option value="2">Alley cat</option>
+                  <option value="3">Ultra-chonk</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label>Observation
+                <select id="obs">
+                  <option value="vision">Vision only</option>
+                  <option value="map" selected>Vision + automap</option>
+                  <option value="radar">Vision + automap + radar</option>
+                </select>
+              </label>
+              <label>Reasoning
+                <select id="reasoning">
+                  <option value="none">off (fast)</option>
+                  <option value="high">high (slower, smarter)</option>
+                </select>
+              </label>
+            </div>
+            <div class="row">
+              <label>Start level
+                <select id="start-level">
+                  <option value="0">E1M1 Le Salon</option>
+                  <option value="1">E1M2 La Cuisine</option>
+                  <option value="2">E1M3 La Cave (boss)</option>
+                </select>
+              </label>
+              <label>Max turns <input id="max-turns" type="number" value="400" min="1" /></label>
+            </div>
+          </details>
+
+          <div class="controls">
+            <button id="agent-pause" class="btn small" disabled>⏸ Pause</button>
+            <button id="agent-stop" class="btn small" disabled>⏹ Stop</button>
+            <button id="agent-export" class="btn small" disabled>💾 Save run</button>
+            <label class="speed">Speed
+              <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>
+            </label>
+          </div>
+
+          <div id="stats" class="stats"></div>
+          <div id="status" class="status">Idle. Press "Let Le Chonk play".</div>
+          <div id="log"></div>
+        </aside>
+      </main>
+
+      <dialog id="replay-dialog">
+        <form method="dialog">
+          <h3>📼 Replay a run</h3>
+          <p>Load a run file saved with "💾 Save run" (or from <code>runs/</code> in the repo).</p>
+          <input id="replay-file" type="file" accept=".json" />
+          <div id="replay-list"></div>
+          <menu><button class="btn small">Close</button></menu>
+        </form>
+      </dialog>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
