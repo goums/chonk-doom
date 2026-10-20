@@ -208,7 +208,7 @@ export class ChonkAgent {
       : 'No closed doors known.';
   }
 
-  private buildObservation(): string {
+  buildObservation(): string {
     const w = this.game.world;
     const parts: string[] = [];
     parts.push(`=== TURN ${this.turns.length + 1} | ${w.level.id} ${w.level.name} (${w.level.subtitle}) ===`);

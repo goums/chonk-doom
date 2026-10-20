@@ -34,8 +34,10 @@ reactive face, music, sound effects) is **generated procedurally at runtime**: t
 | HUD / UI | Canvas 2D composited at 3× for crisp text. [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) for words, [Press Start 2P](https://fonts.google.com/specimen/Press+Start+2P) for numbers (no `5`/`S` or `0`/`O` confusion, for humans *and* for the model) |
 | Audio | **Web Audio API** + **[ZzFX](https://github.com/KilledByAPixel/ZzFX)** sound effects, and a tiny custom 4-channel chiptune sequencer playing 4 original tracks |
 | Game engine | Custom deterministic fixed-timestep simulation (60 Hz): grid collision, DDA raycasting, flow-field enemy pathing, hitscan + projectiles |
-| AI | **Mistral Large 4** (`mistral-large-4`) via the Mistral Studio **chat completions API**: image input, **function calling** (one `act` tool, `tool_choice: "any"`), optional `reasoning_effort: "high"` |
-| Harness runtime | Runs **in the browser**, with no backend (the Mistral API allows CORS). In local dev, a Vite middleware proxies requests and adds the API key from `.env` on the server side |
+| AI model | **Mistral Large 4** (`mistral-large-4`): image input, **function calling** (one `act` tool, `tool_choice: "any"`), optional `reasoning_effort: "high"` |
+| AI API + client library | The **Mistral chat completions REST API** ([Mistral Studio](https://docs.mistral.ai)), or the OpenAI-compatible **[OpenRouter](https://openrouter.ai) API** to compare other models. Called with our own tiny typed `fetch` client ([`src/agent/mistral.ts`](src/agent/mistral.ts), ~150 lines, no SDK) so the same code runs in the browser and in Node, handles both providers' small differences (image parts, `tool_choice`, reasoning switches), retries rate limits with backoff and records the real per-request cost |
+| Harness runtime | Runs **in the browser**, with no backend (both APIs allow CORS). In local dev, a Vite middleware proxies requests and adds the API key from `.env` on the server side |
+| Evals | **[Evalite](https://www.evalite.dev)** (TypeScript-native LLM eval runner built on Vitest): scored unit tests of the model's perception and decisions on real game situations, per model. See [Evals](#-evals) |
 | Benchmark | **[Playwright](https://playwright.dev)** headless Chromium + a Vite dev server, running parallel episodes in **turbo mode** (simulate as fast as possible, render only when the model looks) |
 | Build / hosting | **[Vite](https://vitejs.dev)** 8 → a static site, deployed to **GitHub Pages** by GitHub Actions |
 
@@ -57,7 +59,7 @@ sequenceDiagram
         H->>G: render frame + read state
         H->>M: system prompt + last 4 turns (text) + NEW frame (image) + observation (text)
         Note over G: ⏸ time is frozen
-        M-->>H: act({ thought, actions[1..5], notes })
+        M-->>H: act({ thought, actions[1..8], notes })
         loop each action
             H->>G: per-tick inputs (turn / move / fire...)
             Note over G: ▶ time runs, enemies act
@@ -127,6 +129,9 @@ Closed doors you know: (7,11) door; (11,3) door; (18,7) door; (22,11) RED door, 
 Your notes: (empty)
 ```
 
+Below the automap, the observation also lists the **closed doors** and **items** Le Chonk has seen, with exact coordinates, so the
+model doesn't have to count columns in the ASCII map (an early Mistral Large 4 run walked to the wrong tile because of that).
+
 The automap is an ASCII version of DOOM's automap, built only from tiles Le Chonk has actually seen (`v` = Le Chonk facing south,
 `D` door, `R` red locked door, `/` open door, `+` health, `a` ammo, `o` obstacle). In the default mode, **enemies never appear in the
 text**: the model only learns *how many* are on screen, and has to find them in the image.
@@ -154,6 +159,7 @@ The model must call a single function:
 | `attack {degrees, shots}` | Turn, then fire N times: the main combat move |
 | `shoot {shots}` | Fire without turning |
 | `go_to {x, y}` | Walk the shortest **known** path to an explored automap tile, opening unlocked doors on the way |
+| `explore {tiles}` | Auto-explore: keep walking to the nearest unexplored area (opening doors) until an enemy appears, Le Chonk gets hurt, or a new item comes into view |
 | `use` | Open a door or press the EXIT switch in front |
 | `weapon {slot}` | 1 FIST · 2 PISTOL · 3 SHOTGUN · 4 CHAINGUN |
 | `wait {seconds}` | Let enemies come around the corner |
@@ -176,6 +182,10 @@ frame above came back as:
 queue is dropped, and the model gets a fresh frame. It works like a reflex: the model can queue a long `go_to` and still react the
 instant something shows up. Combat actions (`attack`, `shoot`) are not interruptible, so a volley is always completed. Other outcomes
 look like `BLOCKED after 0.5 tiles`, `Fired 4 shot(s) with SHOTGUN: 3 hit(s), 1 kill(s)` or `This door is locked. You need the RED key.`
+
+**Plan ahead, react instantly.** Because interrupts make long plans safe, the prompt asks for **long plans when it's calm** (up to 8
+actions: `explore`, `go_to` a key, `go_to` the door, `explore` again…) and **short reactive plans in combat** (attack, strafe, attack).
+That cuts the number of model calls, and with it the latency and cost, without making Le Chonk blind to danger.
 
 ### 4. Context and memory management
 
@@ -227,12 +237,45 @@ Baselines (Medium difficulty):
 
 ---
 
+## 🧪 Evals
+
+Beyond full-game episodes, CHONK DOOM ships **LLM evals** written with **[Evalite](https://www.evalite.dev)** (TypeScript, built on
+Vitest). They are scored unit tests of the two skills the harness depends on, on **real game situations**:
+
+- [`evals/make-dataset.mjs`](evals/make-dataset.mjs) stages scenes in the actual engine (Playwright) and records the **exact frame +
+  observation** the model would receive, with a ground truth → [`evals/dataset.json`](evals/dataset.json).
+- [`evals/aim.eval.ts`](evals/aim.eval.ts): **Aim with the degree ruler**. One enemy (mouse, bulldog or chihuahua) at a known angle
+  from −30° to +33°. Scorers: valid `act()` call, aim accuracy (≤ 5° error = 1, ≥ 20° = 0), shoots.
+- [`evals/decide.eval.ts`](evals/decide.eval.ts): **Make the right move**. Locked red door + red key seen → go get the key; 15% health
+  + food seen → go eat; red key in hand → go to the red door; nothing known → explore; bulldog charging → shoot it; EXIT switch in
+  front → press it.
+- Every model runs as an Evalite **variant** on the same cases, with the same prompt and tool as the game.
+
+| Model | Aim (ruler reading) | Decisions | Overall | Avg latency | Cost (14 cases) |
+|---|---|---|---|---|---|
+| Gemini 3.8 Flash ¹ | 99% | 100% | **99%** | 8.3 s | $0.044 |
+| GPT-5.6 Luna | 95% | 94% | **94%** | 3.8 s | $0.008 |
+| **Mistral Large 4** | 90% | 94% | **92%** | 8.0 s | $0.032 |
+| Mistral Large 3 ² | 78% | 100% | **87%** | 59.8 s | $0.014 |
+
+<sub>Single trial per case via OpenRouter, reasoning off, 2026-10-20 ([raw export](evals/results/latest.json)). ¹ Gemini 3.8 Flash
+can't disable reasoning, so it runs with the lowest effort. ² 2 cases timed out on provider rate limits.</sub>
+
+```bash
+npm run eval:data                                   # regenerate the dataset from the game
+npm run eval                                        # run all evals (models from EVAL_MODELS, keys from .env)
+EVAL_MODELS=mistralai/mistral-large-4-0 npm run eval
+EVAL_PROVIDER=mistral EVAL_MODELS=mistral-large-4 npm run eval   # straight to Mistral Studio
+npx evalite serve                                   # browse every case, frame and answer in the Evalite UI
+```
+
 ## 🚀 Setup
 
 ### Option A: no install (GitHub Pages)
 1. Open https://goums.github.io/chonk-doom/
-2. Click **Let Le Chonk Play**, then paste your Mistral API key (from [console.mistral.ai](https://console.mistral.ai)).
-   It's stored only in your browser's localStorage and sent only to `api.mistral.ai`.
+2. Click **Let Le Chonk Play**, pick **Mistral Studio** or **OpenRouter**, and paste your API key (from
+   [console.mistral.ai](https://console.mistral.ai) or [openrouter.ai/keys](https://openrouter.ai/keys)). It's stored only in your
+   browser's localStorage and sent only to that provider.
 3. Pick the difficulty, observation mode and reasoning, then **Start Le Chonk**.
 
 > The model must be `mistral-large-4` (**not** `mistral-large-latest`), and your workspace needs access to it in Mistral Studio.
@@ -243,6 +286,7 @@ Baselines (Medium difficulty):
 git clone https://github.com/goums/chonk-doom && cd chonk-doom
 npm install
 echo "MISTRAL_STUDIO_API_KEY=your_key" > .env   # read by the dev proxy only, never bundled
+echo "OPEN_ROUTER_API_KEY=your_key" >> .env    # optional: compare other models via OpenRouter
 npm run dev                                     # http://localhost:5173
 ```
 
@@ -250,6 +294,7 @@ npm run dev                                     # http://localhost:5173
 ```bash
 npx playwright install chromium
 npm run bench -- --models mistral-large-4 --obs map --reasoning none --levels 0,1,2 --runs 5 --parallel 3
+npm run bench -- --provider openrouter --models mistralai/mistral-large-4-0,google/gemini-3.8-flash --runs 3   # model comparison
 npm run bench -- --models bot:simple,bot:random --runs 3          # baselines
 npm run bench -- --obs vision,map,radar --reasoning none,high     # ablations
 ```
@@ -261,31 +306,11 @@ with frames) plus `summary.md`. `node bench/snap.mjs` regenerates the README ima
 
 ---
 
-## 🗂 Repository layout
-
-| Path | What |
-|---|---|
-| [`src/game/world.ts`](src/game/world.ts) | Deterministic simulation: player, weapons, enemy AI (flow-field pathing), hitscan, projectiles, doors, keys, secrets |
-| [`src/game/levels.ts`](src/game/levels.ts) | The 3 levels as ASCII maps |
-| [`src/game/hud.ts`](src/game/hud.ts) | Status bar, toast notifications, automap, degree ruler, title and intermission screens |
-| [`src/engine/renderer.ts`](src/engine/renderer.ts) | three.js renderer |
-| [`src/art/*`](src/art) | Procedural art: palette and outlines (`pixel.ts`), textures, enemies and items, weapons, Le Chonk's face |
-| [`src/audio/audio.ts`](src/audio/audio.ts) | ZzFX sound effects + chiptune sequencer |
-| [`src/agent/prompt.ts`](src/agent/prompt.ts) | System prompt + `act` tool schema |
-| [`src/agent/perception.ts`](src/agent/perception.ts) | Frame capture, ASCII automap, status, radar |
-| [`src/agent/actions.ts`](src/agent/actions.ts) | Macro-action executor (interrupts, path-finding) |
-| [`src/agent/agent.ts`](src/agent/agent.ts) | The observe → think → act loop, context management, run logs |
-| [`src/agent/mistral.ts`](src/agent/mistral.ts) | Minimal Mistral API client (retries, reasoning chunks, cost) |
-| [`src/agent/bot.ts`](src/agent/bot.ts) | Scripted and random baselines |
-| [`bench/bench.mjs`](bench/bench.mjs) | Headless benchmark runner · [`bench/snap.mjs`](bench/snap.mjs) README images + favicon |
-
----
-
 ## 🛠 How it was developed
 
 - **Team:** 1 person ([@goums](https://github.com/goums), [uplab](https://uplab.fr)) + **Claude Code** (Anthropic) as the coding agent, which wrote most of the code from the design brief and iterated on feedback.
-- **Players:** in agent mode, every in-game decision is made by **Mistral Large 4** (`mistral-large-4`). The scripted bots are only baselines.
-- **Open source used:** three.js (MIT), ZzFX (MIT), Vite (MIT), Playwright (Apache-2.0), the Resurrect 64 palette by Kerrie Lake, and the Pixelify Sans and Press Start 2P fonts (OFL).
+- **Players:** in agent mode, every in-game decision is made by **Mistral Large 4** (`mistral-large-4`). The scripted bots are only baselines, and other models (via OpenRouter) are only used for comparison.
+- **Open source used:** three.js (MIT), ZzFX (MIT), Vite (MIT), Playwright (Apache-2.0), Evalite + Vitest (MIT), the Resurrect 64 palette by Kerrie Lake, and the Pixelify Sans and Press Start 2P fonts (OFL).
 - **Original work:** the game design, levels, all art (drawn procedurally in code), the 4 music tracks and the harness. DOOM is the obvious inspiration, but no DOOM code or assets are used. Le Chonk's look follows the official Mistral Large 4 mascot palette.
 
 ## License

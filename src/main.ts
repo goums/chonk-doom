@@ -463,5 +463,24 @@ async function runEpisode(o: EpisodeOptions) {
   };
 }
 
+/** Eval dataset helpers: stage a scene in a level, then snapshot exactly what the model would receive. */
+function stageScenario(level: number) {
+  if (agent) agent.stop();
+  hideOverlays();
+  game.newGame(1, level, 4242);
+  mode = 'agent';
+  agent = new ChonkAgent(game, screen, { model: 'eval', obsMode: 'map', speed: 1 }, { provider: 'mistral', apiKey: null });
+  agent.beforeCapture = drawGameFrame;
+  return game.world;
+}
+async function snapshotScenario() {
+  const w = game.world;
+  w.updateExplored();
+  const { captureFrame } = await import('./agent/perception');
+  drawGameFrame();
+  const frame = captureFrame(screen, 768 / screen.width);
+  return { frame, observation: agent!.buildObservation() };
+}
+
 // Expose for automation (benchmark runner / debugging).
-Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode } });
+Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode, stageScenario, snapshotScenario } });

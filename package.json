@@ -9,7 +9,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "bench": "node bench/bench.mjs"
+    "bench": "node bench/bench.mjs",
+    "eval": "evalite run",
+    "eval:watch": "evalite watch",
+    "eval:data": "node evals/make-dataset.mjs"
   },
   "license": "MIT",
   "dependencies": {
@@ -18,8 +21,10 @@
   },
   "devDependencies": {
     "@types/three": "^0.186.0",
+    "evalite": "^0.19.0",
     "playwright": "^1.64.1",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }
