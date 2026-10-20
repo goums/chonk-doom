@@ -2,7 +2,11 @@
 // Turns an Evalite JSON export into a markdown leaderboard: node evals/summarize.mjs [evals/results/latest.json]
 import fs from 'node:fs';
 const file = process.argv[2] ?? 'evals/results/latest.json';
-const { evals } = JSON.parse(fs.readFileSync(file, 'utf8'));
+const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+const { evals } = raw;
+// keep the committed export small: drop the embedded frames (they live in evals/dataset.json)
+for (const e of evals) for (const r of e.results ?? []) if (r.input?.input?.frame) r.input.input.frame = '(see dataset.json)';
+fs.writeFileSync(file, JSON.stringify(raw));
 const models = new Map();
 for (const e of evals) {
   const m = models.get(e.variantName) ?? { aim: null, decide: null, lat: [], cost: 0, n: 0, fails: 0 };

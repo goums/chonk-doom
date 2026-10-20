@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "bench": "node bench/bench.mjs",
-    "eval": "evalite run",
+    "eval": "evalite run --threshold 0 --outputPath evals/results/latest.json && node evals/summarize.mjs",
     "eval:watch": "evalite watch",
     "eval:data": "node evals/make-dataset.mjs"
   },
