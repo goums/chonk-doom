@@ -98,7 +98,7 @@ export function automapAscii(w: World, withEnemies: boolean) {
 export function statusText(w: World) {
   const p = w.player;
   const wd = WEAPONS[p.weapon];
-  const ammo = wd.ammo ? `${p.ammo[wd.ammo]} ${AMMO_NAME[wd.ammo].toLowerCase()}` : 'melee, no ammo needed';
+  const ammo = wd.ammo ? `${p.ammo[wd.ammo]} ${AMMO_NAME[wd.ammo].toLowerCase()}` : wd.id === 'fist' ? 'melee, no ammo needed' : 'unlimited energy';
   const owned = [...p.weapons].map((id) => `${WEAPONS[id].slot}=${WEAPONS[id].name}`).join(', ');
   const keys = p.keys.size ? [...p.keys].map((k) => k.toUpperCase()).join(', ') : 'none';
   const h = heading(w);

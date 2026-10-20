@@ -1,10 +1,11 @@
 // AIM eval: one enemy at a known angle. Does the model read the degree ruler and aim at it?
 import { evalite } from 'evalite';
-import { ask, aimOf, dataset, variants, type Answer, type Case } from './lib';
+import { ask, aimOf, dataset, variants, TRIALS, type Answer, type Case } from './lib';
 
 evalite.each(variants)<Case, Answer, Case['expected']>('Aim with the degree ruler', {
   data: dataset.filter((c) => c.category === 'aim').map((c) => ({ input: c, expected: c.expected })),
   task: (c, v) => ask(c, v),
+  trialCount: TRIALS,
   scorers: [
     { name: 'Valid act() call', scorer: ({ output }) => (output.valid ? 1 : 0) },
     {

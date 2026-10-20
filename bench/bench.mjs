@@ -89,7 +89,7 @@ const pct = (x) => (100 * x).toFixed(0) + '%';
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
 const levels = [...new Set(results.map((e) => e.level))].sort();
 let md = `# CHONK DOOM benchmark\n\n${new Date().toISOString().slice(0, 10)} · provider ${PROVIDER} · difficulty ${['Easy', 'Medium', 'Hard'][SKILL]} · ${RUNS} run(s) per level · turn caps ${JSON.stringify(TURN_CAP)} · max ${MAX_DEATHS} deaths\n\n`;
-md += `| Model | Levels cleared | ${levels.map((l) => `E1M${l + 1}`).join(' | ')} | Kills | Deaths/ep | Turns/ep | $ / episode | $ / turn | s / turn |\n`;
+md += `| Model | Levels cleared | ${levels.map((l) => `Level ${l + 1}`).join(' | ')} | Kills | Deaths/ep | Turns/ep | $ / episode | $ / turn | s / turn |\n`;
 md += `|---|---|${levels.map(() => '---').join('|')}|---|---|---|---|---|---|\n`;
 const summary = [];
 for (const [k, es] of groups) {

@@ -1,6 +1,6 @@
 // DECISION eval: staged game situations with one sensible next move (get the key, heal, open the exit...).
 import { evalite } from 'evalite';
-import { ask, aimOf, dataset, variants, type Answer, type Case } from './lib';
+import { ask, aimOf, dataset, variants, TRIALS, type Answer, type Case } from './lib';
 
 function rightMove(output: Answer, e: Case['expected']) {
   const acts = output.actions;
@@ -26,6 +26,7 @@ function rightMove(output: Answer, e: Case['expected']) {
 evalite.each(variants)<Case, Answer, Case['expected']>('Make the right move', {
   data: dataset.filter((c) => c.category === 'decision').map((c) => ({ input: c, expected: c.expected })),
   task: (c, v) => ask(c, v),
+  trialCount: TRIALS,
   scorers: [
     { name: 'Valid act() call', scorer: ({ output }) => (output.valid ? 1 : 0) },
     { name: 'Right move', scorer: ({ output, expected }) => rightMove(output, expected ?? {}) },

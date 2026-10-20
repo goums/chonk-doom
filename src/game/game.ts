@@ -114,6 +114,6 @@ export class Game {
 
   get nextLevelName() {
     const n = LEVELS[this.levelIndex + 1];
-    return n ? `${n.id} ${n.name}` : null;
+    return n ? `${n.id} · ${n.name}` : null;
   }
 }

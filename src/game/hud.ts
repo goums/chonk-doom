@@ -100,6 +100,13 @@ function shield(ctx: Ctx, x: number, y: number, c: string) {
   ctx.fillRect(x + 1, y + 1, 2, 1);
 }
 
+function boltIcon(ctx: Ctx, x: number, y: number, c: string) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y); ctx.lineTo(x + 1, y + 8); ctx.lineTo(x + 5, y + 8); ctx.lineTo(x + 3, y + 14); ctx.lineTo(x + 9, y + 5); ctx.lineTo(x + 5, y + 5); ctx.closePath();
+  ctx.fill();
+}
+
 function pawIcon(ctx: Ctx, x: number, y: number, c: string) {
   ctx.fillStyle = c;
   ctx.fillRect(x + 2, y + 4, 5, 4);
@@ -190,12 +197,38 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
     let frame: WeaponFrame = 'idle';
     const ft = p.fireT;
     if (def.id === 'chaingun') frame = ft < 0.05 ? 'fire0' : ft < 0.1 ? 'fire1' : 'idle';
+    else if (def.id === 'pistol') frame = ft < 0.07 ? 'fire0' : ft < 0.18 ? 'fire1' : 'idle';
     else if (ft < def.cooldown * 0.3) frame = 'fire0';
     else if (ft < def.cooldown * 0.75) frame = 'fire1';
     const bx = Math.cos(p.bob) * 6 * Math.min(1, p.moving);
     const by = Math.abs(Math.sin(p.bob)) * 5 * Math.min(1, p.moving);
     const sw = p.pendingWeapon ? Math.sin(Math.max(0, p.switchT) * Math.PI * 4) * 40 : 0;
-    ctx.drawImage(weapons[wid][frame], Math.round(SCREEN_W / 2 - WEAPON_W / 2 + bx), Math.round(VIEW_H - WEAPON_H + 8 + by + Math.abs(sw)), WEAPON_W, WEAPON_H);
+    // recoil: a quick kick down + slight shake right after each shot
+    const kick = def.id !== 'fist' && ft < 0.12 ? (1 - ft / 0.12) * (def.id === 'shotgun' ? 10 : def.id === 'chaingun' ? 3 : 6) : 0;
+    ctx.drawImage(weapons[wid][frame], Math.round(SCREEN_W / 2 - WEAPON_W / 2 + bx), Math.round(VIEW_H - WEAPON_H + 8 + by + Math.abs(sw) + kick), WEAPON_W, WEAPON_H);
+  }
+
+  // laser beam: from the emitter to the crosshair, with a bright core and an impact flare
+  if (!p.dead && p.weapon === 'pistol' && p.fireT < 0.09) {
+    const k = 1 - p.fireT / 0.09;
+    const mx = SCREEN_W / 2, my = VIEW_H - 64, cx = SCREEN_W / 2, cy = VIEW_H / 2;
+    ctx.save();
+    ctx.globalAlpha = k;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(48,225,185,0.45)';
+    ctx.lineWidth = 7;
+    ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(cx, cy); ctx.stroke();
+    ctx.strokeStyle = '#8ff8e2';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(cx, cy); ctx.stroke();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(mx, my); ctx.lineTo(cx, cy); ctx.stroke();
+    ctx.fillStyle = 'rgba(143,248,226,0.7)';
+    ctx.beginPath(); ctx.arc(cx, cy, 4 + 4 * k, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
   }
 
   // crosshair
@@ -285,6 +318,7 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   panel(ctx, 214, 128);
   if (def.ammo === 'bullets') ctx.drawImage(items.bullets, 222, top + 1, 14, 14);
   else if (def.ammo === 'shells') ctx.drawImage(items.shells, 221, top + 2, 16, 12);
+  else if (def.id === 'pistol') boltIcon(ctx, 224, top + 1, '#30e1b9');
   else pawIcon(ctx, 224, top + 4, '#fb6b1d');
   const ammoTxt = def.ammo ? String(p.ammo[def.ammo]) : '∞';
   const low = def.ammo && p.ammo[def.ammo] < 10;

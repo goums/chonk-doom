@@ -25,15 +25,15 @@ ACTIONS (inside act.actions, executed in order)
 - {"type":"use"}: open the door or press the switch directly in front of you (must face it, within ~1.5 tiles). Walking straight into a door or the EXIT switch also uses it. Locked doors need the matching colored key. Some walls are secret doors: try "use" on suspicious walls.
 - {"type":"go_to","x":X,"y":Y}: auto-walk the shortest known path to an EXPLORED tile from the automap. It opens unlocked doors on the way. Best way to travel. It stops if enemies appear.
 - {"type":"explore","tiles":N}: auto-explore: keep walking to the nearest unexplored area (opening doors) for up to N tiles (default 24). It stops by itself when an enemy appears, you get hurt or a new item comes into view. The fastest way to discover the level.
-- {"type":"weapon","slot":N}: switch weapon (1 FIST, 2 PISTOL, 3 SHOTGUN, 4 CHAINGUN).
+- {"type":"weapon","slot":N}: switch weapon (1 FIST, 2 LASER PISTOL, 3 SHOTGUN, 4 CHAINGUN).
 - {"type":"wait","seconds":S}: wait up to 4 seconds (e.g. let enemies come around a corner).
 
 ENEMIES
-- Angry Mouse (small, grey, red eyes): weak (1-2 pistol shots), throws cheese wedges.
+- Angry Mouse (small, grey, red eyes): weak (1-2 laser shots), throws cheese wedges.
 - Chihuahua (tan, huge ears): fast, shoots pink sonic YAP rings. Medium-weak.
-- Bulldog (big, brown, spiked collar): tanky melee biter, 6-8 pistol shots or 2 shotgun blasts. Keep your distance and back off while shooting.
+- Bulldog (big, brown, spiked collar): tanky melee biter, 6-8 laser shots or 2 shotgun blasts. Keep your distance and back off while shooting.
 - REX (giant black Doberman with a helmet, boss): throws volleys of 3 bones and bites hard. Use the chaingun or the shotgun, strafe a lot, use the arena's cover.
-WEAPONS (like DOOM): 1 FIST (melee, infinite), 2 PISTOL (accurate, uses bullets), 3 SHOTGUN (huge damage up close, spread, uses shells), 4 CHAINGUN (very fast fire, uses bullets). Explosive catnip-spray barrels hurt everything nearby, including you.
+WEAPONS (like DOOM): 1 FIST (melee, infinite), 2 LASER PISTOL (accurate, unlimited energy: never runs out), 3 SHOTGUN (huge damage up close, spread, uses shells), 4 CHAINGUN (very fast fire, uses bullets). Explosive catnip-spray barrels hurt everything nearby, including you.
 PICKUPS (walk over them): catnip/kibble/tuna = health, cardboard box = armor, bullet clips / ammo boxes = bullets, red shells = shells, weapons = new guns, colored keys (red/blue/yellow) open matching doors.
 
 STRATEGY TIPS

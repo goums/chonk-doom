@@ -24,14 +24,24 @@ export interface Answer { thought: string; actions: Action[]; valid: boolean; la
 
 export const dataset: Case[] = JSON.parse(fs.readFileSync(new URL('./dataset.json', import.meta.url), 'utf8'));
 
-export interface ModelVariant { provider: Provider; model: string }
+export interface ModelVariant { provider: Provider; model: string; reasoning: 'none' | 'high' }
 
-const DEFAULT_MODELS = 'mistralai/mistral-large-4-0,mistralai/mistral-large-2512,google/gemini-3.8-flash,openai/gpt-5.6-luna';
+/** EVAL_REASONING=high runs the "reasoning league"; default is the "instruct league" (reasoning off). */
+export const REASONING = (process.env.EVAL_REASONING === 'high' ? 'high' : 'none') as 'none' | 'high';
+/** Trials per case (models are stochastic): EVAL_TRIALS, default 3. */
+export const TRIALS = Number(process.env.EVAL_TRIALS ?? 3);
+
+// open-weight models only; two leagues so reasoning and non-reasoning models are never mixed
+const LEAGUES = {
+  none: 'mistralai/mistral-large-4-0,mistralai/mistral-large-2512,qwen/qwen3-vl-235b-a22b-instruct,meta-llama/llama-4-maverick',
+  high: 'mistralai/mistral-large-4-0,deepseek/deepseek-v4.1-flash,qwen/qwen3.5-397b-a17b,z-ai/glm-5.3-flash',
+};
+const DEFAULT_MODELS = LEAGUES[process.env.EVAL_REASONING === 'high' ? 'high' : 'none'];
 
 /** Models to evaluate: EVAL_PROVIDER (openrouter | mistral) + EVAL_MODELS (comma-separated). */
 export const variants = (process.env.EVAL_MODELS ?? DEFAULT_MODELS).split(',').map((m) => m.trim()).filter(Boolean).map((model) => ({
   name: model.split('/').pop()!,
-  input: { provider: (process.env.EVAL_PROVIDER ?? 'openrouter') as Provider, model },
+  input: { provider: (process.env.EVAL_PROVIDER ?? 'openrouter') as Provider, model, reasoning: REASONING },
 }));
 
 export async function ask(c: Case, v: ModelVariant): Promise<Answer> {
@@ -49,7 +59,8 @@ export async function ask(c: Case, v: ModelVariant): Promise<Answer> {
       tool_choice: 'any',
       parallel_tool_calls: false,
       temperature: 0.3,
-      max_tokens: 800,
+      max_tokens: v.reasoning === 'high' ? 12000 : 800,
+      ...(v.reasoning === 'high' ? { reasoning_effort: 'high' as const } : {}),
     });
     const tc = r.choices[0]?.message.tool_calls?.[0];
     const j = tc ? JSON.parse(tc.function.arguments) : null;

@@ -32,7 +32,7 @@ export interface LevelDef {
 
 export const LEVELS: LevelDef[] = [
   {
-    id: 'E1M1',
+    id: 'Level 1',
     name: 'LE SALON',
     subtitle: 'The Living Room',
     music: 'living',
@@ -75,7 +75,7 @@ export const LEVELS: LevelDef[] = [
     ],
   },
   {
-    id: 'E1M2',
+    id: 'Level 2',
     name: 'LA CUISINE',
     subtitle: 'Kitchen Nightmare',
     music: 'kitchen',
@@ -116,7 +116,7 @@ export const LEVELS: LevelDef[] = [
     ],
   },
   {
-    id: 'E1M3',
+    id: 'Level 3',
     name: 'LA CAVE',
     subtitle: "Rex's Basement",
     music: 'rex',

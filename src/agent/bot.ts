@@ -58,7 +58,7 @@ export function botAct(w: World): { thought: string; actions: Action[] } {
     const a = Math.round(relAngle(w, e.x, e.y) * DEG);
     const acts: Action[] = [];
     // best weapon
-    const slot = p.weapons.has('shotgun') && p.ammo.shells > 0 && d < 5 ? 3 : p.weapons.has('chaingun') && p.ammo.bullets > 0 ? 4 : p.ammo.bullets > 0 ? 2 : 1;
+    const slot = p.weapons.has('shotgun') && p.ammo.shells > 0 && d < 5 ? 3 : p.weapons.has('chaingun') && p.ammo.bullets > 0 ? 4 : 2;
     const cur = WEAPONS[p.weapon].slot;
     if (slot !== cur) acts.push({ type: 'weapon', slot });
     acts.push({ type: 'attack', degrees: a, shots: slot === 4 ? 8 : slot === 3 ? 1 : 3 });

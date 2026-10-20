@@ -17,15 +17,26 @@ const BEAN = '#f68181';
  * Le Chonk's paw: an orange tabby arm coming from the bottom of the screen, ending in a cream "sock"
  * with four toe bumps (very recognisably a cat). `beans` shows the pink pads + claws (punching).
  */
-function paw(ctx: Ctx, x: number, y: number, s = 1, beans = false, claws = false, arm = true) {
+function paw(ctx: Ctx, x: number, y: number, s = 1, beans = false, claws = false, arm = true, rot = 0, armLen = 1) {
+  if (rot) {
+    // rotated paw (e.g. reaching in from the side): rotate around the paw itself
+    ctx.save();
+    ctx.translate(x, y + 4 * s);
+    ctx.rotate(rot);
+    ctx.translate(-x, -(y + 4 * s));
+    paw(ctx, x, y, s, beans, claws, arm, 0, armLen);
+    ctx.restore();
+    return;
+  }
   // arm with tabby stripes
-  if (arm) blob(ctx, x + 2 * s, y + 30 * s, 12.5 * s, 26 * s, ORANGE, 1.15, 0.72);
+  const armW = 12.5 * s * (armLen > 1 ? 1.7 : 1); // chonky arms
+  if (arm) blob(ctx, x + 2 * s, y + (30 + 26 * (armLen - 1)) * s, armW, 26 * armLen * s, ORANGE, 1.15, 0.72);
   if (arm) {
     ctx.save();
     ctx.beginPath();
-    ctx.ellipse(x + 2 * s, y + 30 * s, 12.5 * s, 26 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 2 * s, y + (30 + 26 * (armLen - 1)) * s, armW, 26 * armLen * s, 0, 0, Math.PI * 2);
     ctx.clip();
-    for (const dy of [14, 22, 30]) poly(ctx, [x - 14 * s, y + dy * s, x + 16 * s, y + (dy - 5) * s, x + 16 * s, y + (dy - 2) * s, x - 14 * s, y + (dy + 3) * s], ORANGE_D);
+    for (const dy of armLen > 1 ? [14, 22, 30, 38, 46, 54] : [14, 22, 30]) poly(ctx, [x - 14 * s, y + dy * s, x + 16 * s, y + (dy - 5) * s, x + 16 * s, y + (dy - 2) * s, x - 14 * s, y + (dy + 3) * s], ORANGE_D);
     ctx.restore();
   }
   // cream sock (the paw itself)
@@ -70,17 +81,29 @@ function drawFist(ctx: Ctx, f: WeaponFrame) {
 }
 
 function drawPistol(ctx: Ctx, f: WeaponFrame) {
-  const k = f === 'fire0' ? 5 : f === 'fire1' ? 2 : 0;
+  // LASER PISTOL: white sci-fi body, glowing cyan energy cell and emitter
+  const k = f === 'fire0' ? 6 : f === 'fire1' ? 2 : 0;
   const y = k;
-  if (f === 'fire0') flash(ctx, 80, 30 + y, 11, '#f9c22b', '#fb6b1d');
+  const GLOW = f === 'idle' ? '#30e1b9' : '#8ff8e2';
+  if (f === 'fire0') {
+    ellipse(ctx, 80, 36 + y, 13, 13, 'rgba(48,225,185,0.55)');
+    ellipse(ctx, 80, 36 + y, 7, 7, '#8ff8e2');
+    ellipse(ctx, 80, 36 + y, 3.5, 3.5, '#ffffff');
+  }
   // grip + frame
-  poly(ctx, [68, 100, 92, 100, 89, 60 + y, 71, 60 + y], STEEL_D);
-  // slide, seen from behind
-  poly(ctx, [70, 64 + y, 90, 64 + y, 86, 40 + y, 74, 40 + y], STEEL);
-  poly(ctx, [70, 64 + y, 74, 64 + y, 76, 40 + y, 74, 40 + y], STEEL_L);
-  px(ctx, 76, 46 + y, DARK, 8, 2); // ejection port
-  ellipse(ctx, 80, 41 + y, 3, 1.6, DARK); // muzzle
-  px(ctx, 79, 36 + y, DARK, 2, 4); // front sight
+  poly(ctx, [68, 100, 92, 100, 89, 62 + y, 71, 62 + y], '#625565');
+  // body seen from behind, tapering to the emitter
+  poly(ctx, [69, 66 + y, 91, 66 + y, 87, 42 + y, 73, 42 + y], '#c7dcd0');
+  poly(ctx, [69, 66 + y, 73, 66 + y, 75.5, 42 + y, 73, 42 + y], '#ffffff');
+  poly(ctx, [87, 42 + y, 91, 66 + y, 88, 66 + y, 85, 42 + y], '#9babb2');
+  // glowing energy cell
+  px(ctx, 75, 50 + y, '#0b5e65', 10, 9);
+  px(ctx, 76, 51 + y, GLOW, 8, 7);
+  px(ctx, 76, 51 + y, '#ffffff', 2, 2);
+  // emitter ring
+  ellipse(ctx, 80, 41 + y, 5, 2.4, '#3e3546');
+  ellipse(ctx, 80, 41 + y, 3.2, 1.4, GLOW);
+  px(ctx, 79, 36 + y, '#3e3546', 2, 4); // sight
   paw(ctx, 69, 70 + k, 0.62);
   paw(ctx, 91, 72 + k, 0.62);
 }
@@ -103,8 +126,9 @@ function drawShotgun(ctx: Ctx, f: WeaponFrame) {
   // pump (slides back after a shot)
   poly(ctx, [71, 46 + y + pump, 89, 46 + y + pump, 87, 34 + y + pump, 73, 34 + y + pump], WOOD);
   for (let i = 0; i < 3; i++) px(ctx, 74, 37 + y + pump + i * 3, WOOD_D, 12, 1);
-  paw(ctx, 80, 41 + y + pump, 0.55, false, false, false); // front paw wrapped on the pump (arm hidden behind the gun)
-  paw(ctx, 98, 80 + k * 0.5, 0.7);
+  // left paw reaches in from the bottom-left and wraps the pump from the side; right paw holds the stock
+  paw(ctx, 71, 43 + y + pump, 0.58, false, false, true, 0.95, 2.2);
+  paw(ctx, 99, 80 + k * 0.5, 0.7);
 }
 
 function drawChaingun(ctx: Ctx, f: WeaponFrame) {

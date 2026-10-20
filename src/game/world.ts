@@ -40,7 +40,7 @@ export type AmmoType = 'bullets' | 'shells';
 
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
   fist: { id: 'fist', slot: 1, name: 'FIST', ammo: null, cooldown: 0.42, pellets: 1, spread: 0, dmg: [14, 26], range: 1.25, sound: 'claws' },
-  pistol: { id: 'pistol', slot: 2, name: 'PISTOL', ammo: 'bullets', cooldown: 0.34, pellets: 1, spread: 0.012, dmg: [12, 18], range: 40, sound: 'pistol' },
+  pistol: { id: 'pistol', slot: 2, name: 'LASER PISTOL', ammo: null, cooldown: 0.36, pellets: 1, spread: 0.008, dmg: [11, 17], range: 45, sound: 'laser' }, // unlimited energy
   shotgun: { id: 'shotgun', slot: 3, name: 'SHOTGUN', ammo: 'shells', cooldown: 0.9, pellets: 7, spread: 0.1, dmg: [7, 12], range: 30, sound: 'shotgun' },
   chaingun: { id: 'chaingun', slot: 4, name: 'CHAINGUN', ammo: 'bullets', cooldown: 0.11, pellets: 1, spread: 0.02, dmg: [10, 14], range: 45, sound: 'pistol' },
 };
@@ -249,7 +249,7 @@ export class World {
     };
     this.updateFlow();
     this.updateExplored();
-    this.event('level', `Entered ${level.id}: ${level.name} (${level.subtitle}). ${level.objective}`);
+    this.event('level', `Entered ${level.id} · ${level.name} (${level.subtitle}). ${level.objective}`);
   }
 
   inventory(): Inventory {

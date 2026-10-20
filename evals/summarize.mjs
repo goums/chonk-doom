@@ -21,7 +21,7 @@ for (const e of evals) {
   models.set(e.variantName, m);
 }
 const pct = (x) => (x === null || x === undefined ? '-' : `${Math.round(100 * x)}%`);
-let md = '| Model | Aim (ruler reading) | Decisions | Overall | Avg latency | Cost (14 cases) | Errors |\n|---|---|---|---|---|---|---|\n';
+let md = '| Model | Aim (ruler reading) | Decisions | Overall | Avg latency | Cost (all trials) | Errors |\n|---|---|---|---|---|---|---|\n';
 const rows = [...models.entries()].map(([k, m]) => ({ k, ...m, overall: ((m.aim ?? 0) * 8 + (m.decide ?? 0) * 6) / 14 })).sort((a, b) => b.overall - a.overall);
 for (const r of rows) {
   const lat = r.lat.length ? r.lat.reduce((a, b) => a + b, 0) / r.lat.length / 1000 : 0;

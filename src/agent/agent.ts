@@ -211,7 +211,7 @@ export class ChonkAgent {
   buildObservation(): string {
     const w = this.game.world;
     const parts: string[] = [];
-    parts.push(`=== TURN ${this.turns.length + 1} | ${w.level.id} ${w.level.name} (${w.level.subtitle}) ===`);
+    parts.push(`=== TURN ${this.turns.length + 1} | ${w.level.id} · ${w.level.name} (${w.level.subtitle}) ===`);
     parts.push(`Objective: ${w.level.objective}`);
     parts.push(statusText(w));
     const vis = visibleEnemies(w).length;

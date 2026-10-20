@@ -245,7 +245,7 @@ export class Renderer {
     // muzzle flash light
     const firing = p.fireT < 0.06 && p.weapon !== 'fist';
     this.muzzle.intensity = firing ? 3 : 0;
-    this.muzzle.color.set(0xffd27a);
+    this.muzzle.color.set(p.weapon === 'pistol' ? 0x30e1b9 : 0xffd27a);
     this.muzzle.position.set(p.x + Math.cos(p.angle) * 0.5, EYE, p.y + Math.sin(p.angle) * 0.5);
 
     for (const s of this.sprites.values()) s.visible = false;

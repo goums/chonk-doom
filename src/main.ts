@@ -69,7 +69,7 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (e.code === 'KeyP' || e.code === 'Escape') setPaused(!paused);
-  if (e.code === 'Tab') showAutomap = !showAutomap;
+  if (e.code === 'Tab') { showAutomap = !showAutomap; $('map-btn').classList.toggle('on', showAutomap); }
   if (e.code === 'Space' || e.code === 'Enter') firePressed = true;
   const n = Number(e.key);
   if (n >= 1 && n <= 4) weaponPressed = n;
@@ -108,6 +108,8 @@ setBtn($('btn-agent'), 'cat', 'Let Le Chonk Play');
 setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
 setBtn($('btn-github'), 'github', 'GitHub');
 setBtn($('pause-btn'), 'pause', 'Pause');
+setBtn($('map-btn'), 'map', 'Map');
+$('map-btn').addEventListener('click', () => { showAutomap = !showAutomap; ($('map-btn') as HTMLElement).classList.toggle('on', showAutomap); });
 setBtn($('resume-btn'), 'play', 'Resume');
 setBtn($('agent-start'), 'play', 'Start Le Chonk');
 setBtn($('quit-btn'), 'home', 'Quit to Menu');
@@ -141,6 +143,8 @@ function toMenu() {
   hideOverlays();
   setAgentButtons(false);
   $('pause-btn').classList.add('hidden');
+  $('map-btn').classList.add('hidden');
+  showAutomap = false;
 }
 
 function hideOverlays() {
@@ -165,6 +169,7 @@ function startHuman() {
   mode = 'human';
   game.newGame(difficulty, 0);
   $('pause-btn').classList.remove('hidden');
+  $('map-btn').classList.remove('hidden');
 }
 
 // ---------------- agent panel ----------------
