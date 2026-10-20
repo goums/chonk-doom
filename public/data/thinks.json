@@ -1,0 +1,50 @@
+[
+ {
+  "turn": 1,
+  "level": "Level 1",
+  "tag": "Opening",
+  "thought": "No enemies yet - perfect! I see a door ahead at the end of the hall. Let me explore forward to find the RED key and open new areas. I'll grab that health item at (4,1) on the way too.",
+  "frame": "data/frames/q1.jpg",
+  "plan": "go_to(4,1) → explore(20)"
+ },
+ {
+  "turn": 2,
+  "level": "Level 1",
+  "tag": "Key",
+  "thought": "I see a door ahead to the south and a cardboard box (armor) to my right. Let me grab the health, bullets, then open the door at (11,3) to explore further and find the RED key.",
+  "frame": "data/frames/q2.jpg",
+  "plan": "go_to(4,1) → go_to(2,5) → go_to(11,3) → use → explore(20)"
+ },
+ {
+  "turn": 4,
+  "level": "Level 1",
+  "tag": "Combat",
+  "thought": "Two mice left - one huge one right in front at about -5° and another behind it. I'll blast the big one, strafe right to dodge cheese, then keep shooting. These mice are feisty!",
+  "frame": "data/frames/q3.jpg",
+  "plan": "attack(-5°) → strafe(2) → attack(0°) → strafe(-2) → attack(0°)"
+ },
+ {
+  "turn": 10,
+  "level": "Level 1",
+  "tag": "Low health",
+  "thought": "A huge mouse is at -25° on my left! Health is only 26% - critical! I'll blast it fast, back up, then rush to grab the +25 health at (7,10) before anything else. Le Chonk needs kibble!",
+  "frame": "data/frames/q4.jpg",
+  "plan": "attack(-25°) → move(-2) → attack(0°) → strafe(2) → attack(0°)"
+ },
+ {
+  "turn": 16,
+  "level": "Level 1",
+  "tag": "Defeat",
+  "thought": "A Bulldog is at -25° on my left! Health is only 22% - I need to back up and blast it from a distance. Then I'll grab the health at (28,8) and keep exploring south for the EXIT!",
+  "frame": "data/frames/q5.jpg",
+  "plan": "attack(-25°) → move(-2) → attack(0°) → strafe(-2) → attack(0°)"
+ },
+ {
+  "turn": 38,
+  "level": "Level 1",
+  "tag": "EXIT!",
+  "thought": "I see the EXIT switch on the right wall! Health is 22% after grabbing catnip. I'll go straight to the EXIT at (24,23) and press it to finish this level! Then I can grab more health if needed.",
+  "frame": "data/frames/q6.jpg",
+  "plan": "go_to(24,23) → use → go_to(28,21) → go_to(21,15) → explore(24)"
+ }
+]

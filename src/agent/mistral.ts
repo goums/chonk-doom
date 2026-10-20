@@ -71,8 +71,19 @@ export const PROVIDERS: Record<Provider, { label: string; url: string; proxy: st
   },
 };
 
-// USD per 1M tokens on Mistral Studio (OpenRouter reports the real cost per request instead)
-export const PRICE = { input: 0.68, cachedInput: 0.07, output: 2.09 };
+// USD per 1M tokens for Mistral Studio models (list prices; OpenRouter reports the real cost per request instead)
+const PRICES: [RegExp, { input: number; cachedInput: number; output: number }][] = [
+  [/large-4/, { input: 0.68, cachedInput: 0.07, output: 2.09 }],
+  [/large-2512|large-3/, { input: 0.5, cachedInput: 0.05, output: 1.5 }],
+  [/medium-3-5|medium-3\.5/, { input: 1.5, cachedInput: 0.15, output: 7.5 }],
+  [/medium/, { input: 0.4, cachedInput: 0.04, output: 2 }],
+  [/small/, { input: 0.15, cachedInput: 0.015, output: 0.6 }],
+  [/ministral-14b/, { input: 0.2, cachedInput: 0.02, output: 0.2 }],
+  [/ministral-8b/, { input: 0.15, cachedInput: 0.015, output: 0.15 }],
+];
+export function priceOf(model: string) {
+  return PRICES.find(([re]) => re.test(model))?.[1] ?? PRICES[0][1];
+}
 
 export async function hasDevProxy(provider: Provider): Promise<boolean> {
   if (!import.meta.env.DEV) return false;

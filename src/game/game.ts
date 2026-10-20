@@ -40,9 +40,12 @@ export class Game {
     for (const l of this.listeners) l(t, this);
   }
 
+  startLevelIndex = 0;
+
   newGame(skill: number, levelIndex = 0, seed = 1234) {
     this.skill = skill;
     this.seed = seed;
+    this.startLevelIndex = levelIndex;
     this.run = Game.emptyRun();
     this.levelInv = structuredClone(START_INVENTORY);
     // when starting at a later level, give the weapons you'd have found by then

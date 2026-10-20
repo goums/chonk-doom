@@ -3,7 +3,7 @@ import type { Game } from '../game/game';
 import type { Intent } from '../game/world';
 import { ActionExecution, type Action, type ActionResult } from './actions';
 import { automapAscii, captureFrame, radarText, statusText, visibleEnemies, relAngle, type ObsMode } from './perception';
-import { chat, splitContent, PRICE, type Message, type ClientConfig, type ToolCall } from './mistral';
+import { chat, splitContent, priceOf, type Message, type ClientConfig, type ToolCall } from './mistral';
 import { systemPrompt, ACT_TOOL } from './prompt';
 import { WALL_CHARS } from '../game/world';
 import { botAct, randomAct } from './bot';
@@ -77,6 +77,9 @@ export class ChonkAgent {
   private positions: [number, number][] = [];
   private pendingNote = '';
   onUpdate: (a: ChonkAgent, rec?: TurnRecord) => void = () => {};
+  /** Replay mode: recorded turns are fed back instead of calling a model (no API key needed). */
+  replay: TurnRecord[] | null = null;
+  private replayIdx = 0;
   /** Called right before a frame is captured, so turbo mode can render on demand. */
   beforeCapture: () => void = () => {};
   startedAt = 0;
@@ -106,7 +109,8 @@ export class ChonkAgent {
   get cost() {
     if (this.hasReportedCost) return this.costReported;
     const u = this.usage;
-    return ((u.prompt - u.cached) * PRICE.input + u.cached * PRICE.cachedInput + u.completion * PRICE.output) / 1e6;
+    const P = priceOf(this.cfg.model);
+    return ((u.prompt - u.cached) * P.input + u.cached * P.cachedInput + u.completion * P.output) / 1e6;
   }
 
   /** Called by the main loop every fixed tick. Returns the intent to apply, or null if no action runs. */
@@ -347,7 +351,18 @@ export class ChonkAgent {
         latencyMs: 0, hp: g.world.player.hp, kills: g.world.stats.kills,
       };
       let resp;
-      if (this.cfg.model.startsWith('bot:')) {
+      if (this.replay) {
+        const src = this.replay[this.replayIdx++];
+        if (!src) break; // end of the recording
+        // replay the original "thinking time" (capped) so it feels like the live run
+        await new Promise((r) => setTimeout(r, Math.min(1800, src.latencyMs || 800) / this.cfg.speed));
+        resp = {
+          id: 'replay', model: this.cfg.model,
+          choices: [{ finish_reason: 'tool_calls', message: { role: 'assistant' as const, content: '', reasoning: src.reasoning,
+            tool_calls: src.actions.length ? [{ id: 'rp' + this.turns.length, type: 'function' as const, function: { name: 'act', arguments: JSON.stringify({ thought: src.thought, actions: src.actions, notes: src.notes }) } }] : [] } }],
+          usage: { prompt_tokens: src.usage.prompt, completion_tokens: src.usage.completion, total_tokens: src.usage.prompt + src.usage.completion, prompt_tokens_details: { cached_tokens: src.usage.cached }, cost: src.costUSD },
+        };
+      } else if (this.cfg.model.startsWith('bot:')) {
         // scripted baseline: no API call
         const b = this.cfg.model === 'bot:random' ? randomAct(g.world) : botAct(g.world);
         await new Promise((r) => setTimeout(r, 150 / this.cfg.speed));
@@ -462,6 +477,8 @@ export class ChonkAgent {
       date: new Date().toISOString(),
       config: this.cfg,
       provider: this.client.provider,
+      // everything needed to re-simulate the run exactly (the engine is deterministic)
+      game: { seed: g.seed, startLevel: g.startLevelIndex, skill: g.skill },
       usage: this.usage,
       costUSD: this.cost,
       metrics: this.metrics,

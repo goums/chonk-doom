@@ -19,6 +19,7 @@
         <nav>
           <button id="btn-human" class="btn" title="Play the game yourself">Play Yourself</button>
           <button id="btn-agent" class="btn hot" title="Let Mistral Large 4 play">Let Le Chonk Play</button>
+          <a id="btn-about" class="btn" href="about.html" title="How it works: harness, benchmark, evals">How It Works</a>
           <button id="btn-sound" class="btn" title="Toggle sound">Sound On</button>
           <a id="btn-github" class="btn" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener" title="Source code on GitHub">GitHub</a>
         </nav>
@@ -56,6 +57,13 @@
 
           <details id="setup" open>
             <summary>Setup</summary>
+            <div id="replay-box">
+              <div class="replay-title">📼 No API key? Watch Le Chonk play</div>
+              <p class="replay-desc">Recorded runs by Mistral Large 4, re-simulated live in the game engine (same seed, same decisions, same thoughts).</p>
+              <select id="replay-select"></select>
+              <button id="replay-start" class="btn hot big">Watch Replay</button>
+              <div class="replay-or">or play live with your own key ↓</div>
+            </div>
             <div class="seg" id="provider" role="radiogroup" aria-label="API provider">
               <button type="button" data-provider="mistral" class="on">Mistral Studio</button>
               <button type="button" data-provider="openrouter">OpenRouter</button>

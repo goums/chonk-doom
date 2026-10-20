@@ -1,10 +1,10 @@
-=== TURN 12 | E1M1 LE SALON (The Living Room) ===
+=== TURN 10 | Level 1 · LE SALON (The Living Room) ===
 Objective: Find the RED key, open the red door (south hallway) and hit the EXIT switch.
-Health 100% | Armor 0% | Weapon: PISTOL (74 bullets)
-Weapons owned: 1=FIST, 2=PISTOL
-Ammo: bullets 74, shells 0 | Keys: none
+Health 100% | Armor 0% | Weapon: LASER PISTOL (unlimited energy)
+Weapons owned: 1=FIST, 2=LASER PISTOL
+Ammo: bullets 65, shells 0 | Keys: none
 Position: x=7.5, y=10.3 (tile 7,10), facing SOUTH (heading 180°)
-Kills 1/16 | Items 2/10 | Secrets 0/0 | Level time 13s
+Kills 1/16 | Items 1/10 | Secrets 0/0 | Level time 10s
 2 enemy(s) visible on screen right now.
 Automap (explored area):
              1111111111222222222
@@ -16,11 +16,11 @@ Automap (explored area):
  4 #..o....o..#                 
  5 #..........#                 
  6 #..........#                 
- 7  ####/############D#  ##  #  
- 8 #...........................+
+ 7  ####/########### D#####     
+ 8 #..a........................+
  9 #..o.......................o.
 10 #......v.....................
-11  ######D##############R##  # 
+11  ######D##############R####  
 12       ...                    
 13       ...                    
 14       ...                    
@@ -35,4 +35,6 @@ Automap (explored area):
 23     ########                 
 Nearest unexplored frontier tiles: (6,12) (8,12) (6,13) (8,13) (6,14) (8,14)
 Closed doors you know: (7,11) door; (11,3) door; (18,7) door; (22,11) RED door, LOCKED (need the red key). Open one with go_to to its coordinates (or walk into it).
+Items you have seen (walk onto them to pick up, e.g. go_to): bullets at (3,8); health +10 at (4,1); RED KEY at (7,22); health +10 at (28,8).
+EXIT switch not seen yet: keep exploring (open doors, find keys).
 Your notes: (empty)

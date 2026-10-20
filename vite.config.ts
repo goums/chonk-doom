@@ -48,7 +48,12 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
     base: './',
-    build: { target: 'es2022', chunkSizeWarningLimit: 1500 },
+    build: {
+      target: 'es2022',
+      chunkSizeWarningLimit: 1500,
+      // two pages: the game (index.html) and the project / benchmark page (about.html)
+      rollupOptions: { input: { main: 'index.html', about: 'about.html' } },
+    },
     plugins: [
       devProxy('mistral', 'https://api.mistral.ai/v1', env.MISTRAL_STUDIO_API_KEY, 'MISTRAL_STUDIO_API_KEY'),
       devProxy('openrouter', 'https://openrouter.ai/api/v1', env.OPEN_ROUTER_API_KEY, 'OPEN_ROUTER_API_KEY'),

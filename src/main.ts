@@ -6,7 +6,7 @@ import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime, faceDataUrl } from './game/hud';
 import { emptyIntent, DT, WEAPON_ORDER, SKILLS, type Intent } from './game/world';
 import { initAudio, playMusic, audioSettings, applyVolumes, currentMusic } from './audio/audio';
-import { ChonkAgent, type TurnRecord } from './agent/agent';
+import { ChonkAgent, type TurnRecord, type AgentConfig } from './agent/agent';
 import { hasDevProxy, PROVIDERS, type Provider } from './agent/mistral';
 import type { ObsMode } from './agent/perception';
 
@@ -107,11 +107,13 @@ setBtn($('btn-human'), 'gamepad', 'Play Yourself');
 setBtn($('btn-agent'), 'cat', 'Let Le Chonk Play');
 setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
 setBtn($('btn-github'), 'github', 'GitHub');
+setBtn($('btn-about'), 'about', 'How It Works');
 setBtn($('pause-btn'), 'pause', 'Pause');
 setBtn($('map-btn'), 'map', 'Map');
 $('map-btn').addEventListener('click', () => { showAutomap = !showAutomap; ($('map-btn') as HTMLElement).classList.toggle('on', showAutomap); });
 setBtn($('resume-btn'), 'play', 'Resume');
 setBtn($('agent-start'), 'play', 'Start Le Chonk');
+setBtn($('replay-start'), 'replay', 'Watch Replay');
 setBtn($('quit-btn'), 'home', 'Quit to Menu');
 setBtn($('agent-stop'), 'stop', 'Stop');
 setBtn($('agent-export'), 'save', 'Save Log');
@@ -238,8 +240,7 @@ function openAgentSetup() {
   showBrain(true);
   ($('setup') as HTMLDetailsElement).open = true;
   const ready = devProxy[provider] || keyInput.value.trim();
-  setStatus(ready ? 'Ready. Press Start Le Chonk.' : `Paste your ${PROVIDERS[provider].label} API key, then press Start Le Chonk.`);
-  if (!ready) keyInput.focus();
+  setStatus(ready ? 'Ready. Press Start Le Chonk (or watch a replay).' : 'No key? Press Watch Replay, or paste an API key to play live.');
 }
 
 function startAgent() {
@@ -356,6 +357,54 @@ function renderStats() {
 }
 renderStats();
 
+// ---------------- replays (no API key needed) ----------------
+interface RunFile {
+  config: Partial<AgentConfig>;
+  game?: { seed: number; startLevel: number; skill: number };
+  episode?: { seed: number; level: number; skill: number };
+  turns: TurnRecord[];
+}
+interface ReplayEntry { file: string; title: string; desc: string }
+let replays: ReplayEntry[] = [];
+fetch('replays/index.json').then((r) => r.json()).then((list: ReplayEntry[]) => {
+  replays = list;
+  $('replay-select').innerHTML = list.map((r, i) => `<option value="${i}">${esc(r.title)} · ${esc(r.desc)}</option>`).join('');
+  if (!list.length) $('replay-box').classList.add('hidden');
+}).catch(() => $('replay-box').classList.add('hidden'));
+
+/** Re-simulate a recorded run: same seed + same recorded actions = the exact same game (the engine is deterministic). */
+function startReplay(run: RunFile) {
+  initAudio();
+  if (agent) agent.stop();
+  const g0 = run.game ?? (run.episode ? { seed: run.episode.seed, startLevel: run.episode.level, skill: run.episode.skill } : { seed: 1234, startLevel: 0, skill: 1 });
+  showBrain(true);
+  hideOverlays();
+  setPaused(false);
+  $('log').innerHTML = '';
+  mode = 'agent';
+  game.newGame(g0.skill, g0.startLevel, g0.seed);
+  agent = new ChonkAgent(game, screen, {
+    ...run.config,
+    speed: Number(($('speed') as HTMLSelectElement).value),
+    maxTurns: run.turns.length + 1,
+  }, { provider: 'mistral', apiKey: null });
+  agent.replay = run.turns;
+  agent.onUpdate = onAgentUpdate;
+  agent.beforeCapture = drawGameFrame;
+  setAgentButtons(true);
+  ($('setup') as HTMLDetailsElement).open = false;
+  $('pause-btn').classList.remove('hidden');
+  setStatus('📼 Replaying a recorded run…');
+  return agent.run();
+}
+
+$('replay-start').addEventListener('click', async () => {
+  const r = replays[Number(($('replay-select') as HTMLSelectElement).value)];
+  if (!r) return;
+  setStatus('Loading the replay…');
+  startReplay(await (await fetch('replays/' + r.file)).json());
+});
+
 // ---------------- main loop ----------------
 let turboFrame = 0;
 function drawGameFrame() {
@@ -365,7 +414,7 @@ function drawGameFrame() {
     automap: showAutomap,
     ruler: mode === 'agent',
     showMessages: true,
-    agentBanner: mode === 'agent' ? `${(agent?.cfg.model ?? '').split('/').pop()!.toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
+    agentBanner: mode === 'agent' ? `${agent?.replay ? 'REPLAY · ' : ''}${(agent?.cfg.model ?? '').split('/').pop()!.toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
   });
 }
 
@@ -430,7 +479,7 @@ requestAnimationFrame(frame);
 
 export interface EpisodeOptions {
   model: string; obsMode: ObsMode; reasoning: 'none' | 'high'; skill: number; level: number;
-  maxTurns: number; seed: number; speed: number; maxDeaths: number; apiKey?: string; provider?: Provider;
+  maxTurns: number; seed: number; speed: number; maxDeaths: number; apiKey?: string; provider?: Provider; full?: boolean;
 }
 
 /** Run one benchmark episode (one level) and resolve with the exported run. Used by bench/bench.mjs. */
@@ -443,7 +492,7 @@ async function runEpisode(o: EpisodeOptions) {
   game.newGame(o.skill, o.level, o.seed);
   agent = new ChonkAgent(game, screen, {
     model: o.model, obsMode: o.obsMode, reasoning: o.reasoning, maxTurns: o.maxTurns, skill: o.skill,
-    speed: o.speed, singleLevel: true, maxDeaths: o.maxDeaths,
+    speed: o.speed, singleLevel: !o.full, maxDeaths: o.maxDeaths,
   }, { provider: o.provider ?? 'mistral', apiKey: o.apiKey || null });
   agent.onUpdate = onAgentUpdate;
   agent.beforeCapture = drawGameFrame;
@@ -488,4 +537,4 @@ async function snapshotScenario() {
 }
 
 // Expose for automation (benchmark runner / debugging).
-Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode, stageScenario, snapshotScenario } });
+Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode, stageScenario, snapshotScenario, startReplay } });

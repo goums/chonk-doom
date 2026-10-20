@@ -246,3 +246,11 @@ body.pixel kbd { font-weight: 700; font-size: 14px; }
 
 .stage-btns { display: flex; gap: 10px; flex: none; }
 #map-btn.on { border-color: #f9c22b; background: #45293f; }
+
+/* replay box (no key needed) */
+#replay-box { border: 2px dashed #625565; border-radius: 6px; padding: 10px; margin: 6px 0 10px; background: rgba(251,107,29,0.06); }
+#replay-box .replay-title { font-family: 'Fredoka', 'Inter', sans-serif; font-weight: 700; font-size: 16px; color: #f9c22b; }
+#replay-box .replay-desc { margin: 4px 0 8px; font-size: 13px; color: var(--muted); line-height: 1.35; }
+#replay-box select { margin-bottom: 8px; }
+#replay-box #replay-start { width: 100%; }
+#replay-box .replay-or { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }

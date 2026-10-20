@@ -29,6 +29,7 @@ const PARALLEL = Number(args.parallel ?? 3);
 const SKILL = Number(args.skill ?? 1);
 const SPEED = Number(args.speed ?? 32); // >= 16 = turbo (render only when the agent looks)
 const MAX_DEATHS = Number(args['max-deaths'] ?? 3);
+const FULL = args.full === 'true'; // --full: one episode = the whole game (3 levels), e.g. for featured replays
 const TURN_CAP = { 0: 150, 1: 220, 2: 260 };
 const maxTurns = (lvl) => Number(args['max-turns'] ?? TURN_CAP[lvl] ?? 200);
 const OUT = path.resolve(args.out ?? `runs/${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}`);
@@ -38,9 +39,9 @@ const jobs = [];
 for (const model of MODELS)
   for (const obsMode of model.startsWith('bot:') ? ['radar'] : OBS)
     for (const reasoning of model.startsWith('bot:') ? ['none'] : REASONING)
-      for (const level of LEVELS)
+      for (const level of FULL ? [0] : LEVELS)
         for (let r = 0; r < RUNS; r++)
-          jobs.push({ provider: PROVIDER, model, obsMode, reasoning, level, run: r, seed: 1000 + r * 17 + level, skill: SKILL, speed: SPEED, maxTurns: maxTurns(level), maxDeaths: MAX_DEATHS });
+          jobs.push({ provider: PROVIDER, model, obsMode, reasoning, level: FULL ? 0 : level, run: r, seed: 1000 + r * 17 + level, skill: SKILL, speed: SPEED, maxTurns: FULL ? Number(args['max-turns'] ?? 500) : maxTurns(level), maxDeaths: FULL ? Number(args['max-deaths'] ?? 6) : MAX_DEATHS, full: FULL });
 
 console.log(`🐱 CHONK DOOM bench: ${jobs.length} episodes -> ${OUT}`);
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
@@ -62,7 +63,6 @@ async function worker(id) {
     await page.waitForFunction(() => window.chonk?.runEpisode);
     const t0 = Date.now();
     const out = await page.evaluate((o) => window.chonk.runEpisode(o), { ...job, apiKey: '' });
-    fs.writeFileSync(file, JSON.stringify(out));
     const e = out.episode;
     const lat = out.turns.filter((t) => t.latencyMs > 0).map((t) => t.latencyMs);
     const m = out.metrics ?? {};

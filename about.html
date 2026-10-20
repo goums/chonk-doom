@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CHONK DOOM · How Le Chonk plays DOOM</title>
+    <meta name="description" content="A DOOM-like FPS built for Mistral Large 4 to play by itself: the harness, the benchmark against open-weight models, the evals and the bloopers." />
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&family=Pixelify+Sans:wght@400;600&family=Press+Start+2P&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <nav class="top">
+      <a class="brand" href="./"><img src="img/le-chonk-angry.png" alt="" /> CHONK DOOM</a>
+      <div class="links">
+        <a href="#game">The game</a>
+        <a href="#harness">Harness</a>
+        <a href="#thinks">Le Chonk thinks</a>
+        <a href="#results">Benchmark</a>
+        <a href="#evals">Evals</a>
+        <a href="#bloopers">Bloopers</a>
+        <a href="#reproduce">Reproduce</a>
+        <a class="cta" href="./">🎮 Play / watch</a>
+        <a class="gh" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-text">
+        <p class="kicker">Mistral AI · "Le Chonk wants to play" challenge</p>
+        <h1>Le Chonk plays <span>DOOM</span></h1>
+        <p class="lead">A DOOM-like first-person shooter, built so that <b>Mistral Large 4</b> can play it by itself: it sees the screen,
+          aims with a degree ruler, explores with an automap, opens doors with keys and fights its way to the EXIT, with a big fat cat attitude.</p>
+        <div class="hero-stats" id="hero-stats"></div>
+        <div class="hero-cta">
+          <a class="btn hot" href="./">🐱 Watch Le Chonk play (no key needed)</a>
+          <a class="btn" href="#results">📊 See the benchmark</a>
+        </div>
+      </div>
+      <figure class="hero-shot"><img src="img/gameplay.png" alt="CHONK DOOM gameplay" /></figure>
+    </header>
+
+    <main>
+      <section id="game">
+        <h2>The game</h2>
+        <div class="two">
+          <div>
+            <p>The house has been invaded by angry dogs and mice. <b>Le Chonk</b>, a very large and very proud orange tabby, grabs his laser pistol.
+              Three levels (<b>Le Salon → La Cuisine → La Cave</b>), colored keys and locked doors, a secret wall, explosive barrels and <b>REX</b>, an armored Doberman boss.</p>
+            <ul class="facts">
+              <li>🎯 <b>Real-time 3D FPS</b> (three.js), not a grid game: perception from pixels, aiming, dodging, navigation.</li>
+              <li>🔫 DOOM arsenal: fist, laser pistol, shotgun, chaingun.</li>
+              <li>🐶 Mice throw cheese, chihuahuas fire sonic yaps, bulldogs charge, Rex throws bones.</li>
+              <li>🎨 Everything is generated in code: pixel art (Resurrect 64 palette), the reactive DOOM-style face, 4 chiptune tracks, sound effects. No asset files.</li>
+              <li>🧑 Fully playable by humans too: arrows + space.</li>
+            </ul>
+          </div>
+          <div class="cast" id="cast"></div>
+        </div>
+      </section>
+
+      <section id="harness">
+        <h2>The harness</h2>
+        <p class="intro">A frontier model needs seconds per decision; a shooter runs at 60 fps. So for Le Chonk the game is <b>turn-based</b>:
+          <b>time freezes while he thinks</b>, then his actions run in real time while enemies act, and anything surprising interrupts him.</p>
+        <div class="flow">
+          <div class="step"><span>1</span><b>Observe</b><p>The frame (768×480) + a text observation: status, events, ASCII automap, known doors, items and EXIT, his own notes.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><span>2</span><b>Think</b><p><code>mistral-large-4</code> via the Vercel AI SDK. Last 4 turns in context (text only), only the current image.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><span>3</span><b>Act</b><p>One forced tool call: <code>act({ thought, actions[1..8], notes })</code>.</p></div>
+          <div class="arrow">→</div>
+          <div class="step"><span>4</span><b>Execute</b><p>Macro-actions turned into 60 Hz inputs. Movement stops the instant he's hurt or a new enemy appears.</p></div>
+        </div>
+
+        <h3>What Le Chonk sees</h3>
+        <div class="two">
+          <figure class="frame"><img src="img/agent-frame.jpg" alt="Frame sent to the model" />
+            <figcaption>The exact frame sent to the model. The <b>degree ruler</b> (−45°…+45°, red 0 = crosshair) turns "where is it?" into "how much do I turn?".</figcaption></figure>
+          <pre class="obs" id="obs-sample">loading…</pre>
+        </div>
+
+        <h3>What Le Chonk can do</h3>
+        <div class="actions">
+          <div><code>attack {degrees, shots}</code><span>turn by the ruler angle, then fire</span></div>
+          <div><code>explore {tiles}</code><span>walk into the unknown until something happens</span></div>
+          <div><code>go_to {x, y}</code><span>shortest known path; presses EXIT / doors at the end</span></div>
+          <div><code>move / strafe {tiles}</code><span>walk, back off, sidestep projectiles</span></div>
+          <div><code>turn / shoot / use</code><span>fine control</span></div>
+          <div><code>weapon {slot}</code><span>fist · laser pistol · shotgun · chaingun</span></div>
+          <div><code>wait {seconds}</code><span>let them come around the corner</span></div>
+          <div><code>notes</code><span>his own long-term memory, shown back every turn</span></div>
+        </div>
+        <p class="note">Because interrupts make long plans safe, Le Chonk plans <b>long when it's calm</b> (explore → grab the key → go to the door → explore) and <b>short in combat</b> (attack, strafe, attack). Fewer model calls = faster and cheaper.</p>
+      </section>
+
+      <section id="thinks">
+        <h2>Le Chonk thinks</h2>
+        <p class="intro">Real, unedited thoughts from a recorded run, the same ones shown in his speech bubble.</p>
+        <div class="quotes" id="quotes"><p class="muted">loading…</p></div>
+        <p class="center"><a class="btn hot" href="./">📼 Watch the full replay in the game</a></p>
+      </section>
+
+      <section id="results">
+        <h2>Benchmark: open-weight models</h2>
+        <p class="intro">Same game, same harness, same prompt, only the model changes. Open-weight models only, in two leagues so reasoning and
+          non-reasoning models are never mixed. Each episode = one level, capped at 150 / 220 / 260 turns and 3 deaths, Medium difficulty, via OpenRouter.</p>
+        <div id="leagues"><p class="muted">The benchmark is running… results will appear here.</p></div>
+        <details class="metrics-help"><summary>What the columns mean</summary>
+          <p><b>Cleared</b>: EXIT pressed. <b>Turns</b>: model calls. <b>Actions</b>: macro-actions executed. <b>Game time</b>: simulated time.
+            <b>Wall time</b>: real time including model latency. <b>Hit rate</b>: shots that hit an enemy. <b>Aim error</b>: |commanded angle − true angle of the
+            nearest visible enemy| at each attack (median). <b>Cost</b>: real cost reported by OpenRouter.</p></details>
+      </section>
+
+      <section id="evals">
+        <h2>Evals</h2>
+        <p class="intro">Unit tests of the two skills the harness relies on, written with <a href="https://www.evalite.dev">Evalite</a> (TypeScript, Vitest). Scenes are staged in the real engine
+          (an enemy at a known angle, a known key with a locked door, low health with food nearby, a bulldog charging, the EXIT in front…) and each model must answer with the right <code>act()</code>. 3 trials per case.</p>
+        <div id="evals-tables"><p class="muted">loading…</p></div>
+      </section>
+
+      <section id="bloopers">
+        <h2>Bloopers &amp; honesty</h2>
+        <div class="bloopers">
+          <article><h4>🧀 "The milk bottle"</h4><p>Le Chonk kept trying to drink a green spray can labelled "NIP"… it was an explosive barrel. He bumped into it three times.
+            Fix: classic red barrels with a hazard sign, and "BLOCKED by an explosive barrel (not an item)" feedback.</p></article>
+          <article><h4>🗺️ Counting columns is hard</h4><p>After clearing Level 1 completely, he read the EXIT at (28,23) and then (25,23) instead of (24,23), and wandered. Fix: the
+            observation now lists doors, items and the EXIT with exact coordinates, and <code>go_to</code> the EXIT walks there and presses it.</p></article>
+          <article><h4>🐭 "Right in my face at 0°… 0 hits"</h4><p>Mice in melee range were too thin to hit. DOOM has generous hitboxes; now so do we.</p></article>
+          <article><h4>🔢 5 or S?</h4><p>The pixel font made "+15" on the ruler look like "+1S". For a model that aims by reading digits, that matters: numbers now use Press Start 2P.</p></article>
+        </div>
+        <p class="note">Small models (Ministral 8B/14B, Pixtral) answer ±15° when the bulldog is at 0°, and get stuck in the first room. Mistral Large 4 reads the ruler and clears the levels.</p>
+      </section>
+
+      <section id="reproduce">
+        <h2>Reproduce it</h2>
+        <div class="two">
+          <div>
+            <h4>No install</h4>
+            <p>Open the <a href="./">game</a>, click <b>Let Le Chonk Play</b>, then <b>Watch Replay</b> (no key), or paste a Mistral Studio / OpenRouter key and press <b>Start Le Chonk</b>.</p>
+            <h4>Locally</h4>
+<pre><code>git clone https://github.com/goums/chonk-doom
+cd chonk-doom && npm install
+echo "MISTRAL_STUDIO_API_KEY=…" > .env
+echo "OPEN_ROUTER_API_KEY=…" >> .env
+npm run dev          # play / watch
+npm run bench -- --provider openrouter \
+  --models mistralai/mistral-large-4-0 --runs 3
+npm run eval         # Evalite evals</code></pre>
+          </div>
+          <div>
+            <h4>Tech stack</h4>
+            <ul class="facts">
+              <li>TypeScript · three.js · Canvas 2D pixel art · Web Audio + ZzFX</li>
+              <li><b>Vercel AI SDK</b> (<code>ai</code>, <code>@ai-sdk/mistral</code>, <code>@openrouter/ai-sdk-provider</code>)</li>
+              <li><b>Evalite</b> + Vitest for evals · <b>Playwright</b> for the headless benchmark</li>
+              <li>Vite · GitHub Pages · no backend (keys stay in your browser)</li>
+            </ul>
+            <h4>Credits</h4>
+            <ul class="facts">
+              <li>1 human (<a href="https://github.com/goums">@goums</a>, uplab) + Claude Code as the coding agent</li>
+              <li><b>Mistral Large 4</b> plays every in-game decision</li>
+              <li>Open source: three.js, ZzFX, Vite, Playwright, Evalite, AI SDK, Resurrect 64 palette, Pixelify Sans / Press Start 2P fonts</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>Made with 🧡 for Le Chonk · <a href="https://github.com/goums/chonk-doom">github.com/goums/chonk-doom</a></footer>
+    <script type="module" src="/src/about.ts"></script>
+  </body>
+</html>
