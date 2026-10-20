@@ -1,5 +1,6 @@
 import './style.css';
 import { STYLE } from './art/style';
+import { setBtn } from './icons';
 import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './game/hud';
@@ -97,11 +98,21 @@ function toggleSound(force?: boolean) {
   initAudio();
   audioSettings.muted = force ?? !audioSettings.muted;
   applyVolumes();
-  $('btn-sound').textContent = audioSettings.muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+  setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
   try { localStorage.setItem('chonk.muted', audioSettings.muted ? '1' : '0'); } catch { /* ignore */ }
 }
 $('btn-sound').addEventListener('click', () => toggleSound());
-try { if (localStorage.getItem('chonk.muted') === '1') { audioSettings.muted = true; $('btn-sound').textContent = '🔇 SOUND OFF'; } } catch { /* ignore */ }
+try { if (localStorage.getItem('chonk.muted') === '1') audioSettings.muted = true; } catch { /* ignore */ }
+setBtn($('btn-human'), 'gamepad', 'Play Yourself');
+setBtn($('btn-agent'), 'cat', 'Let Le Chonk Play');
+setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
+setBtn($('btn-github'), 'github', 'GitHub');
+setBtn($('pause-btn'), 'pause', 'Pause');
+setBtn($('resume-btn'), 'play', 'Resume');
+setBtn($('agent-start'), 'play', 'Start Le Chonk');
+setBtn($('quit-btn'), 'home', 'Quit to Menu');
+setBtn($('agent-stop'), 'stop', 'Stop');
+setBtn($('agent-export'), 'save', 'Save Log');
 
 // ---------------- modes ----------------
 function showBrain(show: boolean) {
@@ -112,7 +123,7 @@ function setPaused(p: boolean) {
   if (mode === 'menu') p = false;
   paused = p;
   $('pause-overlay').classList.toggle('hidden', !p);
-  $('pause-btn').textContent = p ? '▶ RESUME' : '⏸ PAUSE';
+  setBtn($('pause-btn'), p ? 'play' : 'pause', p ? 'Resume' : 'Pause');
   agent?.pause(p);
   if (p) keys.clear();
 }
@@ -180,7 +191,7 @@ function openAgentSetup() {
   if (mode === 'human') toMenu();
   showBrain(true);
   ($('setup') as HTMLDetailsElement).open = true;
-  setStatus(devProxy || keyInput.value.trim() ? 'Ready. Press START LE CHONK.' : 'Paste your Mistral API key, then press START.');
+  setStatus(devProxy || keyInput.value.trim() ? 'Ready. Press Start Le Chonk.' : 'Paste your Mistral API key, then press Start Le Chonk.');
   if (!devProxy && !keyInput.value.trim()) keyInput.focus();
 }
 

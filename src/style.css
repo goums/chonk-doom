@@ -199,3 +199,11 @@ body.pixel #thinking small { font-family: 'Inter'; font-weight: 600; color: #452
 body.pixel kbd { font-family: 'Inter'; font-weight: 800; font-size: 13px; color: #2e222f; background: #c7dcd0; border: 2px solid #2e222f; border-bottom-width: 4px; border-radius: 4px; box-shadow: none; min-width: 26px; height: 28px; line-height: 22px; }
 body.pixel #help { font-size: 14px; font-weight: 600; color: #c7dcd0; }
 body.pixel .note { color: #1ebc73; }
+
+/* ---- uniform buttons: same height, icon + label centred ---- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; line-height: 1; white-space: nowrap; box-sizing: border-box; vertical-align: middle; }
+.btn.big { height: 46px; }
+.btn.small { height: 30px; gap: 6px; }
+.btn .ico { flex: none; display: block; }
+nav { align-items: center; }
+body.pixel nav .btn { min-width: 0; padding: 0 16px; }

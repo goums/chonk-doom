@@ -20,7 +20,7 @@ reactive face, music, sound effects) is **generated procedurally at runtime**: t
 |---|---|
 | **Complexity** | A real-time 3D first-person shooter. The agent has to perceive enemies from raw pixels, aim, dodge projectiles, explore a maze with locked doors, keys and secrets, manage health and ammo, pick the right weapon, and beat a boss. |
 | **Performance** | A headless benchmark: N episodes per level and per configuration (completion %, kills %, deaths, turns, cost), **ablations** (vision only / + automap / + radar, reasoning on/off), and scripted baselines. See [Results](#-results). |
-| **Reproducibility** | Zero install: open the site, paste a Mistral key and press **Let Le Chonk play**. Locally it's `npm run dev` or `npm run bench`. Every turn is logged (thought, actions, outcomes, the exact frame the model saw). |
+| **Reproducibility** | Zero install: open the site, paste a Mistral key and press **Let Le Chonk Play**. Locally it's `npm run dev` or `npm run bench`. Every turn is logged (thought, actions, outcomes, the exact frame the model saw). |
 
 ---
 
@@ -231,9 +231,9 @@ Baselines (Medium difficulty):
 
 ### Option A: no install (GitHub Pages)
 1. Open https://goums.github.io/chonk-doom/
-2. Click **🐱 Let Le Chonk play**, then paste your Mistral API key (from [console.mistral.ai](https://console.mistral.ai)).
+2. Click **Let Le Chonk Play**, then paste your Mistral API key (from [console.mistral.ai](https://console.mistral.ai)).
    It's stored only in your browser's localStorage and sent only to `api.mistral.ai`.
-3. Pick the difficulty, observation mode and reasoning, then **▶ START LE CHONK**.
+3. Pick the difficulty, observation mode and reasoning, then **Start Le Chonk**.
 
 > The model must be `mistral-large-4` (**not** `mistral-large-latest`), and your workspace needs access to it in Mistral Studio.
 > Any other Mistral vision + function-calling model also works (e.g. `ministral-14b-latest`); just change the Model field.

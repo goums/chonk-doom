@@ -17,10 +17,10 @@
       <header>
         <div class="brand"><span class="logo">CHONK DOOM</span></div>
         <nav>
-          <button id="btn-human" class="btn">🎮 Play yourself</button>
-          <button id="btn-agent" class="btn hot">🐱 Let Le Chonk play</button>
-          <button id="btn-sound" class="btn" title="Toggle sound (M)">🔊 SOUND ON</button>
-          <a class="btn ghost" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
+          <button id="btn-human" class="btn" title="Play the game yourself">Play Yourself</button>
+          <button id="btn-agent" class="btn hot" title="Let Mistral Large 4 play">Let Le Chonk Play</button>
+          <button id="btn-sound" class="btn" title="Toggle sound">Sound On</button>
+          <a id="btn-github" class="btn" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener" title="Source code on GitHub">GitHub</a>
         </nav>
       </header>
 
@@ -32,8 +32,8 @@
             <div id="thinking" class="hidden"><span class="paw">🐾</span> LE CHONK IS THINKING<span class="dots"></span><small>time is frozen</small></div>
             <div id="pause-overlay" class="hidden">
               <div class="pause-title">PAUSED</div>
-              <button id="resume-btn" class="btn big">▶ Resume</button>
-              <button id="quit-btn" class="btn">Quit to menu</button>
+              <button id="resume-btn" class="btn hot big">Resume</button>
+              <button id="quit-btn" class="btn big">Quit to Menu</button>
             </div>
           </div>
           <div id="stage-bar">
@@ -45,12 +45,12 @@
             <div class="keys"><span class="k"><kbd>P</kbd></span><span>pause</span></div>
             <div class="keys hint"><span>walk into doors to open them</span></div>
           </div>
-          <button id="pause-btn" class="btn hot big hidden" title="Pause (P)">⏸ PAUSE</button>
+          <button id="pause-btn" class="btn hot big hidden" title="Pause (P)">Pause</button>
           </div>
         </section>
 
         <aside id="brain">
-          <div class="panel-title">🧠 CHONK'S BRAIN <button id="brain-close" class="x" title="Close">✕</button></div>
+          <div class="panel-title">Chonk's Brain <button id="brain-close" class="x" title="Close">✕</button></div>
 
           <details id="setup" open>
             <summary>Setup</summary>
@@ -93,19 +93,19 @@
               </label>
               <label>Max turns <input id="max-turns" type="number" value="400" min="1" /></label>
             </div>
-            <button id="agent-start" class="btn hot big">▶ START LE CHONK</button>
+            <button id="agent-start" class="btn hot big">Start Le Chonk</button>
           </details>
 
           <div class="controls">
-            <button id="agent-stop" class="btn small" disabled>⏹ Stop</button>
-            <button id="agent-export" class="btn small" disabled>💾 Save log</button>
+            <button id="agent-stop" class="btn small" disabled>Stop</button>
+            <button id="agent-export" class="btn small" disabled>Save Log</button>
             <label class="speed">Speed
               <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>
             </label>
           </div>
 
           <div id="stats" class="stats"></div>
-          <div id="status" class="status">Ready. Press START.</div>
+          <div id="status" class="status">Ready. Press Start Le Chonk.</div>
           <div id="log"></div>
         </aside>
       </main>
