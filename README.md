@@ -159,6 +159,8 @@ Same game, harness and prompt. Only the model changes.
 
 Every cleared run can be replayed in the game (**Let Le Chonk Play → Watch Replay**). Same seed + same decisions = same game.
 
+📦 **Full traces** (every episode, every frame sent to the model): [benchmark release](https://github.com/goums/chonk-doom/releases/tag/benchmark-2026-10-20).
+
 ## 🧪 Evals
 
 14 staged scenes from the real engine, 3 trials each.
