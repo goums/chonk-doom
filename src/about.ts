@@ -75,8 +75,15 @@ async function results() {
   if (!lb) return;
   if (lb.leagues.length) $('leagues').innerHTML = lb.leagues.map(leagueHtml).join('') + `<p class="muted small">Generated ${esc(lb.generated)} from the raw logs in <code>runs/</code>.</p>`;
   const f = lb.featured;
+  const ins = lb.leagues.find((l) => l.id === 'instruct')?.models ?? [];
+  const me = ins.find((m) => m.chonk);
   const stats: [string, string][] = [];
-  if (f) stats.push([`${f.levels}/3`, 'levels cleared in one run'], [`${f.kills}/${f.totalKills}`, 'enemies defeated'], [`${f.turns}`, 'decisions'], [`$${f.cost.toFixed(2)}`, 'for the whole game']);
+  if (f) stats.push([`${f.levels}/3`, 'levels cleared in one run']);
+  if (me) {
+    stats.push([`$${me.cost.toFixed(2)}`, 'per level'], [`${me.secPerTurn.toFixed(1)} s`, 'per decision']);
+    const rank = ins.indexOf(me) + 1;
+    if (rank <= 3) stats.push([`#${rank}`, `of ${ins.length} open-weight models`]);
+  }
   $('hero-stats').innerHTML = stats.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
 }
 
