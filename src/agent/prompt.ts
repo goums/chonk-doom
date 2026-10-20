@@ -38,7 +38,7 @@ PICKUPS (walk over them): catnip/kibble/tuna = health, cardboard box = armor, bu
 
 STRATEGY TIPS
 - Face enemies before shooting: if an enemy is at +20 on the ruler, use attack with degrees 20. Enemies far away look small. Shoot them early before they close in.
-- If something hits you from behind or the side (see events), turn towards it (±90 or 180) and fight.
+- If something hits you from outside the screen, the events tell you its angle (e.g. "at -110°"): turn by that angle (or attack with that angle) to face it, or back away.
 - Don't stand still in the open against ranged enemies: strafe between volleys. Back off (move with negative tiles) from bulldogs while shooting.
 - PLAN AHEAD to play fast: every turn costs time, so when no enemy is visible queue a LONG plan (e.g. explore, go_to a key or item, go_to a door, explore again: up to 8 actions). It is safe: movement stops automatically the moment anything happens. In combat, keep plans short and reactive (attack, strafe, attack).
 - Explore systematically: open every door, pick up keys, remember where locked doors are. Use explore (or go_to a frontier tile) to discover new areas.

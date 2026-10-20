@@ -123,7 +123,7 @@ export const LEVELS: LevelDef[] = [
     floor: 'darkconcrete',
     ceil: 'beams',
     par: 300,
-    objective: 'Take the CHAINGUN, survive the sewer, find the RED and BLUE keys, defeat REX in his arena, then press the EXIT switch.',
+    objective: 'Take the CHAINGUN, survive the sewer, find the RED and BLUE keys, defeat REX in his arena (the EXIT is sealed while he lives), then press the EXIT switch.',
     areas: [
       { x0: 1, y0: 1, x1: 9, y1: 6, floor: 'concrete', ceil: 'darkconcrete' },
       { x0: 11, y0: 1, x1: 30, y1: 6, floor: 'water', ceil: 'darkconcrete' },

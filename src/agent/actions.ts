@@ -182,6 +182,13 @@ export class ActionExecution {
     this.interrupted = interrupted;
   }
 
+  /** "from a Bulldog bite at -110° (BEHIND you, turn -110° to face it)" for the latest hit, so the model knows where to turn. */
+  private lastHit() {
+    const ev = [...this.w.events].reverse().find((e) => e.type === 'damage');
+    const m = ev && /from (.*)\. Health/.exec(ev.text);
+    return m ? ` from ${m[1]}` : '';
+  }
+
   /** Combat (attack / shoot) keeps firing through new enemies, but stops on serious damage so Le Chonk can react. */
   private checkCombatInterrupt(): boolean {
     const w = this.w;
@@ -190,7 +197,7 @@ export class ActionExecution {
     const dmg = w.stats.damageTaken - this.dmg0;
     if (dmg >= 10 || (dmg > 0 && w.player.hp < 25)) {
       const fired = this.state.fired ?? 0;
-      this.finish(`INTERRUPTED after ${fired} shot(s): you took ${dmg} damage (health ${w.player.hp}). React: back off, strafe, or turn to the attacker.`, true);
+      this.finish(`INTERRUPTED after ${fired} shot(s): you took ${dmg} damage (health ${w.player.hp})${this.lastHit()}.`, true);
       return true;
     }
     return false;
@@ -203,7 +210,7 @@ export class ActionExecution {
     if (w.completeT >= 0) { this.finish('Level complete!', true); return true; }
     if (!this.interruptible) return false;
     if (w.player.hp < this.hp0) {
-      this.finish(`INTERRUPTED: you took ${this.hp0 - w.player.hp} damage.`, true);
+      this.finish(`INTERRUPTED: you took ${this.hp0 - w.player.hp} damage${this.lastHit()}.`, true);
       return true;
     }
     const now = visibleEnemies(w);

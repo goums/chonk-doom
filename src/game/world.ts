@@ -562,7 +562,9 @@ export class World {
     p.lastDmgT = this.time;
     if (real >= 20) p.faceEvent = { kind: 'ouch', t: this.time };
     const dirWord = Math.abs(rel) < 0.6 ? 'in FRONT' : Math.abs(rel) > 2.4 ? 'BEHIND you' : rel > 0 ? 'your RIGHT' : 'your LEFT';
-    this.event('damage', `Took ${real} damage from ${source} (${dirWord}). Health ${Math.max(0, p.hp)}.`, { amount: real, rel_deg: Math.round((rel * 180) / Math.PI) });
+    const deg = Math.round((rel * 180) / Math.PI);
+    const turnHint = Math.abs(deg) < 35 ? 'on screen' : `turn ${deg > 0 ? '+' : ''}${deg}° to face it`;
+    this.event('damage', `Took ${real} damage from ${source} at ${deg > 0 ? '+' : ''}${deg}° (${dirWord}, ${turnHint}). Health ${Math.max(0, p.hp)}.`, { amount: real, rel_deg: deg, source });
     if (p.hp <= 0) {
       p.hp = 0;
       p.dead = true;
@@ -603,6 +605,13 @@ export class World {
       return;
     }
     if (c === 'E') {
+      const boss = this.enemies.find((e) => e.id === this.bossId);
+      if (boss && boss.state !== 'dead' && boss.state !== 'dying') {
+        sfx('locked', 0.8);
+        this.msg('The EXIT is sealed until REX is defeated!', 'warn');
+        this.event('locked', 'The EXIT switch is sealed: defeat REX the Doberman first!');
+        return;
+      }
       this.grid[r.ty][r.tx] = 'e';
       sfx('switch', 1);
       this.exitPressed = true;

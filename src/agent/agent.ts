@@ -213,8 +213,10 @@ export class ChonkAgent {
     const exits: string[] = [];
     for (let y = 0; y < w.H; y++) for (let x = 0; x < w.W; x++) if (w.grid[y][x] === 'E' && w.explored[y * w.W + x]) exits.push(`(${x},${y})`);
     const clear = w.liveEnemies.length === 0 ? ' All enemies are dead: the level is clear, just finish it!' : '';
+    const boss = w.enemies.find((e) => e.id === w.bossId && e.state !== 'dead' && e.state !== 'dying');
+    const sealed = boss ? ' (SEALED until REX is defeated!)' : '';
     return exits.length
-      ? `EXIT switch seen at ${exits.join(', ')}: go_to its coordinates to walk there and press it (this ends the level).${clear}`
+      ? `EXIT switch seen at ${exits.join(', ')}${sealed}: go_to its coordinates to walk there and press it (this ends the level).${clear}`
       : `EXIT switch not seen yet: keep exploring (open doors, find keys).${clear}`;
   }
 
@@ -429,7 +431,8 @@ export class ChonkAgent {
         const w0 = g.world;
         const s0 = { ...w0.stats };
         // aim error: compare the commanded angle with the true angle of the closest visible enemy
-        if ((a.type === 'attack' || a.type === 'turn') && typeof a.degrees === 'number') {
+        // (attacks only, aimed inside the field of view: turning to an off-screen attacker is not an aiming error)
+        if (a.type === 'attack' && typeof a.degrees === 'number' && Math.abs(a.degrees) <= 50) {
           const vis = visibleEnemies(w0);
           if (vis.length) this.metrics.aimErrors.push(Math.min(...vis.map((e) => Math.abs(a.degrees! - (relAngle(w0, e.x, e.y) * 180) / Math.PI))));
         }
