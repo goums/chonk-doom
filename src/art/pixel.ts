@@ -40,6 +40,41 @@ export function rng(seed: number) {
   };
 }
 
+// Resurrect 64 by Kerrie Lake (lospec.com/palette-list/resurrect-64): a modern, friendly, hue-shifted palette.
+const RESURRECT_64 = '2e222f 3e3546 625565 966c6c ab947a 694f62 7f708a 9babb2 c7dcd0 ffffff 6e2727 b33831 ea4f36 f57d4a ae2334 e83b3b fb6b1d f79617 f9c22b 7a3045 9e4539 cd683d e6904e fbb954 4c3e24 676633 a2a947 d5e04b fbff86 165a4c 239063 1ebc73 91db69 cddf6c 313638 374e4a 547e64 92a984 b2ba90 0b5e65 0b8a8f 0eaf9b 30e1b9 8ff8e2 323353 484a77 4d65b4 4d9be6 8fd3ff 45293f 6b3e75 905ea9 a884f3 eaaded 753c54 a24b6f cf657f ed8099 831c5d c32454 f04f78 f68181 fca790 fdcbb0'
+  .split(' ')
+  .map((h) => [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]);
+const nearestCache = new Map<number, number>();
+function nearest(r: number, g: number, b: number) {
+  const key = (r << 16) | (g << 8) | b;
+  let best = nearestCache.get(key);
+  if (best !== undefined) return best;
+  let bd = Infinity;
+  best = 0;
+  for (let i = 0; i < RESURRECT_64.length; i++) {
+    const p = RESURRECT_64[i];
+    const dr = r - p[0], dg = g - p[1], db = b - p[2];
+    const rm = (r + p[0]) / 2; // "redmean" perceptual weighting
+    const d = (2 + rm / 256) * dr * dr + 4 * dg * dg + (2 + (255 - rm) / 256) * db * db;
+    if (d < bd) { bd = d; best = i; }
+  }
+  nearestCache.set(key, best);
+  return best;
+}
+
+/** Pixel style: snap every opaque pixel to the shared palette, for a cohesive modern look. */
+export function paletteize(ctx: Ctx, w = ctx.canvas.width, h = ctx.canvas.height) {
+  if (!STYLE.pixel) return;
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    if (!d[i + 3]) continue;
+    const p = RESURRECT_64[nearest(d[i], d[i + 1], d[i + 2])];
+    d[i] = p[0]; d[i + 1] = p[1]; d[i + 2] = p[2];
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
 /** Remove anti-aliasing: hard alpha threshold so sprites stay pixel-crisp. */
 export function crisp(ctx: Ctx, w: number, h: number, threshold = 110) {
   if (STYLE.smooth) return;
@@ -54,9 +89,11 @@ export function crisp(ctx: Ctx, w: number, h: number, threshold = 110) {
     }
   }
   ctx.putImageData(img, 0, 0);
+  paletteize(ctx, w, h);
 }
 
-/** Add a 1px dark outline around opaque pixels (classic sprite look). */
+/** Add a 1px outline around opaque pixels. Pixel style uses a *selective, colored* outline:
+ *  a darker, purple-shifted shade of the neighbouring pixel instead of flat black. */
 export function outline(ctx: Ctx, w: number, h: number, color: [number, number, number] = [20, 12, 18]) {
   if (STYLE.ink) return softOutline(ctx, [43, 29, 23], 1, 1.1);
   if (STYLE.smooth) return softOutline(ctx, color);
@@ -68,15 +105,25 @@ export function outline(ctx: Ctx, w: number, h: number, color: [number, number, 
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       if (src[i + 3] > 0) continue;
-      if (op(x - 1, y) || op(x + 1, y) || op(x, y - 1) || op(x, y + 1)) {
-        d[i] = color[0];
-        d[i + 1] = color[1];
-        d[i + 2] = color[2];
+      const nb = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]].find(([nx, ny]) => op(nx, ny));
+      if (nb) {
+        if (STYLE.pixel) {
+          const j = (nb[1] * w + nb[0]) * 4;
+          // hue-shifted darkening: darker, cooler, a bit more purple
+          d[i] = src[j] * 0.38 + 18;
+          d[i + 1] = src[j + 1] * 0.3 + 10;
+          d[i + 2] = src[j + 2] * 0.42 + 30;
+        } else {
+          d[i] = color[0];
+          d[i + 1] = color[1];
+          d[i + 2] = color[2];
+        }
         d[i + 3] = 255;
       }
     }
   }
   ctx.putImageData(img, 0, 0);
+  paletteize(ctx, w, h);
 }
 
 /** Per-pixel noise to give surfaces a gritty Doom-ish texture. */
@@ -88,7 +135,7 @@ export function noise(ctx: Ctx, w: number, h: number, amount: number, seed: numb
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] === 0) continue;
-    const n = (r() - 0.5) * amount;
+    const n = (r() - 0.5) * amount * (STYLE.pixel ? 0.5 : 1);
     d[i] += n;
     d[i + 1] += n;
     d[i + 2] += n;
@@ -116,10 +163,10 @@ function softOutline(ctx: Ctx, color: [number, number, number], alpha = 0.55, ra
   t.globalCompositeOperation = 'source-in';
   t.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
   t.fillRect(0, 0, c.width, c.height);
+  const r = Math.max(1, Math.round(ctx.getTransform().a * radius));
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = 'destination-over';
-  const r = Math.max(1, Math.round(ctx.getTransform().a * radius));
   const dirs = STYLE.ink ? 12 : 4;
   for (let i = 0; i < dirs; i++) {
     const a = (i / dirs) * Math.PI * 2;
@@ -290,7 +337,7 @@ function smoothFont(scale: number) {
 
 export function text(ctx: Ctx, s: string, x: number, y: number, color: string, scale = 1, shadow?: string) {
   s = s.toUpperCase();
-  if (STYLE.smooth) {
+  if (ctx.getTransform().a >= 2) {
     ctx.save();
     ctx.font = smoothFont(scale);
     ctx.textBaseline = 'top';
@@ -318,11 +365,9 @@ export function text(ctx: Ctx, s: string, x: number, y: number, color: string, s
 }
 
 let measureCtx: Ctx | null = null;
+/** Width of HUD text (the HUD composite is always hi-res, so text is the vector font). */
 export function textWidth(s: string, scale = 1) {
-  if (STYLE.smooth) {
-    if (!measureCtx) measureCtx = rawCanvas(1, 1)[1];
-    measureCtx.font = smoothFont(scale);
-    return measureCtx.measureText(s.toUpperCase()).width;
-  }
-  return s.length * 4 * scale - scale;
+  if (!measureCtx) measureCtx = rawCanvas(1, 1)[1];
+  measureCtx.font = smoothFont(scale);
+  return measureCtx.measureText(s.toUpperCase()).width;
 }

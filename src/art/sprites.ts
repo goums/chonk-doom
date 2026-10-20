@@ -49,7 +49,7 @@ function angryEyes(ctx: Ctx, lx: number, rx: number, y: number, r: number, pose:
 
 // ---------------- MOUSE ----------------
 function drawMouse(ctx: Ctx, p: Pose) {
-  const grey = '#8d8d9a', dark = '#5d5d6a', pink = '#ff9eb5';
+  const grey = '#9a8aa8', dark = '#6b5a78', pink = '#ff9eb5';
   // tail
   ctx.strokeStyle = pink;
   ctx.lineWidth = 1.5;
@@ -62,7 +62,7 @@ function drawMouse(ctx: Ctx, p: Pose) {
   ellipse(ctx, 16 - p.leg * 1.5, 27, 2.5, 1.4, pink);
   // body
   ellipse(ctx, 12, 19, 6, 7.5, grey);
-  ellipse(ctx, 12, 20, 3.8, 5.5, '#c9c3d0');
+  ellipse(ctx, 12, 20, 3.8, 5.5, '#e2d6e8');
   // arms
   if (p.attack) {
     px(ctx, 16, 6, grey, 2, 8);
@@ -279,8 +279,8 @@ export function buildEnemyFrames(kind: EnemyKind): Record<EnemyFrame, HTMLCanvas
 
 // ---------------- PICKUPS / DECOR ----------------
 export type ItemKind =
-  | 'catnip' | 'kibble' | 'tuna' | 'box' | 'hairballs' | 'sardines' | 'battery'
-  | 'shotgun' | 'laser' | 'key_red' | 'key_blue' | 'key_yellow'
+  | 'catnip' | 'kibble' | 'tuna' | 'box' | 'bullets' | 'shells' | 'ammobox'
+  | 'shotgun' | 'chaingun' | 'key_red' | 'key_blue' | 'key_yellow'
   | 'lamp' | 'plant' | 'bowl' | 'barrel';
 
 function item(w: number, h: number, paint: (ctx: Ctx) => void) {
@@ -290,15 +290,14 @@ function item(w: number, h: number, paint: (ctx: Ctx) => void) {
 }
 
 function key(color: string) {
-  // a cat collar with a bell = keycard
-  return item(16, 14, (ctx) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.ellipse(8, 6, 6, 4, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ellipse(ctx, 8, 10, 2.5, 2.5, '#ffd23f');
-    px(ctx, 7, 11, '#8a6d00', 2, 1);
+  // a classic chunky key, easy to recognise
+  return item(18, 10, (ctx) => {
+    ellipse(ctx, 4.5, 5, 4, 4, color);
+    ellipse(ctx, 4.5, 5, 1.6, 1.6, '#2e222f');
+    px(ctx, 8, 4, color, 9, 2.5);
+    px(ctx, 13, 6, color, 2, 3);
+    px(ctx, 16, 6, color, 1.5, 2.5);
+    px(ctx, 2, 2, '#ffffff', 2, 1);
   });
 }
 
@@ -332,36 +331,36 @@ export function buildItems(): Record<ItemKind, HTMLCanvasElement> {
       px(ctx, 1, 10, '#a37b45', 20, 1);
       text(ctx, 'ARM', 5, 11, '#5a3a18');
     }),
-    hairballs: item(14, 10, (ctx) => {
-      for (const [x, y] of [[4, 6], [10, 6], [7, 3]]) {
-        ellipse(ctx, x, y, 3, 3, '#7f8c4a');
-        px(ctx, x - 1, y - 1, '#b5c47a');
+    bullets: item(12, 12, (ctx) => {
+      // a clip of brass bullets
+      px(ctx, 2, 5, '#625565', 8, 7);
+      for (const x of [3, 5.5, 8]) { px(ctx, x, 1, '#f9c22b', 1.6, 5); px(ctx, x, 1, '#fbff86', 1.6, 1.5); }
+    }),
+    shells: item(14, 11, (ctx) => {
+      // a handful of red shotgun shells
+      for (const [x, y] of [[2, 3], [6, 2], [10, 3]]) {
+        px(ctx, x, y, '#e83b3b', 3, 6);
+        px(ctx, x, y + 6, '#f9c22b', 3, 2);
+        px(ctx, x, y, '#f68181', 1, 6);
       }
     }),
-    sardines: item(16, 10, (ctx) => {
-      px(ctx, 1, 2, '#adb5bd', 14, 7);
-      px(ctx, 1, 2, '#e9ecef', 14, 1);
-      px(ctx, 2, 4, '#ff4d6d', 12, 3);
-      poly(ctx, [4, 5, 10, 4, 10, 6], '#dee2e6');
-      poly(ctx, [10, 5, 13, 3, 13, 7], '#dee2e6');
+    ammobox: item(20, 14, (ctx) => {
+      px(ctx, 1, 3, '#547e64', 18, 10);
+      px(ctx, 1, 3, '#92a984', 18, 2);
+      px(ctx, 6, 6, '#f9c22b', 8, 4);
+      for (const x of [7, 9, 11]) px(ctx, x, 7, '#6e2727', 1, 2);
     }),
-    battery: item(10, 16, (ctx) => {
-      px(ctx, 1, 3, '#222', 8, 12);
-      px(ctx, 1, 3, '#f4c430', 8, 5);
-      px(ctx, 3, 1, '#bbb', 4, 2);
-      px(ctx, 4, 9, '#f4c430', 2, 4);
+    shotgun: item(30, 10, (ctx) => {
+      px(ctx, 2, 3, '#625565', 18, 3);
+      px(ctx, 6, 6, '#9e4539', 8, 2); // pump
+      px(ctx, 18, 3, '#9e4539', 10, 5); // stock
+      px(ctx, 2, 3, '#9babb2', 18, 1);
     }),
-    shotgun: item(30, 12, (ctx) => {
-      px(ctx, 2, 3, '#4361ee', 20, 3);
-      px(ctx, 2, 6, '#4361ee', 20, 3);
-      px(ctx, 18, 3, '#8a5a32', 10, 7);
-      poly(ctx, [6, 4, 12, 3, 12, 7], '#ccc');
-    }),
-    laser: item(26, 10, (ctx) => {
-      px(ctx, 2, 3, '#e5e5e5', 18, 4);
-      px(ctx, 20, 2, '#ff006e', 4, 6);
-      px(ctx, 8, 2, '#ff006e', 2, 1);
-      px(ctx, 0, 4, '#ff0000', 2, 2);
+    chaingun: item(30, 12, (ctx) => {
+      for (const y of [3, 5, 7]) px(ctx, 1, y, y === 5 ? '#9babb2' : '#625565', 16, 1.6);
+      px(ctx, 15, 2, '#3e3546', 13, 8);
+      px(ctx, 20, 9, '#3e3546', 3, 3);
+      px(ctx, 15, 2, '#7f708a', 13, 1.5);
     }),
     key_red: key('#e63946'),
     key_blue: key('#4361ee'),

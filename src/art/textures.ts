@@ -1,5 +1,6 @@
 // Procedural wall / floor / ceiling textures (32x32, tiled with NearestFilter).
-import { makeCanvas, noise, px, rng, text, ellipse, poly, line, pastel, inkFrame, type Ctx } from './pixel';
+import { makeCanvas, noise, px, rng, text, ellipse, poly, line, pastel, inkFrame, paletteize, type Ctx } from './pixel';
+import { STYLE } from './style';
 
 export const TEX = 32;
 
@@ -9,13 +10,26 @@ function tex(seed: number, paint: Painter, grit = 18): HTMLCanvasElement {
   const [c, ctx] = makeCanvas(TEX, TEX);
   paint(ctx, rng(seed));
   if (grit) noise(ctx, TEX, TEX, grit, seed + 7);
+  paletteize(ctx);
   return c;
 }
 
 function shade(hex: string, k: number) {
   const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  if (STYLE.pixel) {
+    // hue shifting: shadows drift to cool purple, highlights to warm yellow
+    if (k < 1) {
+      const t = 1 - k;
+      r = r * k + 46 * t; g = g * k + 34 * t; b = b * k + 64 * t;
+    } else {
+      const t = Math.min(1, k - 1);
+      r += (255 - r) * t * 0.9; g += (240 - g) * t * 0.8; b += (190 - b) * t * 0.5;
+    }
+    return `rgb(${r | 0},${g | 0},${b | 0})`;
+  }
   const f = (v: number) => Math.max(0, Math.min(255, Math.round(v * k)));
-  return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`;
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
 }
 
 const brick = (base: string, mortar: string, seed: number) =>

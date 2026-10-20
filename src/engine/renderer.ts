@@ -52,7 +52,7 @@ export class Renderer {
   constructor() {
     this.gl = new THREE.WebGLRenderer({ antialias: STYLE.smooth, preserveDrawingBuffer: true });
     this.gl.setPixelRatio(1);
-    this.gl.setSize(SCREEN_W * STYLE.screen, VIEW_H * STYLE.screen, false);
+    this.gl.setSize(Math.round(SCREEN_W * STYLE.render), Math.round(VIEW_H * STYLE.render), false);
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
     const vfov = 2 * Math.atan(Math.tan(HFOV / 2) / (SCREEN_W / VIEW_H));
     this.camera = new THREE.PerspectiveCamera((vfov * 180) / Math.PI, SCREEN_W / VIEW_H, 0.05, 60);
@@ -70,9 +70,11 @@ export class Renderer {
       this.scene.add(new THREE.HemisphereLight(0xfff4e6, 0xb7a6c9, 1.1));
       this.scene.add(new THREE.AmbientLight(0xffffff, 0.9));
     } else {
-      this.scene.fog = new THREE.Fog(0x120a14, 5, 24);
-      this.scene.background = new THREE.Color(0x120a14);
-      this.scene.add(new THREE.AmbientLight(0xffffff, 1.45));
+      // modern pixel: twilight purple atmosphere instead of pitch black, warm key light
+      this.scene.fog = new THREE.Fog(0x45293f, 6, 26);
+      this.scene.background = new THREE.Color(0x45293f);
+      this.scene.add(new THREE.HemisphereLight(0xfff0d0, 0x6b3e75, 0.9));
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));
     }
     this.muzzle = new THREE.PointLight(0xffd27a, 0, 7, 1.5);
     this.scene.add(this.muzzle);
@@ -241,9 +243,9 @@ export class Renderer {
     }
 
     // muzzle flash light
-    const firing = p.fireT < 0.06 && p.weapon !== 'claws';
+    const firing = p.fireT < 0.06 && p.weapon !== 'fist';
     this.muzzle.intensity = firing ? 3 : 0;
-    this.muzzle.color.set(p.weapon === 'laser' ? 0xff3060 : 0xffd27a);
+    this.muzzle.color.set(0xffd27a);
     this.muzzle.position.set(p.x + Math.cos(p.angle) * 0.5, EYE, p.y + Math.sin(p.angle) * 0.5);
 
     for (const s of this.sprites.values()) s.visible = false;
@@ -254,7 +256,7 @@ export class Renderer {
       (s.material as THREE.SpriteMaterial).color.setScalar(e.hurtFlash > 0 ? 2 : 1);
     }
     for (const it of w.items) if (!it.taken) {
-      const big = it.kind === 'shotgun' || it.kind === 'laser' ? 0.25 : 0.3;
+      const big = it.kind === 'shotgun' || it.kind === 'chaingun' ? 0.25 : it.kind.startsWith('key') ? 0.2 : 0.3;
       const hover = it.kind.startsWith('key') ? 0.08 + Math.sin(w.time * 3 + it.id) * 0.04 : 0;
       this.sprite(it.id, this.itemTex[it.kind], it.x, it.y, hover, big);
     }

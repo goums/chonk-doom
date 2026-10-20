@@ -93,11 +93,17 @@ function drawFace(ctx: Ctx, tier: number, look: -1 | 0 | 1, expr: Expression) {
     ellipse(ctx, cx, 25, 3, 2.5, '#5a0f14');
     px(ctx, 14, 23, '#fff', 1, 1);
     px(ctx, 16, 23, '#fff', 1, 1);
-  } else if (expr === 'grin' || expr === 'angry') {
-    px(ctx, 9, 23, '#5a0f14', 12, 3);
-    for (let x = 9; x < 21; x += 2) px(ctx, x, 23, '#fff', 1, expr === 'angry' ? 2 : 1);
-    poly(ctx, [10, 23, 12, 23, 11, 26], '#fff');
-    poly(ctx, [18, 23, 20, 23, 19, 26], '#fff');
+  } else if (expr === 'grin') {
+    // big happy open smile: two tiny fangs + pink tongue
+    poly(ctx, [10, 22, 20, 22, 18.5, 25, 15, 26.5, 11.5, 25], '#7a3045');
+    ellipse(ctx, 15, 25.2, 2.6, 1.3, '#f68181');
+    px(ctx, 11, 22, '#ffffff', 1, 2);
+    px(ctx, 18, 22, '#ffffff', 1, 2);
+  } else if (expr === 'angry') {
+    // clenched teeth
+    px(ctx, 10, 22, '#7a3045', 10, 4);
+    px(ctx, 11, 23, '#ffffff', 8, 2);
+    for (let x = 13; x < 19; x += 2) px(ctx, x, 23, '#c7dcd0', 1, 2);
   } else if (expr === 'dead') {
     line(ctx, 12, 23, 18, 23, '#5a0f14');
     ellipse(ctx, 16, 25, 1.5, 2, '#ff6b8b'); // tongue out

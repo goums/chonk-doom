@@ -2,14 +2,14 @@
 //
 // Walls:  # brick  B blue brick  W/w wallpaper  P wood panel  T kitchen tiles  S stone
 //         G slime  M metal  C tech  F fridge  K bookshelf  O "BAD DOG" poster
-// Doors:  D door  R red-collar door  U blue-collar door  Y yellow-collar door
+// Doors:  D door  R red-key door  U blue-key door  Y yellow-key door
 //         % secret wall (looks like the wall to its left; opens with USE)
 // Exit:   E exit switch (USE it to finish the level)
 // Player: ^ > v <   (start, facing N/E/S/W)
 // Enemies: m mouse  c chihuahua  d bulldog  X Rex (boss)
 // Items:  n catnip(+10)  k kibble(+25)  t tuna(+100 overheal)  a cardboard armor
-//         h hairballs  s sardines  b battery  2 sardine shotgun  3 laser pointer
-//         r red collar  u blue collar  y yellow collar
+//         h bullets  s shells  b ammo box  2 shotgun  3 chaingun
+//         r red key  u blue key  y yellow key
 // Decor:  L lamp  p plant  o water bowl  x catnip-spray barrel (explodes)
 
 export interface Area {
@@ -39,7 +39,7 @@ export const LEVELS: LevelDef[] = [
     floor: 'carpet',
     ceil: 'plaster',
     par: 120,
-    objective: 'Find the RED collar, open the red door (south hallway) and hit the EXIT switch.',
+    objective: 'Find the RED key, open the red door (south hallway) and hit the EXIT switch.',
     areas: [
       { x0: 12, y0: 1, x1: 23, y1: 6, floor: 'wood', ceil: 'beams' },
       { x0: 25, y0: 1, x1: 30, y1: 6, floor: 'bluecarpet', ceil: 'plaster' },
@@ -82,7 +82,7 @@ export const LEVELS: LevelDef[] = [
     floor: 'checker',
     ceil: 'light',
     par: 200,
-    objective: 'Grab the SARDINE SHOTGUN, find the BLUE and YELLOW collars, reach the EXIT in the pantry.',
+    objective: 'Grab the SHOTGUN, find the BLUE and YELLOW keys, reach the EXIT in the pantry.',
     areas: [
       { x0: 1, y0: 1, x1: 9, y1: 8, floor: 'wood', ceil: 'plaster' },
       { x0: 20, y0: 12, x1: 30, y1: 22, floor: 'concrete', ceil: 'darkconcrete' },
@@ -123,7 +123,7 @@ export const LEVELS: LevelDef[] = [
     floor: 'darkconcrete',
     ceil: 'beams',
     par: 300,
-    objective: 'Take the LASER POINTER, survive the sewer, defeat REX in his arena, then press the EXIT switch.',
+    objective: 'Take the CHAINGUN, survive the sewer, find the RED and BLUE keys, defeat REX in his arena, then press the EXIT switch.',
     areas: [
       { x0: 1, y0: 1, x1: 9, y1: 6, floor: 'concrete', ceil: 'darkconcrete' },
       { x0: 11, y0: 1, x1: 30, y1: 6, floor: 'water', ceil: 'darkconcrete' },

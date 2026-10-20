@@ -17,18 +17,18 @@ ACTIONS (inside act.actions, executed in order)
 - {"type":"strafe","tiles":N}: sidestep right (+) or left (-). Great for dodging projectiles.
 - {"type":"attack","degrees":D,"shots":S}: turn by D degrees, then fire S times. Your main combat move. Use degrees 0 to fire straight ahead.
 - {"type":"shoot","shots":S}: fire S times at the crosshair without turning.
-- {"type":"use"}: open the door or press the switch directly in front of you (must face it, within ~1.5 tiles). Walking straight into a door or the EXIT switch also uses it. Locked doors need the matching collar key. Some walls are secret doors: try "use" on suspicious walls.
+- {"type":"use"}: open the door or press the switch directly in front of you (must face it, within ~1.5 tiles). Walking straight into a door or the EXIT switch also uses it. Locked doors need the matching colored key. Some walls are secret doors: try "use" on suspicious walls.
 - {"type":"go_to","x":X,"y":Y}: auto-walk the shortest known path to an EXPLORED tile from the automap. It opens unlocked doors on the way. Best way to travel. It stops if enemies appear.
-- {"type":"weapon","slot":N}: switch weapon (1 claws, 2 hairball gun, 3 sardine shotgun, 4 laser pointer).
+- {"type":"weapon","slot":N}: switch weapon (1 FIST, 2 PISTOL, 3 SHOTGUN, 4 CHAINGUN).
 - {"type":"wait","seconds":S}: wait up to 4 seconds (e.g. let enemies come around a corner).
 
 ENEMIES
-- Angry Mouse (small, grey, red eyes): weak (1-2 hairballs), throws cheese wedges.
+- Angry Mouse (small, grey, red eyes): weak (1-2 pistol shots), throws cheese wedges.
 - Chihuahua (tan, huge ears): fast, shoots pink sonic YAP rings. Medium-weak.
-- Bulldog (big, brown, spiked collar): tanky melee biter, 6-9 hairballs or 2 shotgun blasts. Keep your distance and back off while shooting.
-- REX (giant black Doberman with a helmet, boss): throws volleys of 3 bones and bites hard. Use the laser pointer or shotgun, strafe a lot, use the arena's cover.
-WEAPONS: claws (melee, infinite), hairball gun (reliable), sardine shotgun (huge damage up close, spread), laser pointer (very fast fire, best DPS). Explosive catnip-spray barrels hurt everything nearby, including you.
-PICKUPS (walk over them): catnip/kibble/tuna = health, cardboard box = armor, hairballs/sardines/battery = ammo, colored collars = keys.
+- Bulldog (big, brown, spiked collar): tanky melee biter, 6-8 pistol shots or 2 shotgun blasts. Keep your distance and back off while shooting.
+- REX (giant black Doberman with a helmet, boss): throws volleys of 3 bones and bites hard. Use the chaingun or the shotgun, strafe a lot, use the arena's cover.
+WEAPONS (like DOOM): 1 FIST (melee, infinite), 2 PISTOL (accurate, uses bullets), 3 SHOTGUN (huge damage up close, spread, uses shells), 4 CHAINGUN (very fast fire, uses bullets). Explosive catnip-spray barrels hurt everything nearby, including you.
+PICKUPS (walk over them): catnip/kibble/tuna = health, cardboard box = armor, bullet clips / ammo boxes = bullets, red shells = shells, weapons = new guns, colored keys (red/blue/yellow) open matching doors.
 
 STRATEGY TIPS
 - Face enemies before shooting: if an enemy is at +20 on the ruler, use attack with degrees 20. Enemies far away look small. Shoot them early before they close in.

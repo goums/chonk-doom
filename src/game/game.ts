@@ -46,8 +46,8 @@ export class Game {
     this.run = Game.emptyRun();
     this.levelInv = structuredClone(START_INVENTORY);
     // when starting at a later level, give the weapons you'd have found by then
-    if (levelIndex >= 1) { this.levelInv.weapons.push('shotgun'); this.levelInv.ammo.sardines = 20; }
-    if (levelIndex >= 2) { this.levelInv.weapons.push('laser'); this.levelInv.ammo.battery = 80; }
+    if (levelIndex >= 1) { this.levelInv.weapons.push('shotgun'); this.levelInv.ammo.shells = 16; }
+    if (levelIndex >= 2) { this.levelInv.weapons.push('chaingun'); this.levelInv.ammo.bullets = 120; }
     this.startLevel(levelIndex);
   }
 

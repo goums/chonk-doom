@@ -98,7 +98,11 @@ export class ActionExecution {
     if (a.type === 'go_to') {
       this.path = findPath(w, Math.round(Number(a.x)), Math.round(Number(a.y)));
       if (!this.path) this.finish(`No known path to (${a.x},${a.y}). Target must be an explored floor tile; locked doors need their key.`);
-      else if (!this.path.length) this.finish('You are already there.');
+      else if (!this.path.length) {
+        const tx = Math.round(Number(a.x)), ty = Math.round(Number(a.y));
+        if (Math.hypot(tx + 0.5 - p.x, ty + 0.5 - p.y) > 0.25) this.path = [[tx, ty]]; // step to the tile centre
+        else this.finish('You are already there.');
+      }
       this.state.stuck = 0;
       this.state.lx = p.x;
       this.state.ly = p.y;
@@ -235,7 +239,7 @@ export class ActionExecution {
     const p = w.player;
     const path = this.path!;
     // skip reached waypoints
-    while (path.length && Math.hypot(path[0][0] + 0.5 - p.x, path[0][1] + 0.5 - p.y) < 0.3) path.shift();
+    while (path.length && Math.hypot(path[0][0] + 0.5 - p.x, path[0][1] + 0.5 - p.y) < (path.length === 1 ? 0.15 : 0.3)) path.shift();
     if (!path.length) {
       this.finish(`Arrived at (${this.action.x},${this.action.y}).`);
       return null;

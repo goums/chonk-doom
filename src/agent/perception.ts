@@ -1,5 +1,5 @@
 // What Le Chonk perceives each turn: the rendered frame + text observations.
-import { World, ENEMIES, WEAPONS, WALL_CHARS, type Enemy } from '../game/world';
+import { World, ENEMIES, WEAPONS, WALL_CHARS, AMMO_NAME, type Enemy } from '../game/world';
 import { HFOV } from '../engine/renderer';
 
 export type ObsMode = 'vision' | 'map' | 'radar';
@@ -40,8 +40,8 @@ export function compass(h: number) {
 }
 
 const ITEM_CHAR: Record<string, string> = {
-  catnip: '+', kibble: '+', tuna: '+', box: 'A', hairballs: 'a', sardines: 'a', battery: 'a',
-  shotgun: 'W', laser: 'W', key_red: 'r', key_blue: 'b', key_yellow: 'y',
+  catnip: '+', kibble: '+', tuna: '+', box: 'A', bullets: 'a', shells: 'a', ammobox: 'a',
+  shotgun: 'W', chaingun: 'W', key_red: 'r', key_blue: 'b', key_yellow: 'y',
 };
 
 /** ASCII automap of explored tiles. North is up. */
@@ -97,19 +97,19 @@ export function automapAscii(w: World, withEnemies: boolean) {
 export const MAP_LEGEND =
   "Legend: '^ > v <' = YOU (pointing where you face), '#' wall, '.' floor, ' ' unexplored, 'D' plain door (closed, NOT locked: just face it and use), " +
   "'R'/'B'/'Y' red/blue/yellow locked doors, '/' open door, 'E' EXIT switch, '+' health, 'A' armor, 'a' ammo, 'W' weapon, " +
-  "'r'/'b'/'y' collar keys, 'x' explosive barrel, 'o' obstacle. Coordinates: x = column (grows EAST), y = row (grows SOUTH). North is up.";
+  "'r'/'b'/'y' keys, 'x' explosive barrel, 'o' obstacle. Coordinates: x = column (grows EAST), y = row (grows SOUTH). North is up.";
 
 export function statusText(w: World) {
   const p = w.player;
   const wd = WEAPONS[p.weapon];
-  const ammo = wd.ammo ? `${p.ammo[wd.ammo]} ${wd.ammo}` : 'melee, no ammo needed';
+  const ammo = wd.ammo ? `${p.ammo[wd.ammo]} ${AMMO_NAME[wd.ammo].toLowerCase()}` : 'melee, no ammo needed';
   const owned = [...p.weapons].map((id) => `${WEAPONS[id].slot}=${WEAPONS[id].name}`).join(', ');
   const keys = p.keys.size ? [...p.keys].map((k) => k.toUpperCase()).join(', ') : 'none';
   const h = heading(w);
   return [
     `Health ${p.hp}% | Armor ${p.armor}% | Weapon: ${wd.name} (${ammo})`,
     `Weapons owned: ${owned}`,
-    `Ammo: hairballs ${p.ammo.hairballs}, sardines ${p.ammo.sardines}, battery ${p.ammo.battery} | Keys: ${keys}`,
+    `Ammo: bullets ${p.ammo.bullets}, shells ${p.ammo.shells} | Keys: ${keys}`,
     `Position: x=${p.x.toFixed(1)}, y=${p.y.toFixed(1)} (tile ${Math.floor(p.x)},${Math.floor(p.y)}), facing ${compass(h)} (heading ${h}°)`,
     `Kills ${w.stats.kills}/${w.stats.totalKills} | Items ${w.stats.items}/${w.stats.totalItems} | Secrets ${w.stats.secrets}/${w.stats.totalSecrets} | Level time ${Math.floor(w.time)}s`,
   ].join('\n');

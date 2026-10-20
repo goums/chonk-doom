@@ -5,10 +5,12 @@ import { STYLE } from '../art/style';
 import { buildFaces, FACE_W, FACE_H, type Expression } from '../art/face';
 import { buildWeapons, WEAPON_W, WEAPON_H, type WeaponFrame } from '../art/weapons';
 import { buildItems } from '../art/sprites';
-import { World, WEAPONS, WALL_CHARS, type KeyColor } from './world';
+import { World, WEAPONS, WEAPON_ORDER, WALL_CHARS, ENEMIES, type KeyColor, type MsgKind } from './world';
 
 /** Style-dependent HUD colors. */
-const C = STYLE.ink
+const C = STYLE.pixel
+  ? { label: '#9babb2', value: '#fbb954', num: '#ffffff', numShadow: '#2e222f', armsCur: '#ffffff', armsHas: '#fbb954', armsNo: '#625565', menu: '#c7dcd0', menuSel: '#ffffff', shadow: '#2e222f', dim: '#7f708a', accent: '#fb6b1d' }
+  : STYLE.ink
   ? { label: '#6b3b22', value: '#2b1d17', num: '#d62828', numShadow: '', armsCur: '#d62828', armsHas: '#2b1d17', armsNo: '#c9b39a', menu: '#6b3b22', menuSel: '#2b1d17', shadow: '', dim: '#8a5a3a', accent: '#d62828' }
   : { label: '#d8c8e0', value: '#ffd23f', num: '#ff3b3b', numShadow: '#3a0a0a', armsCur: '#fff', armsHas: '#ffd23f', armsNo: '#5a4c60', menu: '#b8a6c4', menuSel: '#fff', shadow: '#000', dim: '#7d6b85', accent: '#ff7b00' };
 
@@ -41,13 +43,13 @@ export function initHudArt() {
     ctx.fillStyle = 'rgba(255,175,0,0.55)';
     ctx.fillRect(0, 0, SCREEN_W, 0.6);
   } else {
-    ctx.fillStyle = '#4a3f4f';
+    // modern pixel: flat deep purple with a crisp highlight line
+    ctx.fillStyle = '#2e222f';
     ctx.fillRect(0, 0, SCREEN_W, BAR_H);
-    noise(ctx, SCREEN_W, BAR_H, 30, 99);
-    ctx.fillStyle = '#7d6b85';
+    ctx.fillStyle = '#625565';
     ctx.fillRect(0, 0, SCREEN_W, 1);
-    ctx.fillStyle = '#211a24';
-    ctx.fillRect(0, BAR_H - 1, SCREEN_W, 1);
+    ctx.fillStyle = '#3e3546';
+    ctx.fillRect(0, 1, SCREEN_W, 1);
   }
   barBg = c;
 }
@@ -70,17 +72,61 @@ function panel(ctx: Ctx, x: number, w: number) {
     ctx.fill();
     return;
   }
-  ctx.fillStyle = '#2a2230';
-  ctx.fillRect(x + 1, VIEW_H + 3, w - 2, BAR_H - 6);
-  ctx.fillStyle = '#16111a';
-  ctx.fillRect(x + 1, VIEW_H + 3, w - 2, 1);
-  ctx.fillStyle = '#6e5e77';
-  ctx.fillRect(x + 1, VIEW_H + BAR_H - 4, w - 2, 1);
+  pixelCard(ctx, x + 2, VIEW_H + 4, w - 4, BAR_H - 7, '#3e3546', '#625565');
 }
 
-function bigNum(ctx: Ctx, n: string, cx: number, y: number, color = C.num) {
-  const w = textWidth(n, 3);
-  text(ctx, n, Math.round(cx - w / 2), y, color, 3, C.numShadow || undefined);
+/** A chunky pixel card with notched (rounded) corners and a top highlight. */
+function pixelCard(ctx: Ctx, x: number, y: number, w: number, h: number, fill: string, light: string) {
+  ctx.fillStyle = fill;
+  ctx.fillRect(x + 1, y, w - 2, h);
+  ctx.fillRect(x, y + 1, w, h - 2);
+  ctx.fillStyle = light;
+  ctx.fillRect(x + 1, y, w - 2, 1);
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 1, y + h - 1, w - 2, 1);
+}
+
+function heart(ctx: Ctx, x: number, y: number, c: string) {
+  ctx.fillStyle = c;
+  for (const [dx, dy, w] of [[1, 0, 2], [5, 0, 2], [0, 1, 8], [0, 2, 8], [1, 3, 6], [2, 4, 4], [3, 5, 2]]) ctx.fillRect(x + dx, y + dy, w, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.fillRect(x + 1, y + 1, 1, 1);
+}
+
+function shield(ctx: Ctx, x: number, y: number, c: string) {
+  ctx.fillStyle = c;
+  for (const [dx, dy, w] of [[0, 0, 8], [0, 1, 8], [0, 2, 8], [1, 3, 6], [1, 4, 6], [2, 5, 4], [3, 6, 2]]) ctx.fillRect(x + dx, y + dy, w, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillRect(x + 1, y + 1, 2, 1);
+}
+
+function pawIcon(ctx: Ctx, x: number, y: number, c: string) {
+  ctx.fillStyle = c;
+  ctx.fillRect(x + 2, y + 4, 5, 4);
+  ctx.fillRect(x + 3, y + 3, 3, 1);
+  for (const [dx, dy] of [[0, 1], [3, 0], [6, 0], [8, 2]]) ctx.fillRect(x + dx, y + dy, 2, 2);
+}
+
+/** Numbers: in the pixel style they use Press Start 2P, whose digits are unambiguous (5 vs S, 0 vs O). */
+function numText(ctx: Ctx, n: string, x: number, y: number, color: string, size: number, align: 'left' | 'center' = 'left') {
+  if (!STYLE.pixel) {
+    const w = textWidth(n, size);
+    text(ctx, n, align === 'center' ? Math.round(x - w / 2) : x, y, color, size, C.numShadow || undefined);
+    return;
+  }
+  ctx.save();
+  ctx.font = `${Math.round(size * 4.8)}px 'Press Start 2P', monospace`;
+  ctx.textBaseline = 'top';
+  ctx.textAlign = align;
+  ctx.fillStyle = C.numShadow || '#000';
+  ctx.fillText(n, x + 0.6, y + 1.6);
+  ctx.fillStyle = color;
+  ctx.fillText(n, x, y + 1);
+  ctx.restore();
+}
+
+function bigNum(ctx: Ctx, n: string, cx: number, y: number, color = C.num, size = 3) {
+  numText(ctx, n, cx, y, color, size, 'center');
 }
 
 /** Face state machine, kept per-HUD so the idle glance looks natural. */
@@ -132,7 +178,7 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
     const def = WEAPONS[p.weapon];
     let frame: WeaponFrame = 'idle';
     const ft = p.fireT;
-    if (def.id === 'laser') frame = ft < 0.05 ? 'fire0' : ft < 0.1 ? 'fire1' : 'idle';
+    if (def.id === 'chaingun') frame = ft < 0.05 ? 'fire0' : ft < 0.1 ? 'fire1' : 'idle';
     else if (ft < def.cooldown * 0.3) frame = 'fire0';
     else if (ft < def.cooldown * 0.75) frame = 'fire1';
     const bx = Math.cos(p.bob) * 6 * Math.min(1, p.moving);
@@ -164,15 +210,9 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   if (opt.automap) drawAutomap(ctx, w);
   if (opt.ruler) drawRuler(ctx);
 
-  // ---- messages ----
-  if (opt.showMessages) {
-    let y = 3;
-    for (const m of w.messages) {
-      if (w.time - m.t > 3.5) continue;
-      text(ctx, m.text.slice(0, 94), 3, y, '#ffe066', 1, '#000');
-      y += 7;
-    }
-  }
+  // ---- notifications: bold friendly toasts ----
+  const bossUp = w.enemies.some((e) => e.id === w.bossId && e.state !== 'idle' && e.hp > 0);
+  if (opt.showMessages) drawToasts(ctx, w, bossUp ? 28 : 8);
   if (opt.agentBanner) {
     const s = opt.agentBanner;
     const tw = textWidth(s, 1);
@@ -186,31 +226,29 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   if (boss && boss.state !== 'idle' && boss.hp > 0) {
     const bw = 160;
     const x = (SCREEN_W - bw) / 2;
-    ctx.fillStyle = '#000a';
-    ctx.fillRect(x - 2, 14, bw + 4, 10);
-    ctx.fillStyle = '#7a0010';
-    ctx.fillRect(x, 16, bw, 6);
-    ctx.fillStyle = '#ff2040';
-    ctx.fillRect(x, 16, Math.round((bw * boss.hp) / 1400), 6);
-    text(ctx, 'REX', x - 16, 16, '#fff', 1, '#000');
+    ctx.fillStyle = 'rgba(46,34,47,0.9)';
+    ctx.fillRect(x - 24, 6, bw + 28, 14);
+    ctx.fillStyle = '#6e2727';
+    ctx.fillRect(x, 10, bw, 6);
+    ctx.fillStyle = '#e83b3b';
+    ctx.fillRect(x, 10, Math.round((bw * boss.hp) / ENEMIES.rex.hp), 6);
+    text(ctx, 'REX', x - 21, 8.5, '#fff', 1.3);
   }
 
-  // ---- status bar ----
+  // ---- status bar: HEALTH · ARMOR · FACE · WEAPON + AMMO · KEYS ----
   ctx.drawImage(barBg, 0, VIEW_H, SCREEN_W, BAR_H);
-  const ammoType = WEAPONS[p.weapon].ammo;
-  panel(ctx, 0, 60);
-  bigNum(ctx, ammoType ? String(p.ammo[ammoType]) : '--', 30, VIEW_H + 7);
-  text(ctx, 'AMMO', 22, VIEW_H + 29, C.label);
-  panel(ctx, 60, 76);
-  bigNum(ctx, `${Math.max(0, p.hp)}%`, 98, VIEW_H + 7);
-  text(ctx, 'HEALTH', 86, VIEW_H + 29, C.label);
-  panel(ctx, 128, 44);
-  text(ctx, 'ARMS', 143, VIEW_H + 29, C.label);
-  ['claws', 'hairball', 'shotgun', 'laser'].forEach((id, i) => {
-    const has = p.weapons.has(id as never);
-    const cur = p.weapon === id;
-    text(ctx, String(i + 1), 133 + i * 10, VIEW_H + 10, cur ? C.armsCur : has ? C.armsHas : C.armsNo, 2);
-  });
+  const L = 1.15; // label text size
+  const top = VIEW_H + 6;
+  // health
+  panel(ctx, 2, 92);
+  heart(ctx, 10, top + 4, p.hp > 25 ? '#e83b3b' : '#ae2334');
+  bigNum(ctx, `${Math.max(0, p.hp)}`, 52, top, p.hp > 25 ? C.num : '#e83b3b', 2.6);
+  text(ctx, 'HEALTH', 52 - textWidth('HEALTH', L) / 2, VIEW_H + 27, C.label, L);
+  // armor
+  panel(ctx, 94, 78);
+  shield(ctx, 102, top + 4, '#4d9be6');
+  bigNum(ctx, `${p.armor}`, 140, top, C.num, 2.6);
+  text(ctx, 'ARMOR', 140 - textWidth('ARMOR', L) / 2, VIEW_H + 27, C.label, L);
   // face
   if (STYLE.ink) {
     ctx.fillStyle = '#ffe2b8';
@@ -226,29 +264,83 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
     ctx.roundRect(173, VIEW_H + 2, 40, BAR_H - 4, 6);
     ctx.fill();
   } else {
-    ctx.fillStyle = '#1a1220';
-    ctx.fillRect(172, VIEW_H + 2, 42, BAR_H - 4);
+    pixelCard(ctx, 174, VIEW_H + 3, 38, BAR_H - 5, '#45293f', '#6b3e75');
   }
   const face = faces.get(faceAnim.pick(w))!;
   ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2, FACE_W, FACE_H);
-  panel(ctx, 214, 72);
-  bigNum(ctx, `${p.armor}%`, 250, VIEW_H + 7);
-  text(ctx, 'ARMOR', 240, VIEW_H + 29, C.label);
-  panel(ctx, 286, 20);
+  // weapon + ammo
+  const def = WEAPONS[p.weapon];
+  panel(ctx, 214, 128);
+  if (def.ammo === 'bullets') ctx.drawImage(items.bullets, 222, top + 1, 14, 14);
+  else if (def.ammo === 'shells') ctx.drawImage(items.shells, 221, top + 2, 16, 12);
+  else pawIcon(ctx, 224, top + 4, '#fb6b1d');
+  const ammoTxt = def.ammo ? String(p.ammo[def.ammo]) : '∞';
+  const low = def.ammo && p.ammo[def.ammo] < 10;
+  numText(ctx, ammoTxt, 244, top, low ? '#e83b3b' : C.value, 2.6);
+  text(ctx, `${def.slot} · ${def.name}`, 222, VIEW_H + 27, C.label, L);
+  // owned weapon slots
+  WEAPON_ORDER.forEach((id, i) => {
+    const has = p.weapons.has(id), cur = p.weapon === id;
+    numText(ctx, String(i + 1), 296 + i * 11, top + 2, cur ? C.armsCur : has ? C.armsHas : C.armsNo, 1.4);
+  });
+  // keys
+  panel(ctx, 342, 40);
   (['red', 'blue', 'yellow'] as KeyColor[]).forEach((k, i) => {
-    if (p.keys.has(k)) ctx.drawImage(items[`key_${k}` as const], 288, VIEW_H + 4 + i * 11, 16, 14);
+    if (p.keys.has(k)) ctx.drawImage(items[`key_${k}` as const], 353, VIEW_H + 6 + i * 10, 18, 10);
+    else { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(355, VIEW_H + 9 + i * 10, 14, 4); }
   });
-  panel(ctx, 306, 78);
-  const rows: [string, number, number][] = [
-    ['HAIR', p.ammo.hairballs, 200],
-    ['SARD', p.ammo.sardines, 50],
-    ['BATT', p.ammo.battery, 300],
-  ];
-  rows.forEach(([n, v, m], i) => {
-    const y = VIEW_H + 7 + i * 9;
-    text(ctx, n, 312, y, C.label);
-    text(ctx, `${v}/${m}`, 334, y, C.value);
-  });
+}
+
+const TOAST: Record<MsgKind, { icon: string; color: string }> = {
+  health: { icon: '❤', color: '#1ebc73' },
+  armor: { icon: '🛡', color: '#4d9be6' },
+  ammo: { icon: '🔫', color: '#fbb954' },
+  weapon: { icon: '⭐', color: '#f04f78' },
+  key: { icon: '🔑', color: '#f9c22b' },
+  warn: { icon: '⚠', color: '#e83b3b' },
+  secret: { icon: '✨', color: '#a884f3' },
+  boss: { icon: '🏆', color: '#f9c22b' },
+  info: { icon: '🐾', color: '#c7dcd0' },
+};
+
+/** Big, bold, friendly notifications that slide in at the top of the view. */
+function drawToasts(ctx: Ctx, w: World, y0: number) {
+  const live = w.messages.filter((m) => w.time - m.t < 3);
+  let y = y0;
+  for (const m of live.slice(-3)) {
+    const age = w.time - m.t;
+    const t = TOAST[m.kind];
+    const alpha = age > 2.5 ? Math.max(0, (3 - age) * 2) : 1;
+    const slide = age < 0.15 ? (1 - age / 0.15) * -12 : 0;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const toastFont = STYLE.pixel ? `7px 'Press Start 2P', monospace` : `700 ${STYLE.ink ? 12 : 10}px '${STYLE.font}', system-ui, sans-serif`;
+    ctx.font = toastFont;
+    ctx.textBaseline = 'middle';
+    const label = STYLE.pixel ? m.text.toUpperCase() : m.text;
+    const tw = ctx.measureText(label).width;
+    const bw = tw + 30, bh = 16;
+    const x = Math.round((SCREEN_W - bw) / 2), yy = Math.round(y + slide);
+    const col = m.kind === 'key' && /red|blue|yellow/.exec(label) ? { red: '#e83b3b', blue: '#4d9be6', yellow: '#f9c22b' }[/red|blue|yellow/.exec(label)![0] as 'red'] : t.color;
+    if (STYLE.ink) {
+      ctx.fillStyle = '#fff7ea';
+      ctx.beginPath(); ctx.roundRect(x, yy, bw, bh, 7); ctx.fill();
+      ctx.strokeStyle = STYLE.inkColor; ctx.lineWidth = 1; ctx.stroke();
+    } else {
+      ctx.fillStyle = 'rgba(46,34,47,0.92)';
+      ctx.beginPath(); ctx.roundRect(x, yy, bw, bh, STYLE.pixel ? 3 : 8); ctx.fill();
+      ctx.fillStyle = col;
+      ctx.fillRect(x + 2, yy + 3, 2, bh - 6);
+    }
+    ctx.font = `10px system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif`;
+    ctx.fillStyle = col;
+    ctx.fillText(t.icon, x + 8, yy + bh / 2 + 0.5);
+    ctx.font = toastFont;
+    ctx.fillStyle = STYLE.ink ? STYLE.inkColor : '#ffffff';
+    ctx.fillText(label, x + 22, yy + bh / 2 + 0.5);
+    ctx.restore();
+    y += bh + 3;
+  }
 }
 
 /** Degree ruler across the top of the view so a vision model can measure turns precisely. */
@@ -263,7 +355,7 @@ export function drawRuler(ctx: Ctx) {
     px(ctx, x, VIEW_H - (major ? 13 : 9), deg === 0 ? '#ff4d6d' : '#fff', 1, major ? 6 : 3);
     if (major) {
       const s = deg > 0 ? `+${deg}` : String(deg);
-      text(ctx, s, x - Math.floor(textWidth(s) / 2), VIEW_H - 6, deg === 0 ? '#ff4d6d' : '#fff');
+      numText(ctx, s, x, VIEW_H - 6.8, deg === 0 ? '#ff4d6d' : '#fff', 1.15, 'center');
     }
   }
 }

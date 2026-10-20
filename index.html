@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CHONK DOOM</title>
     <meta name="description" content="A DOOM-like FPS starring Le Chonk, and a harness that lets Mistral Large 4 play it by itself." />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Press+Start+2P&family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="app">
@@ -17,7 +19,6 @@
         <nav>
           <button id="btn-human" class="btn">🎮 Play yourself</button>
           <button id="btn-agent" class="btn hot">🐱 Let Le Chonk play</button>
-          <button id="btn-style" class="btn" title="Switch graphics style">🎨 STYLE</button>
           <button id="btn-sound" class="btn" title="Toggle sound (M)">🔊 SOUND ON</button>
           <a class="btn ghost" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
         </nav>
@@ -29,21 +30,22 @@
             <canvas id="screen" width="384" height="240"></canvas>
             <div id="bubble" class="hidden"></div>
             <div id="thinking" class="hidden"><span class="paw">🐾</span> LE CHONK IS THINKING<span class="dots"></span><small>time is frozen</small></div>
-            <button id="pause-btn" class="hidden" title="Pause (P)">⏸</button>
             <div id="pause-overlay" class="hidden">
               <div class="pause-title">PAUSED</div>
               <button id="resume-btn" class="btn big">▶ Resume</button>
               <button id="quit-btn" class="btn">Quit to menu</button>
             </div>
           </div>
+          <div id="stage-bar">
           <div id="help">
             <div class="keys"><span class="k"><kbd>↑</kbd><kbd>↓</kbd></span><span>move</span></div>
             <div class="keys"><span class="k"><kbd>←</kbd><kbd>→</kbd></span><span>turn</span></div>
             <div class="keys"><span class="k"><kbd class="wide">Space</kbd></span><span>shoot</span></div>
             <div class="keys"><span class="k"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><span>weapons</span></div>
             <div class="keys"><span class="k"><kbd>P</kbd></span><span>pause</span></div>
-            <div class="keys"><span class="k"><kbd>M</kbd></span><span>mute</span></div>
             <div class="keys hint"><span>walk into doors to open them</span></div>
+          </div>
+          <button id="pause-btn" class="btn hot big hidden" title="Pause (P)">⏸ PAUSE</button>
           </div>
         </section>
 

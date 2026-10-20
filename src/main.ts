@@ -1,5 +1,5 @@
 import './style.css';
-import { STYLE, STYLE_LABEL, nextStyle } from './art/style';
+import { STYLE } from './art/style';
 import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './game/hud';
@@ -11,17 +11,15 @@ import type { ObsMode } from './agent/perception';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-document.body.classList.add(STYLE.name, STYLE.smooth ? 'hires' : 'lores');
-$('btn-style').textContent = `🎨 ${STYLE_LABEL[STYLE.name]}`;
-$('btn-style').addEventListener('click', nextStyle);
+document.body.classList.add(STYLE.name);
 // web fonts must be ready before art with text is generated
-try { await Promise.race([document.fonts.load(`${STYLE.fontWeight} 12px '${STYLE.font}'`), new Promise((r) => setTimeout(r, 2500))]); } catch { /* offline */ }
+try { await Promise.race([Promise.all([document.fonts.load(`${STYLE.fontWeight} 12px '${STYLE.font}'`), document.fonts.load(`12px 'Press Start 2P'`)]), new Promise((r) => setTimeout(r, 2500))]); } catch { /* offline */ }
 
 const screen = $<HTMLCanvasElement>('screen');
 screen.width = SCREEN_W * STYLE.screen;
 screen.height = SCREEN_H * STYLE.screen;
 const sctx = screen.getContext('2d')!;
-sctx.imageSmoothingEnabled = STYLE.smooth;
+sctx.imageSmoothingEnabled = STYLE.smooth; // pixel style: nearest-neighbour upscale of the 3D view
 sctx.setTransform(STYLE.screen, 0, 0, STYLE.screen, 0, 0);
 const renderer = new Renderer();
 const game = new Game();
@@ -62,7 +60,6 @@ window.addEventListener('keydown', (e) => {
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
   if (e.repeat && e.code === 'Space') return;
   keys.add(e.code);
-  if (e.code === 'KeyM') toggleSound();
   if (mode === 'menu') {
     if (e.code === 'ArrowDown') menuSel = (menuSel + 1) % MENU.length;
     if (e.code === 'ArrowUp') menuSel = (menuSel + MENU.length - 1) % MENU.length;
@@ -115,7 +112,7 @@ function setPaused(p: boolean) {
   if (mode === 'menu') p = false;
   paused = p;
   $('pause-overlay').classList.toggle('hidden', !p);
-  $('pause-btn').textContent = p ? '▶' : '⏸';
+  $('pause-btn').textContent = p ? '▶ RESUME' : '⏸ PAUSE';
   agent?.pause(p);
   if (p) keys.clear();
 }

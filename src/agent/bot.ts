@@ -1,7 +1,7 @@
 // A hand-written scripted policy ("bot:simple"). It is used as:
 //  1. an offline smoke test of the whole harness (no API key needed),
 //  2. a BASELINE in the benchmark. Note that it cheats: it reads exact enemy positions from game memory.
-import { World, WALL_CHARS } from '../game/world';
+import { World, WALL_CHARS, WEAPONS } from '../game/world';
 import type { Action } from './actions';
 import { findPath } from './actions';
 import { visibleEnemies, relAngle } from './perception';
@@ -58,8 +58,8 @@ export function botAct(w: World): { thought: string; actions: Action[] } {
     const a = Math.round(relAngle(w, e.x, e.y) * DEG);
     const acts: Action[] = [];
     // best weapon
-    const slot = p.weapons.has('laser') && p.ammo.battery > 0 ? 4 : p.weapons.has('shotgun') && p.ammo.sardines > 0 && d < 5 ? 3 : p.ammo.hairballs > 0 ? 2 : 1;
-    const cur = { claws: 1, hairball: 2, shotgun: 3, laser: 4 }[p.weapon];
+    const slot = p.weapons.has('shotgun') && p.ammo.shells > 0 && d < 5 ? 3 : p.weapons.has('chaingun') && p.ammo.bullets > 0 ? 4 : p.ammo.bullets > 0 ? 2 : 1;
+    const cur = WEAPONS[p.weapon].slot;
     if (slot !== cur) acts.push({ type: 'weapon', slot });
     acts.push({ type: 'attack', degrees: a, shots: slot === 4 ? 8 : slot === 3 ? 1 : 3 });
     if (e.kind === 'bulldog' && d < 2.5) acts.push({ type: 'move', tiles: -1.5 });
@@ -70,9 +70,13 @@ export function botAct(w: World): { thought: string; actions: Action[] } {
   const items = w.items.filter((i) => !i.taken && known(i.x, i.y));
   const pick = (pred: (k: string) => boolean) => nearestReachable(w, items.filter((i) => pred(i.kind)).map((i) => [Math.floor(i.x), Math.floor(i.y)]));
   const key = pick((k) => k.startsWith('key'));
-  if (key) return { thought: 'A collar key! Mine.', actions: [{ type: 'go_to', x: key.x, y: key.y }] };
-  const weapon = pick((k) => k === 'shotgun' || k === 'laser');
+  if (key) return { thought: 'A key! Mine.', actions: [{ type: 'go_to', x: key.x, y: key.y }] };
+  const weapon = pick((k) => (k === 'shotgun' || k === 'chaingun') && !p.weapons.has(k));
   if (weapon) return { thought: 'New weapon spotted.', actions: [{ type: 'go_to', x: weapon.x, y: weapon.y }] };
+  if (p.ammo.bullets < 60 || (p.weapons.has('shotgun') && p.ammo.shells < 10)) {
+    const a = pick((k) => ((k === 'bullets' || k === 'ammobox' || k === 'chaingun') && p.ammo.bullets < 180) || ((k === 'shells' || k === 'shotgun') && p.ammo.shells < 44));
+    if (a) return { thought: 'Ammo time.', actions: [{ type: 'go_to', x: a.x, y: a.y }] };
+  }
   if (p.hp < 60) {
     const h = pick((k) => k === 'catnip' || k === 'kibble' || k === 'tuna');
     if (h) return { thought: 'Need food.', actions: [{ type: 'go_to', x: h.x, y: h.y }] };

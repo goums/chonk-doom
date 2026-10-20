@@ -123,16 +123,17 @@ body.smooth kbd { font-family: 'Fredoka'; font-weight: 600; font-size: 12px; bor
 body.smooth #help { font-size: 14px; }
 
 /* ---- pause ---- */
-#pause-btn { position: absolute; right: 2%; bottom: 20%; width: clamp(48px, 6vw, 72px); height: clamp(48px, 6vw, 72px); border-radius: 50%; border: 3px solid #fff; background: rgba(0,0,0,0.55); color: #fff; font-size: clamp(20px, 2.6vw, 32px); cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); z-index: 3; }
-#pause-btn:hover { background: rgba(255,130,4,0.85); }
-#pause-overlay { position: absolute; inset: 0; background: rgba(10,5,14,0.6); backdrop-filter: blur(3px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 4; }
-#pause-overlay .pause-title { font-family: 'Press Start 2P', monospace; font-size: clamp(22px, 4vw, 48px); color: #fff; text-shadow: 4px 4px 0 #000; }
-.btn.big { font-size: 16px; padding: 14px 26px; }
+#stage-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; max-width: calc((100vh - 150px) * 1.6); }
+#stage-bar #help { justify-content: flex-start; }
+#pause-btn { flex: none; }
+#pause-overlay { position: absolute; inset: 0; background: rgba(46,34,47,0.7); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 4; }
+#pause-overlay .pause-title { font-family: 'Pixelify Sans', monospace; font-weight: 400; font-size: clamp(28px, 5vw, 56px); color: #fff; text-shadow: 4px 4px 0 #2e222f; }
+.btn.big { font-size: 15px; padding: 12px 22px; }
 #agent-start { width: 100%; margin: 10px 0 4px; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; }
 .panel-title .x { background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
-#help .hint span { font-style: italic; color: #6e5e77; }
-body.smooth #pause-overlay .pause-title { font-family: 'Fredoka'; font-weight: 700; }
+#help .hint span { font-style: italic; }
+body.smooth #pause-overlay .pause-title { font-family: 'Fredoka'; }
 
 /* ---- storybook style: paper, ink and watercolor ---- */
 body.storybook { --bg: #f4e4cc; --panel: #fbf1e1; --panel2: #f6e2c2; --ink: #2b1d17; --muted: #7a5a44; --line: #2b1d17; --accent: #d62828;
@@ -165,3 +166,36 @@ body.storybook #pause-btn { background: #ffd166; color: var(--ink); border: 3px 
 body.storybook #pause-overlay { background: rgba(244,228,204,0.55); }
 body.storybook #pause-overlay .pause-title { font-family: 'Patrick Hand'; color: #f28c28; -webkit-text-stroke: 2px var(--ink); text-shadow: 4px 4px 0 var(--ink); }
 body.storybook .note { color: #2d6a4f; }
+
+/* ---- pixel style (default): modern pixel UI with the Resurrect 64 palette ---- */
+body.pixel { --bg: #2e222f; --panel: #3e3546; --panel2: #45293f; --ink: #ffffff; --muted: #9babb2; --line: #625565; --accent: #fb6b1d; --accent2: #f9c22b;
+  font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 17px; background: #2e222f; }
+body.pixel #app::before { background: linear-gradient(90deg, #f9c22b, #fb6b1d, #e83b3b, #f04f78, #a884f3, #4d9be6, #1ebc73); height: 4px; }
+body.pixel header { border-bottom: 2px solid #3e3546; }
+body.pixel .logo { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 30px; letter-spacing: 1px; background: linear-gradient(180deg, #f9c22b 0%, #fb6b1d 55%, #e83b3b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(3px 3px 0 #45293f); }
+body.pixel .btn { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 15px; background: #3e3546; color: #fff; border: 2px solid #625565; border-radius: 4px; box-shadow: 0 3px 0 #1b141c; padding: 8px 14px; }
+body.pixel .btn:hover { border-color: #fb6b1d; }
+body.pixel .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #1b141c; }
+body.pixel .btn.hot { background: #fb6b1d; border-color: #f9c22b; color: #2e222f; }
+body.pixel .btn.big { font-size: 17px; padding: 11px 22px; }
+body.pixel .btn.small { font-size: 13px; padding: 6px 10px; }
+body.pixel #screen { image-rendering: pixelated; }
+body.pixel #screen-wrap { border: 3px solid #625565; border-radius: 6px; box-shadow: 0 6px 0 #1b141c; overflow: hidden; }
+body.pixel #brain { background: #3e3546; border: 2px solid #625565; border-radius: 6px; box-shadow: 0 6px 0 #1b141c; }
+body.pixel .panel-title, body.pixel summary { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 16px; color: #f9c22b; }
+body.pixel input, body.pixel select { font-family: 'Pixelify Sans'; font-size: 15px; background: #2e222f; border: 2px solid #625565; border-radius: 4px; }
+body.pixel label { font-size: 14px; }
+body.pixel .stat { background: #2e222f; border: 1px solid #625565; border-radius: 4px; }
+body.pixel .stat b { font-size: 17px; }
+body.pixel .stat span { font-size: 12px; }
+body.pixel .status { font-size: 15px; color: #f9c22b; }
+body.pixel .turn { background: #2e222f; border-radius: 4px; font-size: 15px; }
+body.pixel .turn ol, body.pixel .turn header { font-size: 13px; }
+body.pixel .turn li .act { color: #8fd3ff; }
+body.pixel #bubble { font-family: 'Pixelify Sans'; font-weight: 400; font-size: clamp(14px, 1.45vw, 20px); line-height: 1.2; background: #ffffff; color: #2e222f; border: 3px solid #2e222f; border-radius: 6px; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+body.pixel #bubble b { color: #fb6b1d; }
+body.pixel #thinking { font-family: 'Pixelify Sans'; font-weight: 400; font-size: clamp(13px, 1.3vw, 17px); color: #2e222f; background: #f9c22b; border: 3px solid #2e222f; border-radius: 6px; }
+body.pixel #thinking small { font-family: 'Pixelify Sans'; font-weight: 400; color: #45293f; font-size: 13px; }
+body.pixel kbd { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 14px; color: #2e222f; background: #c7dcd0; border: 2px solid #2e222f; border-bottom-width: 4px; border-radius: 4px; box-shadow: none; min-width: 26px; height: 28px; line-height: 22px; }
+body.pixel #help { font-size: 16px; color: #9babb2; }
+body.pixel .note { color: #1ebc73; }

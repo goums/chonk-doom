@@ -36,16 +36,18 @@ export interface WeaponDef {
   range: number;
   sound: SfxId;
 }
-export type AmmoType = 'hairballs' | 'sardines' | 'battery';
+export type AmmoType = 'bullets' | 'shells';
 
 export const WEAPONS: Record<WeaponId, WeaponDef> = {
-  claws: { id: 'claws', slot: 1, name: 'CLAWS', ammo: null, cooldown: 0.42, pellets: 1, spread: 0, dmg: [14, 26], range: 1.25, sound: 'claws' },
-  hairball: { id: 'hairball', slot: 2, name: 'HAIRBALL GUN', ammo: 'hairballs', cooldown: 0.34, pellets: 1, spread: 0.012, dmg: [10, 16], range: 40, sound: 'hairball' },
-  shotgun: { id: 'shotgun', slot: 3, name: 'SARDINE SHOTGUN', ammo: 'sardines', cooldown: 0.9, pellets: 7, spread: 0.1, dmg: [6, 11], range: 30, sound: 'shotgun' },
-  laser: { id: 'laser', slot: 4, name: 'LASER POINTER', ammo: 'battery', cooldown: 0.09, pellets: 1, spread: 0.008, dmg: [7, 10], range: 50, sound: 'laser' },
+  fist: { id: 'fist', slot: 1, name: 'FIST', ammo: null, cooldown: 0.42, pellets: 1, spread: 0, dmg: [14, 26], range: 1.25, sound: 'claws' },
+  pistol: { id: 'pistol', slot: 2, name: 'PISTOL', ammo: 'bullets', cooldown: 0.34, pellets: 1, spread: 0.012, dmg: [12, 18], range: 40, sound: 'pistol' },
+  shotgun: { id: 'shotgun', slot: 3, name: 'SHOTGUN', ammo: 'shells', cooldown: 0.9, pellets: 7, spread: 0.1, dmg: [7, 12], range: 30, sound: 'shotgun' },
+  chaingun: { id: 'chaingun', slot: 4, name: 'CHAINGUN', ammo: 'bullets', cooldown: 0.11, pellets: 1, spread: 0.02, dmg: [10, 14], range: 45, sound: 'pistol' },
 };
-export const WEAPON_ORDER: WeaponId[] = ['claws', 'hairball', 'shotgun', 'laser'];
-export const AMMO_MAX: Record<AmmoType, number> = { hairballs: 200, sardines: 50, battery: 300 };
+export const WEAPON_ORDER: WeaponId[] = ['fist', 'pistol', 'shotgun', 'chaingun'];
+/** Player-facing ammo names. */
+export const AMMO_NAME: Record<AmmoType, string> = { bullets: 'BULLETS', shells: 'SHELLS' };
+export const AMMO_MAX: Record<AmmoType, number> = { bullets: 200, shells: 50 };
 
 interface EnemyDef {
   hp: number;
@@ -68,13 +70,20 @@ export const ENEMIES: Record<EnemyKind, EnemyDef> = {
   mouse: { name: 'Angry Mouse', hp: 20, speed: 2.6, radius: 0.22, scale: 0.55, painChance: 1, melee: [3, 6], meleeRange: 0.8, ranged: { proj: 'cheese', dmg: [5, 9], speed: 7, count: 1, spread: 0 }, cooldown: 1.6, windup: 0.35, sight: 'squeak', pain: 'squeak', die: 'squeakDie' },
   chihuahua: { name: 'Chihuahua', hp: 30, speed: 3.6, radius: 0.25, scale: 0.6, painChance: 0.8, melee: null, meleeRange: 0, ranged: { proj: 'yap', dmg: [8, 13], speed: 9, count: 1, spread: 0 }, cooldown: 1.3, windup: 0.3, sight: 'yap', pain: 'yap', die: 'barkDie' },
   bulldog: { name: 'Bulldog', hp: 90, speed: 2.3, radius: 0.38, scale: 0.85, painChance: 0.4, melee: [12, 20], meleeRange: 1.05, ranged: null, cooldown: 0.9, windup: 0.3, sight: 'bark', pain: 'bark', die: 'barkDie' },
-  rex: { name: 'REX the Doberman', hp: 1400, speed: 2.1, radius: 0.6, scale: 1.6, painChance: 0.08, melee: [25, 35], meleeRange: 1.5, ranged: { proj: 'bone', dmg: [14, 22], speed: 10, count: 3, spread: 0.18 }, cooldown: 1.4, windup: 0.45, sight: 'growl', pain: 'growl', die: 'barkDie' },
+  rex: { name: 'REX the Doberman', hp: 900, speed: 2.1, radius: 0.6, scale: 1.6, painChance: 0.08, melee: [25, 35], meleeRange: 1.5, ranged: { proj: 'bone', dmg: [14, 22], speed: 10, count: 3, spread: 0.18 }, cooldown: 1.4, windup: 0.45, sight: 'growl', pain: 'growl', die: 'barkDie' },
 };
 
 export type EnemyState = 'idle' | 'chase' | 'attack' | 'pain' | 'dying' | 'dead';
 export type ProjKind = 'cheese' | 'yap' | 'bone';
 
 let nextId = 1;
+
+/** 'a Bulldog' / 'an Angry Mouse' (bosses keep their name). */
+function an(name: string, cap = false) {
+  if (name.startsWith('REX')) return name;
+  const art = /^[AEIOU]/i.test(name) ? 'an' : 'a';
+  return `${cap ? art[0].toUpperCase() + art.slice(1) : art} ${name}`;
+}
 
 export interface Enemy {
   id: number;
@@ -94,6 +103,8 @@ export interface Decor { id: number; kind: 'lamp' | 'plant' | 'bowl' | 'barrel';
 export interface Projectile { id: number; kind: ProjKind; x: number; y: number; vx: number; vy: number; dmg: number; from: number; alive: boolean }
 export interface Fx { id: number; kind: 'puff' | 'fur' | 'boom'; x: number; y: number; z: number; t: number; ttl: number }
 export interface Door { x: number; y: number; ch: string; key: KeyColor | null; open: number; opening: boolean; secret: boolean; wallTex: string }
+
+export type MsgKind = 'health' | 'armor' | 'ammo' | 'weapon' | 'key' | 'warn' | 'secret' | 'boss' | 'info';
 
 export interface GameEvent { t: number; type: string; text: string; data?: Record<string, unknown> }
 
@@ -124,7 +135,7 @@ export interface Inventory {
 }
 
 export const START_INVENTORY: Inventory = {
-  hp: 100, armor: 0, ammo: { hairballs: 50, sardines: 0, battery: 0 }, weapons: ['claws', 'hairball'], weapon: 'hairball',
+  hp: 100, armor: 0, ammo: { bullets: 50, shells: 0 }, weapons: ['fist', 'pistol'], weapon: 'pistol',
 };
 
 /** Difficulty levels: damage taken multiplier and enemy aggression (attack frequency). */
@@ -157,7 +168,7 @@ export class World {
   stats = { kills: 0, totalKills: 0, items: 0, totalItems: 0, secrets: 0, totalSecrets: 0, shots: 0, hits: 0, damageTaken: 0 };
   skill: number;
   rand: () => number;
-  messages: { text: string; t: number }[] = [];
+  messages: { text: string; t: number; kind: MsgKind }[] = [];
   bossId = -1;
   private bumpT = -99;
 
@@ -181,8 +192,8 @@ export class World {
     this.flow = new Int16Array(this.W * this.H).fill(-1);
     let px = 1.5, py = 1.5, pa = 0;
     const itemMap: Record<string, ItemKind> = {
-      n: 'catnip', k: 'kibble', t: 'tuna', a: 'box', h: 'hairballs', s: 'sardines', b: 'battery',
-      '2': 'shotgun', '3': 'laser', r: 'key_red', u: 'key_blue', y: 'key_yellow',
+      n: 'catnip', k: 'kibble', t: 'tuna', a: 'box', h: 'bullets', s: 'shells', b: 'ammobox',
+      '2': 'shotgun', '3': 'chaingun', r: 'key_red', u: 'key_blue', y: 'key_yellow',
     };
     const enemyMap: Record<string, EnemyKind> = { m: 'mouse', c: 'chihuahua', d: 'bulldog', X: 'rex' };
     for (let y = 0; y < this.H; y++) {
@@ -306,9 +317,9 @@ export class World {
     if (this.events.length > 400) this.events.splice(0, 100);
   }
 
-  msg(text: string) {
-    this.messages.push({ text, t: this.time });
-    if (this.messages.length > 4) this.messages.shift();
+  msg(text: string, kind: MsgKind = 'info') {
+    this.messages.push({ text, t: this.time, kind });
+    if (this.messages.length > 3) this.messages.shift();
   }
 
   play(id: SfxId, x: number, y: number, vol = 1) {
@@ -429,23 +440,23 @@ export class World {
       p.cd = 0.3;
       // auto-switch to best weapon with ammo
       const best = [...WEAPON_ORDER].reverse().find((id) => p.weapons.has(id) && (!WEAPONS[id].ammo || p.ammo[WEAPONS[id].ammo!] > 0));
-      if (best && best !== p.weapon) { p.pendingWeapon = best; p.switchT = 0.25; this.msg(`OUT OF ${w.ammo.toUpperCase()}!`); this.event('ammo', `Out of ${w.ammo}, switching to ${WEAPONS[best].name}.`); }
+      if (best && best !== p.weapon) { p.pendingWeapon = best; p.switchT = 0.25; this.msg(`Out of ${AMMO_NAME[w.ammo].toLowerCase()}!`, 'warn'); this.event('ammo', `Out of ${AMMO_NAME[w.ammo].toLowerCase()}, switching to ${WEAPONS[best].name}.`); }
       return;
     }
     if (w.ammo) p.ammo[w.ammo]--;
     p.cd = w.cooldown;
     p.fireT = 0;
     this.stats.shots++;
-    sfx(w.sound, w.id === 'laser' ? 0.5 : 1);
-    this.wakeByNoise(w.id === 'claws' ? 3 : 14);
+    sfx(w.sound, w.id === 'chaingun' ? 0.7 : 1);
+    this.wakeByNoise(w.id === 'fist' ? 3 : 14);
     let hitAny = false;
     for (let i = 0; i < w.pellets; i++) {
       const ang = p.angle + (this.rand() - 0.5) * 2 * w.spread;
       const dmg = w.dmg[0] + Math.floor(this.rand() * (w.dmg[1] - w.dmg[0] + 1));
-      if (this.hitscan(p.x, p.y, ang, w.range, dmg, w.id === 'claws')) hitAny = true;
+      if (this.hitscan(p.x, p.y, ang, w.range, dmg, w.id === 'fist')) hitAny = true;
     }
     if (hitAny) this.stats.hits++;
-    if (w.id === 'claws' && hitAny) sfx('clawHit', 0.8);
+    if (w.id === 'fist' && hitAny) sfx('clawHit', 0.8);
   }
 
   /** Player hitscan. Returns true if an enemy was hit. */
@@ -515,13 +526,13 @@ export class World {
       e.t = 0;
       this.stats.kills++;
       this.play(def.die, e.x, e.y);
-      this.event('kill', `Killed a ${def.name}.`, { kind: e.kind, id: e.id });
+      this.event('kill', `Killed ${an(def.name)}.`, { kind: e.kind, id: e.id });
       if (e.kind === 'rex') {
-        this.msg('REX IS DEFEATED! THE HOUSE IS SAFE!');
+        this.msg('Rex is defeated! The house is safe!', 'boss');
         this.event('boss', 'REX the Doberman is defeated!');
       }
-      // mice sometimes drop hairball ammo, dogs drop kibble
-      if (this.rand() < 0.35) this.items.push({ id: nextId++, kind: e.kind === 'mouse' ? 'hairballs' : e.kind === 'chihuahua' ? 'sardines' : 'kibble', x: e.x, y: e.y, taken: false });
+      // mice drop bullets, chihuahuas shells, dogs kibble
+      if (this.rand() < 0.35) this.items.push({ id: nextId++, kind: e.kind === 'mouse' ? 'bullets' : e.kind === 'chihuahua' ? 'shells' : 'kibble', x: e.x, y: e.y, taken: false });
       return;
     }
     if (this.rand() < def.painChance && e.state !== 'attack') {
@@ -556,7 +567,7 @@ export class World {
       p.dead = true;
       sfx('meowDeath', 1);
       this.event('death', `Le Chonk was killed by ${source}.`);
-      this.msg('YOU DIED. PRESS SPACE/USE TO RETRY');
+      this.msg('Le Chonk fainted! Press Space to retry', 'warn');
     } else sfx('meow', Math.min(1, 0.4 + real / 25));
   }
 
@@ -573,15 +584,15 @@ export class World {
     if (d && !d.opening) {
       if (d.key && !p.keys.has(d.key)) {
         sfx('locked', 0.8);
-        this.msg(`YOU NEED THE ${d.key.toUpperCase()} COLLAR TO OPEN THIS DOOR`);
-        this.event('locked', `This door is locked. You need the ${d.key.toUpperCase()} collar.`);
+        this.msg(`Locked! Find the ${d.key} key`, 'warn');
+        this.event('locked', `This door is locked. You need the ${d.key.toUpperCase()} key.`);
         return;
       }
       d.opening = true;
       if (d.secret) {
         this.stats.secrets++;
         sfx('secret', 1);
-        this.msg('A SECRET IS REVEALED!');
+        this.msg('Secret passage found!', 'secret');
         this.event('secret', 'Found a secret passage!');
       } else {
         this.play('door', d.x + 0.5, d.y + 0.5);
@@ -604,7 +615,7 @@ export class World {
   private pickups() {
     const p = this.player;
     for (const it of this.items) {
-      if (it.taken || Math.hypot(it.x - p.x, it.y - p.y) > 0.55) continue;
+      if (it.taken || Math.hypot(it.x - p.x, it.y - p.y) > 0.75) continue;
       let ok = true;
       let text = '';
       let sound: SfxId = 'pickup';
@@ -613,23 +624,25 @@ export class World {
         p.ammo[t] = Math.min(AMMO_MAX[t], p.ammo[t] + n);
         return true;
       };
+      let kind: MsgKind = 'ammo';
       switch (it.kind) {
-        case 'catnip': ok = p.hp < 100; if (ok) p.hp = Math.min(100, p.hp + 10); text = 'Sniffed some CATNIP (+10)'; break;
-        case 'kibble': ok = p.hp < 100; if (ok) p.hp = Math.min(100, p.hp + 25); text = 'Ate a bowl of KIBBLE (+25)'; break;
-        case 'tuna': p.hp = Math.min(200, p.hp + 100); text = 'TUNA SUPREME! (+100)'; sound = 'bigPickup'; break;
-        case 'box': ok = p.armor < 100; if (ok) p.armor = 100; text = 'Got the CARDBOARD BOX ARMOR!'; sound = 'bigPickup'; break;
-        case 'hairballs': ok = ammo('hairballs', 20); text = 'Picked up HAIRBALLS'; break;
-        case 'sardines': ok = ammo('sardines', 8); text = 'Picked up SARDINES'; break;
-        case 'battery': ok = ammo('battery', 60); text = 'Picked up a BATTERY'; break;
-        case 'shotgun':
-          p.weapons.add('shotgun'); ammo('sardines', 12); p.pendingWeapon = 'shotgun'; p.switchT = 0.2;
-          text = 'You got the SARDINE SHOTGUN!'; sound = 'weaponPickup'; p.faceEvent = { kind: 'grin', t: this.time }; break;
-        case 'laser':
-          p.weapons.add('laser'); ammo('battery', 80); p.pendingWeapon = 'laser'; p.switchT = 0.2;
-          text = 'You got the LASER POINTER! Dogs fear the red dot.'; sound = 'weaponPickup'; p.faceEvent = { kind: 'grin', t: this.time }; break;
+        case 'catnip': ok = p.hp < 100; if (ok) p.hp = Math.min(100, p.hp + 10); text = '+10 health · catnip'; kind = 'health'; break;
+        case 'kibble': ok = p.hp < 100; if (ok) p.hp = Math.min(100, p.hp + 25); text = '+25 health · kibble'; kind = 'health'; break;
+        case 'tuna': p.hp = Math.min(200, p.hp + 100); text = '+100 health · TUNA!'; sound = 'bigPickup'; kind = 'health'; break;
+        case 'box': ok = p.armor < 100; if (ok) p.armor = 100; text = 'Armor 100 · cardboard box'; sound = 'bigPickup'; kind = 'armor'; break;
+        case 'bullets': ok = ammo('bullets', 15); text = '+15 bullets'; break;
+        case 'shells': ok = ammo('shells', 6); text = '+6 shells'; break;
+        case 'ammobox': ok = ammo('bullets', 50); text = '+50 bullets · ammo box'; break;
+        case 'shotgun': case 'chaingun': {
+          const wid = it.kind as WeaponId;
+          const t: AmmoType = wid === 'shotgun' ? 'shells' : 'bullets';
+          if (p.weapons.has(wid)) { ok = ammo(t, wid === 'shotgun' ? 8 : 20); text = `+${wid === 'shotgun' ? 8 : 20} ${t}`; break; }
+          p.weapons.add(wid); ammo(t, wid === 'shotgun' ? 8 : 20); p.pendingWeapon = wid; p.switchT = 0.2;
+          text = `New weapon: ${WEAPONS[wid].name} (${WEAPONS[wid].slot})`; sound = 'weaponPickup'; kind = 'weapon'; p.faceEvent = { kind: 'grin', t: this.time }; break;
+        }
         case 'key_red': case 'key_blue': case 'key_yellow': {
           const col = it.kind.slice(4) as KeyColor;
-          p.keys.add(col); text = `Picked up the ${col.toUpperCase()} COLLAR`; sound = 'key'; break;
+          p.keys.add(col); text = `Got the ${col} key!`; sound = 'key'; kind = 'key'; break;
         }
         default: ok = false;
       }
@@ -639,7 +652,7 @@ export class World {
       p.pickupFlash = 1;
       if (it.kind === 'catnip' || it.kind === 'kibble' || it.kind === 'tuna') p.faceEvent = { kind: 'happy', t: this.time };
       sfx(sound, 0.9);
-      this.msg(text.toUpperCase());
+      this.msg(text, kind);
       this.event('pickup', text + '.', { kind: it.kind });
     }
   }
@@ -658,7 +671,7 @@ export class World {
     e.t = 0;
     e.cd = 0.4 + this.rand() * 0.8;
     this.play(ENEMIES[e.kind].sight, e.x, e.y, 0.8);
-    this.event('alert', `A ${ENEMIES[e.kind].name} noticed you!`, { kind: e.kind, id: e.id });
+    this.event('alert', `${an(ENEMIES[e.kind].name, true)} noticed you!`, { kind: e.kind, id: e.id });
   }
 
   private updateFlow() {
@@ -717,7 +730,7 @@ export class World {
         // resolve attack
         if (def.melee && dist <= def.meleeRange + 0.15) {
           const dmg = def.melee[0] + Math.floor(this.rand() * (def.melee[1] - def.melee[0] + 1));
-          this.damagePlayer(dmg, e.x, e.y, `a ${def.name} bite`);
+          this.damagePlayer(dmg, e.x, e.y, `${an(def.name)} bite`);
           this.play(e.kind === 'mouse' ? 'squeak' : 'bark', e.x, e.y);
         } else if (def.ranged && los) {
           const r = def.ranged;

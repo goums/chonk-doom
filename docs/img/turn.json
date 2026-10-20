@@ -1,0 +1,33 @@
+{
+  "actions": [
+    {
+      "type": "go_to",
+      "x": 7,
+      "y": 11
+    },
+    {
+      "type": "turn",
+      "degrees": 90
+    }
+  ],
+  "results": [
+    {
+      "action": {
+        "type": "go_to",
+        "x": 7,
+        "y": 11
+      },
+      "outcome": "INTERRUPTED: 2 new enemy(s) came into view.",
+      "interrupted": true,
+      "ticks": 147
+    },
+    {
+      "action": {
+        "type": "wait"
+      },
+      "outcome": "1 remaining action(s) skipped.",
+      "interrupted": true,
+      "ticks": 0
+    }
+  ]
+}
