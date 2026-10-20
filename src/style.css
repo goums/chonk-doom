@@ -274,7 +274,7 @@ body.pixel kbd { font-weight: 700; font-size: 14px; }
 /* shown on touch screens or narrow windows, except while Le Chonk plays */
 @media (pointer: coarse), (max-width: 760px) {
   #touchpad { display: flex; }
-  body[data-mode="agent"] #touchpad { display: none; }
+  body[data-mode="agent"] #touchpad, body.brain-open #touchpad { display: none; }
   #help { display: none; }
   #stage-bar { justify-content: center; }
 }
