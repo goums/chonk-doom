@@ -2,7 +2,7 @@
 import type { Game } from '../game/game';
 import type { Intent } from '../game/world';
 import { ActionExecution, type Action, type ActionResult } from './actions';
-import { automapAscii, captureFrame, radarText, statusText, visibleEnemies, type ObsMode } from './perception';
+import { automapAscii, captureFrame, radarText, statusText, visibleEnemies, relAngle, type ObsMode } from './perception';
 import { chat, splitContent, PRICE, type Message, type ClientConfig, type ToolCall } from './mistral';
 import { systemPrompt, ACT_TOOL } from './prompt';
 import { WALL_CHARS } from '../game/world';
@@ -86,6 +86,18 @@ export class ChonkAgent {
     this.cfg = { ...DEFAULT_CONFIG, ...cfg };
     this.client = client;
   }
+
+  /** Gameplay metrics for the benchmark (accumulated over the whole run, across deaths). */
+  metrics = {
+    actions: 0,
+    byType: {} as Record<string, number>,
+    interrupts: 0,
+    invalidTurns: 0,
+    shots: 0,
+    hits: 0,
+    damageTaken: 0,
+    aimErrors: [] as number[], // |commanded degrees - true angle of the nearest visible enemy|, per attack/turn in combat
+  };
 
   /** Real cost reported by the provider (OpenRouter), accumulated per request. */
   costReported = 0;
@@ -191,6 +203,17 @@ export class ChonkAgent {
     return its.length ? `Items you have seen (walk onto them to pick up, e.g. go_to): ${its.join('; ')}.` : 'No items seen yet.';
   }
 
+  /** Where the EXIT switch is (once seen): the goal of every level. */
+  private exitInfo(): string {
+    const w = this.game.world;
+    const exits: string[] = [];
+    for (let y = 0; y < w.H; y++) for (let x = 0; x < w.W; x++) if (w.grid[y][x] === 'E' && w.explored[y * w.W + x]) exits.push(`(${x},${y})`);
+    const clear = w.liveEnemies.length === 0 ? ' All enemies are dead: the level is clear, just finish it!' : '';
+    return exits.length
+      ? `EXIT switch seen at ${exits.join(', ')}: go_to its coordinates to walk there and press it (this ends the level).${clear}`
+      : `EXIT switch not seen yet: keep exploring (open doors, find keys).${clear}`;
+  }
+
   /** Closed doors seen so far: the most common way forward, so list them explicitly. */
   private knownDoors(): string {
     const w = this.game.world;
@@ -222,6 +245,7 @@ export class ChonkAgent {
       parts.push(this.frontier());
       parts.push(this.knownDoors());
       parts.push(this.knownItems());
+      parts.push(this.exitInfo());
     }
     // simple stuck detector
     const p = w.player;
@@ -369,6 +393,7 @@ export class ChonkAgent {
       if (!act || !act.actions.length) {
         rec.thought = text || '(no valid action)';
         rec.error = 'No valid act() call; waiting 0.5s.';
+        this.metrics.invalidTurns++;
         this.turns.push(rec);
         this.onUpdate(this, rec);
         await this.runAction({ type: 'wait', seconds: 0.5 }, true);
@@ -386,7 +411,22 @@ export class ChonkAgent {
         if (this.stopRequested) break;
         const a = act.actions[i];
         const interruptible = !['attack', 'shoot', 'turn', 'use', 'weapon'].includes(a.type);
+        const w0 = g.world;
+        const s0 = { ...w0.stats };
+        // aim error: compare the commanded angle with the true angle of the closest visible enemy
+        if ((a.type === 'attack' || a.type === 'turn') && typeof a.degrees === 'number') {
+          const vis = visibleEnemies(w0);
+          if (vis.length) this.metrics.aimErrors.push(Math.min(...vis.map((e) => Math.abs(a.degrees! - (relAngle(w0, e.x, e.y) * 180) / Math.PI))));
+        }
         const r = await this.runAction(a, interruptible);
+        if (g.world === w0) {
+          this.metrics.shots += w0.stats.shots - s0.shots;
+          this.metrics.hits += w0.stats.hits - s0.hits;
+          this.metrics.damageTaken += w0.stats.damageTaken - s0.damageTaken;
+        }
+        this.metrics.actions++;
+        this.metrics.byType[a.type] = (this.metrics.byType[a.type] ?? 0) + 1;
+        if (r.interrupted) this.metrics.interrupts++;
         rec.results.push(r);
         this.onUpdate(this, rec);
         if (r.interrupted || g.state !== 'playing') {
@@ -424,6 +464,7 @@ export class ChonkAgent {
       provider: this.client.provider,
       usage: this.usage,
       costUSD: this.cost,
+      metrics: this.metrics,
       run: g.run,
       currentLevel: g.world.level.id,
       state: g.state,

@@ -143,10 +143,27 @@ export class ActionExecution {
       this.state.maxSteps = Math.max(4, Math.min(40, Number(a.tiles ?? 24)));
     }
     if (a.type === 'go_to') {
-      this.path = findPath(w, Math.round(Number(a.x)), Math.round(Number(a.y)));
-      if (!this.path) this.finish(`No known path to (${a.x},${a.y}). Target must be an explored floor tile; locked doors need their key.`);
-      else if (!this.path.length) {
-        const tx = Math.round(Number(a.x)), ty = Math.round(Number(a.y));
+      const tx = Math.round(Number(a.x)), ty = Math.round(Number(a.y));
+      this.path = findPath(w, tx, ty);
+      const c = w.tile(tx, ty);
+      const door = w.door(tx, ty);
+      if (!this.path && w.explored[ty * w.W + tx] && (c === 'E' || door || WALL_CHARS.has(c))) {
+        // target is a wall-like tile (EXIT switch, locked door, wall): walk to the best tile in front of it, then face it
+        let best: [number, number][] | null = null;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const pth = findPath(w, tx + dx, ty + dy);
+          if (pth && (!best || pth.length < best.length)) best = pth;
+        }
+        if (best) {
+          this.path = best;
+          this.state.face = 1;
+          this.state.fx = tx;
+          this.state.fy = ty;
+          this.state.press = c === 'E' || (door && !door.secret) ? 1 : 0;
+        }
+      }
+      if (!this.path) this.finish(`No known path to (${a.x},${a.y}). Target must be an explored tile you can reach; locked doors need their key.`);
+      else if (!this.path.length && !this.state.face) {
         if (Math.hypot(tx + 0.5 - p.x, ty + 0.5 - p.y) > 0.25) this.path = [[tx, ty]]; // step to the tile centre
         else this.finish('You are already there.');
       }
@@ -224,7 +241,7 @@ export class ActionExecution {
         if (remain < 0.07) { it.forward *= 0.3; it.strafe *= 0.3; }
         if (p.moving < 0.08 && this.ticks > 3) this.state.stuck++;
         else this.state.stuck = 0;
-        if (this.state.stuck > 6) { this.finish(`BLOCKED after ${moved.toFixed(1)} tiles (wall, obstacle or enemy in the way).`, true); return null; }
+        if (this.state.stuck > 6) { this.finish(`BLOCKED after ${moved.toFixed(1)} tiles by ${this.blocker(a.type === 'move' ? Math.sign(dist) : 0, a.type === 'strafe' ? Math.sign(dist) : 0)}.`, true); return null; }
         return it;
       }
       case 'use':
@@ -282,16 +299,58 @@ export class ActionExecution {
     return it;
   }
 
+  /** Describe what is in the way of a movement direction (forward/strafe signs). */
+  private blocker(fwd: number, side: number) {
+    const w = this.w;
+    const p = w.player;
+    const ang = p.angle + (side ? (side > 0 ? Math.PI / 2 : -Math.PI / 2) : fwd < 0 ? Math.PI : 0);
+    const ax = p.x + Math.cos(ang) * 0.7, ay = p.y + Math.sin(ang) * 0.7;
+    const e = w.liveEnemies.find((x) => Math.hypot(x.x - ax, x.y - ay) < 0.8);
+    if (e) return `an enemy (${e.kind}) in the way`;
+    const d = w.decor.find((o) => o.blocking && !o.dead && Math.hypot(o.x - ax, o.y - ay) < 0.8);
+    if (d) return d.kind === 'barrel' ? 'an explosive barrel (not an item: shoot it from afar or walk around it)' : `a ${d.kind} (decoration, walk around it)`;
+    const tx = Math.floor(ax), ty = Math.floor(ay);
+    const door = w.door(tx, ty);
+    if (door) return door.key && !p.keys.has(door.key) ? `the locked ${door.key.toUpperCase()} door` : 'a closed door (walk into it or use it)';
+    if (w.tile(tx, ty) === 'E') return 'the EXIT switch (use it to finish the level!)';
+    return `a wall at (${tx},${ty})`;
+  }
+
   private seenItems() {
     const w = this.w;
     return w.items.filter((i) => !i.taken && w.explored[Math.floor(i.y) * w.W + Math.floor(i.x)]).length;
   }
 
   private goToStep(it: Intent): Intent | null {
+    if (this.state.pressT) return this.pressStep(it);
     if (this.checkInterrupt()) return null;
     const r = this.followPath(it);
-    if (r === 'arrived') { this.finish(`Arrived at (${this.action.x},${this.action.y}).`); return null; }
+    if (r === 'arrived') {
+      if (this.state.face) { this.state.pressT = 1; return this.pressStep(it); }
+      this.finish(`Arrived at (${this.action.x},${this.action.y}).`);
+      return null;
+    }
     return r === 'blocked' ? null : it;
+  }
+
+  /** After go_to a switch/door: turn to face it, press use, report what happened. */
+  private pressStep(it: Intent): Intent | null {
+    const w = this.w;
+    const p = w.player;
+    const want = Math.atan2(this.state.fy + 0.5 - p.y, this.state.fx + 0.5 - p.x);
+    const diff = angDiff(want, p.angle);
+    if (Math.abs(diff) > 0.02 && this.state.pressT === 1) {
+      it.turn = Math.sign(diff) * Math.min(Math.abs(diff), TURN_SPEED * DT);
+      return it;
+    }
+    if (!this.state.press) { this.finish(`Arrived next to (${this.state.fx},${this.state.fy}), facing it.`); return null; }
+    if (this.state.pressT === 1) { this.state.pressT = 2; this.state.pressTick = this.ticks; it.use = true; return it; }
+    if (this.ticks - this.state.pressTick > 30 || w.completeT >= 0) {
+      const last = [...w.events].reverse().find((e) => e.t >= w.time - 0.8 && ['exit', 'door', 'locked', 'secret'].includes(e.type));
+      this.finish(last ? last.text : `Walked to (${this.state.fx},${this.state.fy}) and pressed use.`);
+      return null;
+    }
+    return it;
   }
 
   /** Auto-explore: walk to frontier after frontier until something new shows up. */

@@ -65,7 +65,27 @@ async function worker(id) {
     fs.writeFileSync(file, JSON.stringify(out));
     const e = out.episode;
     const lat = out.turns.filter((t) => t.latencyMs > 0).map((t) => t.latencyMs);
-    Object.assign(e, { costUSD: out.costUSD, wallSec: (Date.now() - t0) / 1000, avgLatency: lat.length ? lat.reduce((a, b) => a + b, 0) / lat.length / 1000 : 0, tokens: out.usage.prompt + out.usage.completion, errors: out.turns.filter((t) => t.error).length });
+    const m = out.metrics ?? {};
+    const errs = [...(m.aimErrors ?? [])].sort((a, b) => a - b);
+    Object.assign(e, {
+      costUSD: out.costUSD,
+      wallSec: (Date.now() - t0) / 1000,
+      avgLatency: lat.length ? lat.reduce((a, b) => a + b, 0) / lat.length / 1000 : 0,
+      tokensIn: out.usage.prompt,
+      tokensOut: out.usage.completion,
+      tokens: out.usage.prompt + out.usage.completion,
+      actions: m.actions ?? 0,
+      actionsByType: m.byType ?? {},
+      interrupts: m.interrupts ?? 0,
+      invalidTurns: m.invalidTurns ?? 0,
+      shots: m.shots ?? 0,
+      hits: m.hits ?? 0,
+      hitRate: m.shots ? m.hits / m.shots : null,
+      aimErrMedian: errs.length ? errs[Math.floor(errs.length / 2)] : null,
+      aimWithin5: errs.length ? errs.filter((x) => x <= 5).length / errs.length : null,
+      damageTaken: m.damageTaken ?? 0,
+      errors: out.turns.filter((t) => t.error).length,
+    });
     // errored episodes (API failures) are not cached, so a re-run retries them
     if (!e.error) fs.writeFileSync(file, JSON.stringify(out));
     else fs.writeFileSync(file.replace(/\.json$/, '.error.json'), JSON.stringify(out));
@@ -78,37 +98,42 @@ await Promise.all(Array.from({ length: Math.min(PARALLEL, jobs.length) }, (_, i)
 await browser.close();
 await server.close();
 
-// ---- summary: accomplishment / cost / speed ----
+// ---- summary: one table per level ("Clearing Level N") + an overall table ----
 const groups = new Map();
 for (const e of results) {
-  const k = e.model.startsWith('bot:') ? e.model : `${e.model} · ${e.obsMode} · reasoning ${e.reasoning}`;
+  const k = e.model.startsWith('bot:') ? e.model : `${e.model.split('/').pop()}${e.reasoning === 'high' ? ' (reasoning)' : ''}`;
   if (!groups.has(k)) groups.set(k, []);
   groups.get(k).push(e);
 }
-const pct = (x) => (100 * x).toFixed(0) + '%';
-const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
+const pct = (x) => (x === null || x === undefined || Number.isNaN(x) ? '-' : (100 * x).toFixed(0) + '%');
+const mean = (xs) => { const v = xs.filter((x) => x !== null && x !== undefined); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+const fmt = (x, d = 0) => (x === null || x === undefined ? '-' : x.toFixed(d));
+const mmss = (s) => (s === null ? '-' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`);
 const levels = [...new Set(results.map((e) => e.level))].sort();
 let md = `# CHONK DOOM benchmark\n\n${new Date().toISOString().slice(0, 10)} · provider ${PROVIDER} · difficulty ${['Easy', 'Medium', 'Hard'][SKILL]} · ${RUNS} run(s) per level · turn caps ${JSON.stringify(TURN_CAP)} · max ${MAX_DEATHS} deaths\n\n`;
-md += `| Model | Levels cleared | ${levels.map((l) => `Level ${l + 1}`).join(' | ')} | Kills | Deaths/ep | Turns/ep | $ / episode | $ / turn | s / turn |\n`;
-md += `|---|---|${levels.map(() => '---').join('|')}|---|---|---|---|---|---|\n`;
 const summary = [];
+for (const lvl of levels) {
+  md += `## Clearing Level ${lvl + 1}\n\n| Model | Cleared | Turns | Actions | Game time | Wall time | s / turn | Tokens in / out | Cost | Hit rate | Aim error (median) | Aim ≤ 5° | Damage taken | Deaths | Kills |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n`;
+  for (const [k, es] of groups) {
+    const xs = es.filter((e) => e.level === lvl);
+    if (!xs.length) continue;
+    const row = {
+      model: k, level: lvl + 1, episodes: xs.length,
+      cleared: xs.filter((e) => e.completed).length,
+      turns: mean(xs.map((e) => e.turns)), actions: mean(xs.map((e) => e.actions)),
+      gameTime: mean(xs.map((e) => e.gameTime)), wallSec: mean(xs.map((e) => e.wallSec)), secPerTurn: mean(xs.map((e) => e.avgLatency)),
+      tokensIn: mean(xs.map((e) => e.tokensIn)), tokensOut: mean(xs.map((e) => e.tokensOut)), cost: mean(xs.map((e) => e.costUSD)),
+      hitRate: mean(xs.map((e) => e.hitRate)), aimErr: mean(xs.map((e) => e.aimErrMedian)), aim5: mean(xs.map((e) => e.aimWithin5)),
+      damage: mean(xs.map((e) => e.damageTaken)), deaths: mean(xs.map((e) => e.deaths)), kills: mean(xs.map((e) => e.kills / e.totalKills)),
+    };
+    summary.push(row);
+    md += `| ${k} | **${row.cleared}/${row.episodes}** | ${fmt(row.turns)} | ${fmt(row.actions)} | ${mmss(row.gameTime)} | ${mmss(row.wallSec)} | ${fmt(row.secPerTurn, 1)} | ${fmt(row.tokensIn / 1000)}k / ${fmt(row.tokensOut / 1000, 1)}k | $${fmt(row.cost, 3)} | ${pct(row.hitRate)} | ${row.aimErr === null ? '-' : fmt(row.aimErr, 1) + '°'} | ${pct(row.aim5)} | ${fmt(row.damage)} | ${fmt(row.deaths, 1)} | ${pct(row.kills)} |\n`;
+  }
+  md += '\n';
+}
+md += `## Overall\n\n| Model | Levels cleared | Total cost | Total wall time | Avg s / turn |\n|---|---|---|---|---|\n`;
 for (const [k, es] of groups) {
-  const per = levels.map((l) => es.filter((e) => e.level === l));
-  const turns = es.reduce((a, e) => a + e.turns, 0);
-  const cost = es.reduce((a, e) => a + (e.costUSD || 0), 0);
-  const row = {
-    config: k,
-    completion: mean(es.map((e) => (e.completed ? 1 : 0))),
-    perLevel: per.map((xs) => ({ cleared: xs.filter((e) => e.completed).length, n: xs.length })),
-    kills: mean(es.map((e) => e.kills / e.totalKills)),
-    deaths: mean(es.map((e) => e.deaths)),
-    turns: turns / es.length,
-    costPerEpisode: cost / es.length,
-    costPerTurn: turns ? cost / turns : 0,
-    secPerTurn: mean(es.map((e) => e.avgLatency || 0)),
-  };
-  summary.push(row);
-  md += `| ${k} | **${pct(row.completion)}** | ${row.perLevel.map((p) => `${p.cleared}/${p.n}`).join(' | ')} | ${pct(row.kills)} | ${row.deaths.toFixed(1)} | ${row.turns.toFixed(0)} | $${row.costPerEpisode.toFixed(3)} | $${row.costPerTurn.toFixed(4)} | ${row.secPerTurn.toFixed(1)} |\n`;
+  md += `| ${k} | **${es.filter((e) => e.completed).length}/${es.length}** | $${fmt(es.reduce((a, e) => a + (e.costUSD || 0), 0), 3)} | ${mmss(es.reduce((a, e) => a + (e.wallSec || 0), 0))} | ${fmt(mean(es.map((e) => e.avgLatency)), 1)} |\n`;
 }
 fs.writeFileSync(path.join(OUT, 'summary.md'), md);
 fs.writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify({ args, summary, episodes: results }, null, 2));

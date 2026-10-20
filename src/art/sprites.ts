@@ -389,13 +389,18 @@ export function buildItems(): Record<ItemKind, HTMLCanvasElement> {
       text(ctx, 'H2O', 4, 5, '#fff');
     }),
     barrel: item(20, 26, (ctx) => {
-      // a "barrel": giant catnip spray can that explodes
-      px(ctx, 3, 3, '#2a9d8f', 14, 22);
-      px(ctx, 3, 3, '#5fd3c4', 2, 22);
-      px(ctx, 7, 0, '#ccc', 6, 3);
-      text(ctx, 'NIP', 4, 12, '#fff');
-      px(ctx, 3, 19, '#e76f51', 14, 2);
+      // classic red explosive barrel with a hazard sign (clearly NOT food)
+      blob(ctx, 10, 14, 8, 11.5, '#c32454');
+      px(ctx, 2, 6, '#6e2727', 16, 1.6);
+      px(ctx, 2, 21, '#6e2727', 16, 1.6);
+      ellipse(ctx, 10, 3.2, 7.5, 2, '#831c5d');
+      ellipse(ctx, 10, 3.2, 5, 1.2, '#45293f');
+      // yellow hazard triangle with "!"
+      poly(ctx, [10, 9, 15.5, 18, 4.5, 18], '#f9c22b');
+      px(ctx, 9.4, 11.5, '#2e222f', 1.2, 3.5);
+      px(ctx, 9.4, 15.8, '#2e222f', 1.2, 1.2);
     }),
+
   };
 }
 
