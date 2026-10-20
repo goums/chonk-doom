@@ -1,27 +1,22 @@
 [
  {
   "file": "replay-1.json",
-  "title": "Mistral Large 4 · Level 1",
-  "desc": "28 turns, instruct, mistral"
+  "title": "🏆 Mistral Large 4 plays the whole game",
+  "desc": "3 levels, live re-simulation, 196 turns"
  },
  {
   "file": "replay-2.json",
   "title": "Mistral Large 4 · Level 1",
-  "desc": "27 turns, instruct, mistral"
+  "desc": "27 turns"
  },
  {
   "file": "replay-3.json",
   "title": "Mistral Large 4 · Level 2",
-  "desc": "36 turns, instruct, mistral"
+  "desc": "31 turns"
  },
  {
   "file": "replay-4.json",
   "title": "Mistral Large 4 · Level 3",
-  "desc": "44 turns, instruct, mistral"
- },
- {
-  "file": "replay-5.json",
-  "title": "Mistral Large 4 · Level 3",
-  "desc": "49 turns, instruct, mistral"
+  "desc": "29 turns"
  }
 ]

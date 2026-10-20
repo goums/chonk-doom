@@ -6,6 +6,8 @@ const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
 const { evals } = raw;
 // keep the committed export small: drop the embedded frames (they live in evals/dataset.json)
 for (const e of evals) for (const r of e.results ?? []) if (r.input?.input?.frame) r.input.input.frame = '(see dataset.json)';
+// and no local absolute paths
+for (const e of evals) if (e.filepath) e.filepath = e.filepath.replace(process.cwd() + '/', '');
 fs.writeFileSync(file, JSON.stringify(raw));
 const models = new Map();
 for (const e of evals) {

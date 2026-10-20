@@ -2,6 +2,7 @@
 import './about.css';
 import { buildEnemyFrames, buildItems } from './art/sprites';
 import { buildFaces } from './art/face';
+import { scoreBars, scatter, money, secs, type ModelScore } from './chart';
 
 const $ = (id: string) => document.getElementById(id)!;
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
@@ -10,7 +11,7 @@ const num = (x: number | null | undefined, d = 0) => (x === null || x === undefi
 const mmss = (s: number | null | undefined) => (s === null || s === undefined ? '–' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`);
 
 async function json<T>(url: string): Promise<T | null> {
-  try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; }
+  try { const r = await fetch(url, { cache: 'no-cache' }); return r.ok ? r.json() : null; } catch { return null; }
 }
 
 // ---- the cast, drawn with the game's own procedural art ----
@@ -38,70 +39,53 @@ function cast() {
 }
 
 interface Row {
-  model: string; level: number; episodes: number; cleared: number; turns: number; actions: number; gameTime: number; wallSec: number;
+  model: string; level: number; episodes: number; cleared: number; score: number; turns: number; actions: number; gameTime: number; wallSec: number;
   secPerTurn: number; tokensIn: number; tokensOut: number; cost: number; hitRate: number | null; aimErr: number | null; aim5: number | null;
   damage: number; deaths: number; kills: number;
 }
-interface League { id: string; title: string; desc: string; provider: string; rows: Row[] }
-interface Leaderboard { generated: string; leagues: League[]; featured?: { title: string; levels: number; turns: number; cost: number; wallSec: number } }
+interface League { id: string; title: string; desc: string; rows: Row[]; models: (ModelScore & { aimErr: number | null; hitRate: number | null })[] }
+interface Leaderboard { generated: string; leagues: League[]; featured?: { levels: number; turns: number; cost: number; wallSec: number; deaths: number; kills: number; totalKills: number } }
+
+const chonk = (m: string) => /large 4/i.test(m);
 
 function leagueHtml(L: League) {
   const levels = [...new Set(L.rows.map((r) => r.level))].sort();
-  const models = [...new Set(L.rows.map((r) => r.model))];
-  // overall per model
-  const overall = models.map((m) => {
-    const rs = L.rows.filter((r) => r.model === m);
-    const cleared = rs.reduce((a, r) => a + r.cleared, 0), eps = rs.reduce((a, r) => a + r.episodes, 0);
-    const cost = rs.reduce((a, r) => a + r.cost * r.episodes, 0);
-    const errs = rs.map((r) => r.aimErr).filter((x): x is number => x !== null);
-    return { m, cleared, eps, cost, wall: rs.reduce((a, r) => a + r.wallSec * r.episodes, 0), spt: rs.reduce((a, r) => a + r.secPerTurn, 0) / rs.length, aim: errs.length ? errs.reduce((a, b) => a + b, 0) / errs.length : null };
-  }).sort((a, b) => b.cleared - a.cleared || a.cost - b.cost);
-  const max = Math.max(1, ...overall.map((o) => o.eps));
-  let h = `<div class="league"><h3>${esc(L.title)}</h3><p class="muted">${esc(L.desc)}</p>`;
-  h += '<div class="bars">' + overall.map((o) => `
-    <div class="bar-row${/large-4/.test(o.m) ? ' chonk' : ''}">
-      <span class="bar-name">${/large-4/.test(o.m) ? '🐱 ' : ''}${esc(o.m)}</span>
-      <span class="bar"><i style="width:${(100 * o.cleared) / max}%"></i></span>
-      <span class="bar-val">${o.cleared}/${o.eps} levels · $${o.cost.toFixed(2)} · ${o.spt.toFixed(1)} s/turn${o.aim !== null ? ` · aim ±${o.aim.toFixed(1)}°` : ''}</span>
-    </div>`).join('') + '</div>';
+  let h = `<div class="league"><h3>${esc(L.title)} <span class="muted">· ${esc(L.desc)}</span></h3>`;
+  h += `<div class="chart bars">${scoreBars(L.models, 'Chonk score (0-100)')}</div>`;
+  h += `<div class="charts2"><div class="chart">${scatter(L.models, 'Score vs cost per level', { key: 'cost', label: 'Cost per level (USD, log scale)', log: true, fmt: money })}</div>` +
+    `<div class="chart">${scatter(L.models, 'Score vs speed', { key: 'secPerTurn', label: 'Seconds per decision', fmt: secs })}</div></div>`;
+  h += `<div class="table-wrap"><table><thead><tr><th>Model</th><th>Score</th><th>Cleared</th><th>Cost / level</th><th>s / decision</th><th>Aim error</th><th>Hit rate</th></tr></thead><tbody>` +
+    L.models.map((m) => `<tr class="${m.chonk ? 'chonk' : ''}"><td>${m.chonk ? '🐱 ' : ''}${esc(m.model)}</td><td><b>${num(m.score)}</b></td><td>${m.cleared}/${m.episodes}</td><td>$${num(m.cost, 2)}</td><td>${num(m.secPerTurn, 1)}</td><td>${m.aimErr === null ? '–' : num(m.aimErr, 1) + '°'}</td><td>${pct(m.hitRate)}</td></tr>`).join('') +
+    '</tbody></table></div>';
+  h += '<details class="metrics-help"><summary>Per-level details</summary>';
   for (const lvl of levels) {
-    const rs = L.rows.filter((r) => r.level === lvl).sort((a, b) => b.cleared - a.cleared || a.turns - b.turns);
-    h += `<h4>Clearing Level ${lvl}</h4><div class="table-wrap"><table><thead><tr>
-      <th>Model</th><th>Cleared</th><th>Turns</th><th>Actions</th><th>Game time</th><th>Wall time</th><th>s/turn</th><th>Tokens in/out</th><th>Cost</th><th>Hit rate</th><th>Aim error</th><th>Aim ≤5°</th><th>Damage</th><th>Deaths</th><th>Kills</th>
-    </tr></thead><tbody>` + rs.map((r) => `<tr class="${/large-4/.test(r.model) ? 'chonk' : ''}">
-      <td>${esc(r.model)}</td><td><b>${r.cleared}/${r.episodes}</b></td><td>${num(r.turns)}</td><td>${num(r.actions)}</td><td>${mmss(r.gameTime)}</td><td>${mmss(r.wallSec)}</td>
+    const rs = L.rows.filter((r) => r.level === lvl).sort((a, b) => b.score - a.score);
+    h += `<h4>Level ${lvl}</h4><div class="table-wrap"><table><thead><tr>
+      <th>Model</th><th>Score</th><th>Cleared</th><th>Turns</th><th>Actions</th><th>Game time</th><th>Wall time</th><th>s/turn</th><th>Tokens in/out</th><th>Cost</th><th>Hit rate</th><th>Aim error</th><th>Damage</th><th>Deaths</th><th>Kills</th>
+    </tr></thead><tbody>` + rs.map((r) => `<tr class="${chonk(r.model) ? 'chonk' : ''}">
+      <td>${esc(r.model)}</td><td>${num(r.score)}</td><td><b>${r.cleared}/${r.episodes}</b></td><td>${num(r.turns)}</td><td>${num(r.actions)}</td><td>${mmss(r.gameTime)}</td><td>${mmss(r.wallSec)}</td>
       <td>${num(r.secPerTurn, 1)}</td><td>${num(r.tokensIn / 1000)}k / ${num(r.tokensOut / 1000, 1)}k</td><td>$${num(r.cost, 3)}</td><td>${pct(r.hitRate)}</td>
-      <td>${r.aimErr === null ? '–' : num(r.aimErr, 1) + '°'}</td><td>${pct(r.aim5)}</td><td>${num(r.damage)}</td><td>${num(r.deaths, 1)}</td><td>${pct(r.kills)}</td></tr>`).join('') + '</tbody></table></div>';
+      <td>${r.aimErr === null ? '–' : num(r.aimErr, 1) + '°'}</td><td>${num(r.damage)}</td><td>${num(r.deaths, 1)}</td><td>${pct(r.kills)}</td></tr>`).join('') + '</tbody></table></div>';
   }
-  return h + '</div>';
+  return h + '</details></div>';
 }
 
 async function results() {
   const lb = await json<Leaderboard>('data/leaderboard.json');
-  if (!lb || !lb.leagues.length) return;
-  $('leagues').innerHTML = lb.leagues.map(leagueHtml).join('') + `<p class="muted small">Generated ${esc(lb.generated)} from the raw run logs in <code>runs/</code>.</p>`;
-  // hero stats from Le Chonk's own rows
-  const mine = lb.leagues.flatMap((l) => l.rows).filter((r) => /large-4/.test(r.model));
-  if (mine.length) {
-    const cleared = mine.reduce((a, r) => a + r.cleared, 0), eps = mine.reduce((a, r) => a + r.episodes, 0);
-    const cost = mine.reduce((a, r) => a + r.cost * r.episodes, 0) / Math.max(1, eps);
-    const spt = mine.reduce((a, r) => a + r.secPerTurn, 0) / mine.length;
-    const errs = mine.map((r) => r.aimErr).filter((x): x is number => x !== null);
-    $('hero-stats').innerHTML = [
-      [`${cleared}/${eps}`, 'levels cleared by Mistral Large 4'],
-      [`$${cost.toFixed(2)}`, 'per level'],
-      [`${spt.toFixed(1)} s`, 'per decision'],
-      [errs.length ? `±${(errs.reduce((a, b) => a + b, 0) / errs.length).toFixed(0)}°` : '–', 'median aim error'],
-    ].map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
-  }
+  if (!lb) return;
+  if (lb.leagues.length) $('leagues').innerHTML = lb.leagues.map(leagueHtml).join('') + `<p class="muted small">Generated ${esc(lb.generated)} from the raw logs in <code>runs/</code>.</p>`;
+  const f = lb.featured;
+  const stats: [string, string][] = [];
+  if (f) stats.push([`${f.levels}/3`, 'levels cleared in one run'], [`${f.kills}/${f.totalKills}`, 'enemies defeated'], [`${f.turns}`, 'decisions'], [`$${f.cost.toFixed(2)}`, 'for the whole game']);
+  $('hero-stats').innerHTML = stats.map(([v, l]) => `<div><b>${v}</b><span>${l}</span></div>`).join('');
 }
 
 interface EvalRow { model: string; aim: number | null; decide: number | null; overall: number; latency: number; cost: number }
 async function evals() {
   const ev = await json<{ leagues: { title: string; rows: EvalRow[] }[] }>('data/evals.json');
-  if (!ev) return;
-  $('evals-tables').innerHTML = ev.leagues.map((L) => `<h4>${esc(L.title)}</h4><div class="table-wrap"><table><thead><tr><th>Model</th><th>Aim (ruler)</th><th>Decisions</th><th>Overall</th><th>Latency</th><th>Cost</th></tr></thead><tbody>` +
-    L.rows.map((r) => `<tr class="${/large-4/.test(r.model) ? 'chonk' : ''}"><td>${esc(r.model)}</td><td>${pct(r.aim)}</td><td>${pct(r.decide)}</td><td><b>${pct(r.overall)}</b></td><td>${num(r.latency, 1)} s</td><td>$${num(r.cost, 3)}</td></tr>`).join('') +
+  if (!ev || !ev.leagues.length) { $('evals-tables').innerHTML = '<p class="muted">Running…</p>'; return; }
+  $('evals-tables').innerHTML = ev.leagues.map((L) => `<h4>${esc(L.title)}</h4><div class="table-wrap"><table><thead><tr><th>Model</th><th>Aim</th><th>Decisions</th><th>Overall</th><th>Latency</th><th>Cost</th></tr></thead><tbody>` +
+    L.rows.map((r) => `<tr class="${chonk(r.model) ? 'chonk' : ''}"><td>${esc(r.model)}</td><td>${pct(r.aim)}</td><td>${pct(r.decide)}</td><td><b>${pct(r.overall)}</b></td><td>${num(r.latency, 1)} s</td><td>$${num(r.cost, 3)}</td></tr>`).join('') +
     '</tbody></table></div>').join('');
 }
 

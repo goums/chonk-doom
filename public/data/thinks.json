@@ -3,40 +3,72 @@
   "turn": 1,
   "level": "Level 1",
   "tag": "Opening",
-  "thought": "Miaou! No enemies, so I explore like a lazy cat finding ze best sunbeam! I go to ze health kibble first, then sniff around ze room for ze red key, sacré bleu!",
+  "thought": "Miaou! No enemies, so I explore ze whole salon to find ze red key and ze exit, tout de suite!",
   "frame": "data/frames/q1.jpg",
   "plan": "go_to(4,1) → explore(24) → explore(24)"
  },
  {
-  "turn": 2,
+  "turn": 5,
   "level": "Level 1",
   "tag": "Key",
-  "thought": "Miaou! I see ze kibble at (4,1) and bullets at (2,5), and two doors to open! I grab ze loot first, then open ze door at (11,3) to find ze red key, oh là là!",
+  "thought": "Miaou! Ze mice ran away like cowards! I grab ze bullets at (12,3) and keep exploring east to find ze red key, oh là là!",
   "frame": "data/frames/q2.jpg",
-  "plan": "go_to(4,1) → go_to(2,5) → go_to(11,3) → explore(24)"
+  "plan": "go_to(12,3) → explore(24) → explore(24)"
  },
  {
-  "turn": 6,
-  "level": "Level 1",
-  "tag": "Combat",
-  "thought": "Hssss! A mouse at +35° on ze right, and another sneaking behind ze bookshelf! I pew pew ze one on ze right first, then strafe left to dodge ze cheese, miaou!",
-  "frame": "data/frames/q3.jpg",
-  "plan": "attack(35°) → strafe(-1) → attack(-10°) → explore(24)"
- },
- {
-  "turn": 26,
+  "turn": 12,
   "level": "Level 1",
   "tag": "Low health",
-  "thought": "Hssss! A mouse at -5° is right in front of me, and my health is only 34% - my belly is in danger! I pew pew it, then I turn left and explore south into ze new corridor to find ze EXIT switch, miaou!",
-  "frame": "data/frames/q4.jpg",
-  "plan": "attack(-5°) → turn(-90°) → explore(24) → explore(24) → explore(24) → explore(24)"
+  "thought": "Aïe aïe! 26% health, ze bulldog bit me hard at +131° and a mouse is at 0°! But I see ze RED KEY at (7,22) on ze map, magnifique! Pew pew ze mouse at 0°, then RUN to ze key, miaou!",
+  "frame": "data/frames/q3.jpg",
+  "plan": "attack(0°) → go_to(7,22) → go_to(22,11)"
  },
  {
-  "turn": 28,
+  "turn": 17,
+  "level": "Level 1",
+  "tag": "Defeat",
+  "thought": "Aïe aïe aïe! 5% health, sacré bleu! A cheese-throwing mouse right in front at 0°! Pew pew pew NOW, then I RUN-RUN to ze health +10 at (4,1), oh là là my poor chonky belly!",
+  "frame": "data/frames/q4.jpg",
+  "plan": "attack(0°) → go_to(4,1)"
+ },
+ {
+  "turn": 24,
+  "level": "Level 1",
+  "tag": "Combat",
+  "thought": "Aïe! A mouse bit my left side at -48°! Hssss! I turn left, pew pew pew, then strafe and keep exploring north for the RED key, miaou!",
+  "frame": "data/frames/q5.jpg",
+  "plan": "attack(-48°) → strafe(2) → attack(48°) → explore(24)"
+ },
+ {
+  "turn": 108,
   "level": "Level 1",
   "tag": "EXIT!",
-  "thought": "Magnifique! All ze enemies are dead, and I found some yummy kibble - health is 59%! Now I see ze EXIT switch 'E' at (24,23) on ze map, just south of me. I go_to it and press it to finish ze level, miaou!",
-  "frame": "data/frames/q5.jpg",
-  "plan": "go_to(24,23)"
+  "thought": "Oh là là! Ze EXIT switch is at (24,23) on my map, just south of me! But a big brown Bulldog is somewhere — I go straight to ze EXIT and press it, miaou, let's finish ze level!",
+  "frame": "data/frames/q6.jpg",
+  "plan": "go_to(24,23) → go_to(24,23)"
+ },
+ {
+  "turn": 161,
+  "level": "Level 2",
+  "tag": "EXIT!",
+  "thought": "Miaou! Health 1% - one YAP and I'm kibble! The Chihuahua is at +14° blocking my path to the EXIT! I pew pew pew FAST with my laser pistol, then I RUN straight to the EXIT switch! Go go go, Le Chonk!",
+  "frame": "data/frames/q7.jpg",
+  "plan": "attack(14°) → go_to(13,23) → use"
+ },
+ {
+  "turn": 162,
+  "level": "Level 3",
+  "tag": "Boss fight",
+  "thought": "Miaou! Level 3, La Cave! Health is très low at 1%, but I have 72% armor - my fluffy belly is protecting me! I see a CHAINGUN at (3,4) and bullets at (2,5). First, let me grab that chaingun - pew pew pew will be magnifique against REX! Then I'll explore for keys. Zut alors, let's go!",
+  "frame": "data/frames/q8.jpg",
+  "plan": "go_to(3,4) → go_to(2,5) → explore(24)"
+ },
+ {
+  "turn": 165,
+  "level": "Level 3",
+  "tag": "Boss fight",
+  "thought": "Yummy! Tuna! 101% health, RED KEY in my fluffy paws, and 199 bullets! Now I need ze BLUE KEY and to find REX's arena. Let me open ze RED door at (8,10) - it leads somewhere new! Then explore ze north for ze blue key. Miaou, let's go!",
+  "frame": "data/frames/q9.jpg",
+  "plan": "go_to(8,10) → explore(24) → explore(24)"
  }
 ]

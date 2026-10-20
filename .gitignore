@@ -6,3 +6,4 @@ runs/
 .DS_Store
 bench/tmp/
 node_modules/.evalite
+evals/results/latest.*

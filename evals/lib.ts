@@ -31,18 +31,19 @@ export const REASONING = (process.env.EVAL_REASONING === 'high' ? 'high' : 'none
 /** Trials per case (models are stochastic): EVAL_TRIALS, default 3. */
 export const TRIALS = Number(process.env.EVAL_TRIALS ?? 3);
 
-// open-weight models only; two leagues so reasoning and non-reasoning models are never mixed
+// open-weight models only; two leagues so reasoning and non-reasoning models are never mixed.
+// "provider:model" picks a provider per model: Mistral models go straight to Mistral Studio, the rest via OpenRouter.
 const LEAGUES = {
-  none: 'mistralai/mistral-large-4-0,mistralai/mistral-large-2512,qwen/qwen3-vl-235b-a22b-instruct,meta-llama/llama-4-maverick',
-  high: 'mistralai/mistral-large-4-0,deepseek/deepseek-v4.1-flash,qwen/qwen3.5-397b-a17b,z-ai/glm-5.3-flash',
+  none: 'mistral:mistral-large-4,moonshotai/kimi-k2.6,qwen/qwen3.5-397b-a17b,deepseek/deepseek-v4.1-flash,z-ai/glm-5.3-flash,google/gemma-4-31b-it',
+  high: 'mistral:mistral-large-4,moonshotai/kimi-k2.6,qwen/qwen3.5-397b-a17b,deepseek/deepseek-v4.1-flash,z-ai/glm-5.3-flash,nvidia/nemotron-3.5-super-vl',
 };
 const DEFAULT_MODELS = LEAGUES[process.env.EVAL_REASONING === 'high' ? 'high' : 'none'];
 
 /** Models to evaluate: EVAL_PROVIDER (openrouter | mistral) + EVAL_MODELS (comma-separated). */
-export const variants = (process.env.EVAL_MODELS ?? DEFAULT_MODELS).split(',').map((m) => m.trim()).filter(Boolean).map((model) => ({
-  name: model.split('/').pop()!,
-  input: { provider: (process.env.EVAL_PROVIDER ?? 'openrouter') as Provider, model, reasoning: REASONING },
-}));
+export const variants = (process.env.EVAL_MODELS ?? DEFAULT_MODELS).split(',').map((m) => m.trim()).filter(Boolean).map((spec) => {
+  const [provider, model] = /^(mistral|openrouter):(.+)$/.exec(spec)?.slice(1) ?? [process.env.EVAL_PROVIDER ?? 'openrouter', spec];
+  return { name: model.split('/').pop()!, input: { provider: provider as Provider, model, reasoning: REASONING } };
+});
 
 export async function ask(c: Case, v: ModelVariant): Promise<Answer> {
   const apiKey = v.provider === 'openrouter' ? process.env.OPEN_ROUTER_API_KEY : process.env.MISTRAL_STUDIO_API_KEY;

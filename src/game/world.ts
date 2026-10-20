@@ -259,8 +259,8 @@ export class World {
 
   // ---------------- map queries ----------------
   tile(x: number, y: number) {
-    if (x < 0 || y < 0 || x >= this.W || y >= this.H) return '#';
-    return this.grid[y][x];
+    if (!(x >= 0 && y >= 0 && x < this.W && y < this.H)) return '#'; // also catches NaN from bad model input
+    return this.grid[y | 0][x | 0];
   }
 
   door(x: number, y: number) {

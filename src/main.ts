@@ -99,10 +99,10 @@ function toggleSound(force?: boolean) {
   audioSettings.muted = force ?? !audioSettings.muted;
   applyVolumes();
   setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
-  try { localStorage.setItem('chonk.muted', audioSettings.muted ? '1' : '0'); } catch { /* ignore */ }
 }
 $('btn-sound').addEventListener('click', () => toggleSound());
-try { if (localStorage.getItem('chonk.muted') === '1') audioSettings.muted = true; } catch { /* ignore */ }
+// sound is on by default; browsers only allow audio after a first gesture, so unlock it on any click/tap
+window.addEventListener('pointerdown', () => { initAudio(); if (mode === 'menu' && !currentMusic() && !audioSettings.muted) playMusic('title'); }, { once: true });
 setBtn($('btn-human'), 'gamepad', 'Play Yourself');
 setBtn($('btn-agent'), 'cat', 'Let Le Chonk Play');
 setBtn($('btn-sound'), audioSettings.muted ? 'soundOff' : 'soundOn', audioSettings.muted ? 'Sound Off' : 'Sound On');
