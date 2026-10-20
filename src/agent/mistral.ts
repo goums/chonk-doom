@@ -189,6 +189,14 @@ export async function chat(cfg: ClientConfig, req: ChatRequest, signal?: AbortSi
       };
     } catch (e) {
       const err = e as { statusCode?: number; responseBody?: string; message?: string; lastError?: { statusCode?: number; responseBody?: string; message?: string } };
+      // a model that answers without calling the required tool is a wasted turn, not a fatal error
+      if (/did not contain a tool call/i.test(err.message ?? '')) {
+        return {
+          id: 'no-tool-call', model: req.model,
+          choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: '(answered without calling act)', tool_calls: [] } }],
+          usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+        };
+      }
       const last = err.lastError ?? err;
       const body = last.responseBody ?? '';
       if (/reasoning is mandatory/i.test(body + (last.message ?? '')) && !mandatoryReasoning.has(req.model) && attempt === 0) {
