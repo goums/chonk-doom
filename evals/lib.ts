@@ -1,6 +1,6 @@
 // Shared eval helpers: load keys from .env, ask a model exactly like the harness does, parse its act() call.
 import fs from 'node:fs';
-import { chat, type Provider } from '../src/agent/mistral';
+import { chat, priceOf, type Provider } from '../src/agent/mistral';
 import { systemPrompt, ACT_TOOL } from '../src/agent/prompt';
 import type { Action } from '../src/agent/actions';
 
@@ -65,7 +65,9 @@ export async function ask(c: Case, v: ModelVariant): Promise<Answer> {
     const tc = r.choices[0]?.message.tool_calls?.[0];
     const j = tc ? JSON.parse(tc.function.arguments) : null;
     const actions: Action[] = Array.isArray(j?.actions) ? j.actions : [];
-    return { thought: String(j?.thought ?? ''), actions, valid: !!j && actions.length > 0, latencyMs: performance.now() - t0, costUSD: r.usage.cost ?? 0 };
+    const P = priceOf(v.model);
+    const est = (r.usage.prompt_tokens * P.input + r.usage.completion_tokens * P.output) / 1e6; // Mistral Studio doesn't report cost
+    return { thought: String(j?.thought ?? ''), actions, valid: !!j && actions.length > 0, latencyMs: performance.now() - t0, costUSD: r.usage.cost ?? est };
   } catch (e) {
     return { thought: '', actions: [], valid: false, latencyMs: performance.now() - t0, costUSD: 0, error: String((e as Error).message ?? e) };
   }

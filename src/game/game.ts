@@ -68,7 +68,10 @@ export class Game {
     this.run.deaths++;
     this.levelDeaths++;
     const deaths = this.levelDeaths;
-    this.world = new World(LEVELS[this.levelIndex], structuredClone(this.levelInv), this.skill, this.seed + this.levelIndex * 101 + deaths * 7);
+    // like DOOM: respawn with full health (weapons and ammo from the level start are kept), no death spiral
+    const inv = structuredClone(this.levelInv);
+    inv.hp = Math.max(inv.hp, 100);
+    this.world = new World(LEVELS[this.levelIndex], inv, this.skill, this.seed + this.levelIndex * 101 + deaths * 7);
     this.levelDeaths = deaths;
     this.state = 'playing';
     this.stateT = 0;
