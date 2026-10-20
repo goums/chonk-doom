@@ -216,3 +216,14 @@ body.pixel .panel-title, body.pixel summary { font-family: 'Fredoka', 'Inter', s
 body.pixel #help, body.pixel kbd { font-family: 'Fredoka', 'Inter', sans-serif; }
 body.pixel #help { font-size: 15px; font-weight: 500; }
 body.pixel kbd { font-weight: 700; font-size: 14px; }
+
+/* provider toggle */
+.seg { display: flex; border: 2px solid var(--line); border-radius: 6px; overflow: hidden; margin: 4px 0 6px; }
+.seg button { flex: 1; padding: 7px 8px; background: transparent; color: var(--muted); border: 0; cursor: pointer; font-family: 'Fredoka', 'Inter', sans-serif; font-weight: 600; font-size: 14px; }
+.seg button.on { background: #fb6b1d; color: #2e222f; }
+#model { margin-top: 4px; }
+
+@media (max-width: 1000px) {
+  body.brain-open main { grid-template-columns: minmax(0, 1fr); }
+  #brain { max-height: none; }
+}

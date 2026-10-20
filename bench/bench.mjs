@@ -4,7 +4,9 @@
 //
 //   npm run bench -- --models mistral-large-4 --obs map,vision --reasoning none,high --levels 0,1,2 --runs 3
 //
-// The API key is read from .env (MISTRAL_STUDIO_API_KEY) through the Vite dev proxy, or from MISTRAL_API_KEY.
+// Providers: --provider mistral (Mistral Studio, key MISTRAL_STUDIO_API_KEY) or --provider openrouter (key OPEN_ROUTER_API_KEY),
+// both read from .env by the Vite dev proxy. Example (4 models on OpenRouter):
+//   npm run bench -- --provider openrouter --models mistralai/mistral-large-4-0,google/gemini-3.8-flash --runs 3
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -17,7 +19,8 @@ const args = Object.fromEntries(
   }, []),
 );
 const list = (k, d) => String(args[k] ?? d).split(',').map((s) => s.trim()).filter(Boolean);
-const MODELS = list('models', 'mistral-large-4');
+const PROVIDER = String(args.provider ?? 'mistral');
+const MODELS = list('models', PROVIDER === 'openrouter' ? 'mistralai/mistral-large-4-0' : 'mistral-large-4');
 const OBS = list('obs', 'map');
 const REASONING = list('reasoning', 'none');
 const LEVELS = list('levels', '0,1,2').map(Number);
@@ -37,7 +40,7 @@ for (const model of MODELS)
     for (const reasoning of model.startsWith('bot:') ? ['none'] : REASONING)
       for (const level of LEVELS)
         for (let r = 0; r < RUNS; r++)
-          jobs.push({ model, obsMode, reasoning, level, run: r, seed: 1000 + r * 17 + level, skill: SKILL, speed: SPEED, maxTurns: maxTurns(level), maxDeaths: MAX_DEATHS });
+          jobs.push({ provider: PROVIDER, model, obsMode, reasoning, level, run: r, seed: 1000 + r * 17 + level, skill: SKILL, speed: SPEED, maxTurns: maxTurns(level), maxDeaths: MAX_DEATHS });
 
 console.log(`🐱 CHONK DOOM bench: ${jobs.length} episodes -> ${OUT}`);
 const server = await createServer({ server: { port: 0, host: '127.0.0.1', hmr: false, watch: null }, logLevel: 'error' });
@@ -58,9 +61,12 @@ async function worker(id) {
     await page.goto(url);
     await page.waitForFunction(() => window.chonk?.runEpisode);
     const t0 = Date.now();
-    const out = await page.evaluate((o) => window.chonk.runEpisode(o), { ...job, apiKey: process.env.MISTRAL_API_KEY || '' });
+    const out = await page.evaluate((o) => window.chonk.runEpisode(o), { ...job, apiKey: '' });
     fs.writeFileSync(file, JSON.stringify(out));
     const e = out.episode;
+    const lat = out.turns.filter((t) => t.latencyMs > 0).map((t) => t.latencyMs);
+    Object.assign(e, { costUSD: out.costUSD, wallSec: (Date.now() - t0) / 1000, avgLatency: lat.length ? lat.reduce((a, b) => a + b, 0) / lat.length / 1000 : 0, tokens: out.usage.prompt + out.usage.completion, errors: out.turns.filter((t) => t.error).length });
+    fs.writeFileSync(file, JSON.stringify(out));
     results.push(e);
     console.log(`[w${id}] ${name}: ${e.completed ? '✅ EXIT' : '❌'} kills ${e.kills}/${e.totalKills} deaths ${e.deaths} turns ${e.turns} $${out.costUSD.toFixed(3)} ${(Date.now() - t0) / 1000 | 0}s${e.error ? ' ERROR ' + e.error : ''}`);
     await page.close();
@@ -70,35 +76,37 @@ await Promise.all(Array.from({ length: Math.min(PARALLEL, jobs.length) }, (_, i)
 await browser.close();
 await server.close();
 
-// ---- summary ----
+// ---- summary: accomplishment / cost / speed ----
 const groups = new Map();
 for (const e of results) {
   const k = e.model.startsWith('bot:') ? e.model : `${e.model} · ${e.obsMode} · reasoning ${e.reasoning}`;
   if (!groups.has(k)) groups.set(k, []);
   groups.get(k).push(e);
 }
-const pct = (a, b) => (b ? ((100 * a) / b).toFixed(0) + '%' : '-');
+const pct = (x) => (100 * x).toFixed(0) + '%';
 const mean = (xs) => xs.reduce((a, b) => a + b, 0) / (xs.length || 1);
-let md = `# CHONK DOOM benchmark\n\n${new Date().toISOString()} · skill ${SKILL} · ${RUNS} run(s) per level · turn caps ${JSON.stringify(TURN_CAP)} · max deaths ${MAX_DEATHS}\n\n`;
-md += '| Config | Level | Completion | Kills | Items | Deaths/ep | Turns/ep | Game time |\n|---|---|---|---|---|---|---|---|\n';
+const levels = [...new Set(results.map((e) => e.level))].sort();
+let md = `# CHONK DOOM benchmark\n\n${new Date().toISOString().slice(0, 10)} · provider ${PROVIDER} · difficulty ${['Easy', 'Medium', 'Hard'][SKILL]} · ${RUNS} run(s) per level · turn caps ${JSON.stringify(TURN_CAP)} · max ${MAX_DEATHS} deaths\n\n`;
+md += `| Model | Levels cleared | ${levels.map((l) => `E1M${l + 1}`).join(' | ')} | Kills | Deaths/ep | Turns/ep | $ / episode | $ / turn | s / turn |\n`;
+md += `|---|---|${levels.map(() => '---').join('|')}|---|---|---|---|---|---|\n`;
 const summary = [];
 for (const [k, es] of groups) {
-  for (const lvl of [...new Set(es.map((e) => e.level))].sort()) {
-    const xs = es.filter((e) => e.level === lvl);
-    const row = {
-      config: k, level: lvl + 1, episodes: xs.length,
-      completion: mean(xs.map((e) => (e.completed ? 1 : 0))),
-      kills: mean(xs.map((e) => e.kills / e.totalKills)),
-      items: mean(xs.map((e) => e.items / e.totalItems)),
-      deaths: mean(xs.map((e) => e.deaths)),
-      turns: mean(xs.map((e) => e.turns)),
-      time: mean(xs.map((e) => e.gameTime)),
-    };
-    summary.push(row);
-    md += `| ${k} | E1M${lvl + 1} | ${pct(row.completion, 1)} (${xs.filter((e) => e.completed).length}/${xs.length}) | ${pct(row.kills, 1)} | ${pct(row.items, 1)} | ${row.deaths.toFixed(1)} | ${row.turns.toFixed(0)} | ${row.time.toFixed(0)}s |\n`;
-  }
-  const score = mean(es.map((e) => (e.completed ? 1 : 0)));
-  md += `| **${k}** | **all** | **${pct(score, 1)}** | **${pct(mean(es.map((e) => e.kills / e.totalKills)), 1)}** | | **${mean(es.map((e) => e.deaths)).toFixed(1)}** | | |\n`;
+  const per = levels.map((l) => es.filter((e) => e.level === l));
+  const turns = es.reduce((a, e) => a + e.turns, 0);
+  const cost = es.reduce((a, e) => a + (e.costUSD || 0), 0);
+  const row = {
+    config: k,
+    completion: mean(es.map((e) => (e.completed ? 1 : 0))),
+    perLevel: per.map((xs) => ({ cleared: xs.filter((e) => e.completed).length, n: xs.length })),
+    kills: mean(es.map((e) => e.kills / e.totalKills)),
+    deaths: mean(es.map((e) => e.deaths)),
+    turns: turns / es.length,
+    costPerEpisode: cost / es.length,
+    costPerTurn: turns ? cost / turns : 0,
+    secPerTurn: mean(es.map((e) => e.avgLatency || 0)),
+  };
+  summary.push(row);
+  md += `| ${k} | **${pct(row.completion)}** | ${row.perLevel.map((p) => `${p.cleared}/${p.n}`).join(' | ')} | ${pct(row.kills)} | ${row.deaths.toFixed(1)} | ${row.turns.toFixed(0)} | $${row.costPerEpisode.toFixed(3)} | $${row.costPerTurn.toFixed(4)} | ${row.secPerTurn.toFixed(1)} |\n`;
 }
 fs.writeFileSync(path.join(OUT, 'summary.md'), md);
 fs.writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify({ args, summary, episodes: results }, null, 2));

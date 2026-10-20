@@ -7,7 +7,7 @@ import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './ga
 import { emptyIntent, DT, WEAPON_ORDER, SKILLS, type Intent } from './game/world';
 import { initAudio, playMusic, audioSettings, applyVolumes, currentMusic } from './audio/audio';
 import { ChonkAgent, type TurnRecord } from './agent/agent';
-import { hasDevProxy } from './agent/mistral';
+import { hasDevProxy, PROVIDERS, type Provider } from './agent/mistral';
 import type { ObsMode } from './agent/perception';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -169,10 +169,51 @@ function startHuman() {
 
 // ---------------- agent panel ----------------
 const keyInput = $<HTMLInputElement>('api-key');
-try { keyInput.value = localStorage.getItem('chonk.mistralKey') ?? ''; } catch { /* storage blocked */ }
-keyInput.addEventListener('change', () => { try { localStorage.setItem('chonk.mistralKey', keyInput.value.trim()); } catch { /* ignore */ } });
-let devProxy = false;
-hasDevProxy().then((ok) => { devProxy = ok; $('proxy-note').classList.toggle('hidden', !ok); });
+const modelSelect = $<HTMLSelectElement>('model-select');
+const modelInput = $<HTMLInputElement>('model');
+const store = {
+  get: (k: string) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* storage blocked */ } },
+};
+let provider: Provider = (store.get('chonk.provider') as Provider) || 'mistral';
+const devProxy: Record<Provider, boolean> = { mistral: false, openrouter: false };
+
+function selectedModel() {
+  return modelSelect.value === '__custom' ? modelInput.value.trim() : modelSelect.value;
+}
+
+function setProvider(p: Provider) {
+  provider = p;
+  store.set('chonk.provider', p);
+  const P = PROVIDERS[p];
+  document.querySelectorAll<HTMLButtonElement>('#provider button').forEach((b) => b.classList.toggle('on', b.dataset.provider === p));
+  $('key-label').textContent = `${P.label} API key`;
+  keyInput.placeholder = `paste your key from ${P.keyHint} (kept in this browser only)`;
+  keyInput.value = store.get(`chonk.key.${p}`) ?? '';
+  modelSelect.innerHTML = P.models.map((m) => `<option value="${m.id}">${m.label} · ${m.id}</option>`).join('') + '<option value="__custom">Custom…</option>';
+  const saved = store.get(`chonk.model.${p}`);
+  if (saved && P.models.some((m) => m.id === saved)) modelSelect.value = saved;
+  else if (saved) { modelSelect.value = '__custom'; modelInput.value = saved; }
+  modelInput.classList.toggle('hidden', modelSelect.value !== '__custom');
+  updateProxyNote();
+}
+
+function updateProxyNote() {
+  const note = $('proxy-note');
+  const env = provider === 'mistral' ? 'MISTRAL_STUDIO_API_KEY' : 'OPEN_ROUTER_API_KEY';
+  note.textContent = `✅ Dev proxy detected: using ${env} from .env (leave the key empty).`;
+  note.classList.toggle('hidden', !devProxy[provider]);
+}
+
+document.querySelectorAll<HTMLButtonElement>('#provider button').forEach((b) => b.addEventListener('click', () => setProvider(b.dataset.provider as Provider)));
+keyInput.addEventListener('change', () => store.set(`chonk.key.${provider}`, keyInput.value.trim()));
+modelSelect.addEventListener('change', () => {
+  modelInput.classList.toggle('hidden', modelSelect.value !== '__custom');
+  if (modelSelect.value !== '__custom') store.set(`chonk.model.${provider}`, modelSelect.value);
+});
+modelInput.addEventListener('change', () => store.set(`chonk.model.${provider}`, modelInput.value.trim()));
+setProvider(provider);
+(['mistral', 'openrouter'] as Provider[]).forEach((p) => hasDevProxy(p).then((ok) => { devProxy[p] = ok; updateProxyNote(); }));
 
 function setAgentButtons(running: boolean) {
   ($('agent-stop') as HTMLButtonElement).disabled = !running;
@@ -191,15 +232,16 @@ function openAgentSetup() {
   if (mode === 'human') toMenu();
   showBrain(true);
   ($('setup') as HTMLDetailsElement).open = true;
-  setStatus(devProxy || keyInput.value.trim() ? 'Ready. Press Start Le Chonk.' : 'Paste your Mistral API key, then press Start Le Chonk.');
-  if (!devProxy && !keyInput.value.trim()) keyInput.focus();
+  const ready = devProxy[provider] || keyInput.value.trim();
+  setStatus(ready ? 'Ready. Press Start Le Chonk.' : `Paste your ${PROVIDERS[provider].label} API key, then press Start Le Chonk.`);
+  if (!ready) keyInput.focus();
 }
 
 function startAgent() {
   initAudio();
   const key = keyInput.value.trim();
-  if (!key && !devProxy) {
-    setStatus('Paste your Mistral API key first. Get one at console.mistral.ai.', true);
+  if (!key && !devProxy[provider]) {
+    setStatus(`Paste your ${PROVIDERS[provider].label} API key first (${PROVIDERS[provider].keyHint}).`, true);
     keyInput.focus();
     return;
   }
@@ -211,13 +253,13 @@ function startAgent() {
   mode = 'agent';
   game.newGame(difficulty, Number(($('start-level') as HTMLSelectElement).value), Math.floor(Math.random() * 1e6));
   agent = new ChonkAgent(game, screen, {
-    model: $<HTMLInputElement>('model').value.trim() || 'mistral-large-4',
+    model: selectedModel() || PROVIDERS[provider].models[0].id,
     obsMode: ($('obs') as HTMLSelectElement).value as ObsMode,
     reasoning: ($('reasoning') as HTMLSelectElement).value as 'none' | 'high',
     maxTurns: Number($<HTMLInputElement>('max-turns').value) || 400,
     skill: difficulty,
     speed: Number(($('speed') as HTMLSelectElement).value),
-  }, { apiKey: key || null });
+  }, { provider, apiKey: key || null });
   agent.onUpdate = onAgentUpdate;
   agent.beforeCapture = drawGameFrame;
   setAgentButtons(true);
@@ -318,7 +360,7 @@ function drawGameFrame() {
     automap: showAutomap,
     ruler: mode === 'agent',
     showMessages: true,
-    agentBanner: mode === 'agent' ? `${(agent?.cfg.model ?? '').toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
+    agentBanner: mode === 'agent' ? `${(agent?.cfg.model ?? '').split('/').pop()!.toUpperCase()} / TURN ${agent ? agent.turns.length + (agent.status === 'thinking' ? 1 : 0) : 0}` : undefined,
   });
 }
 
@@ -369,7 +411,7 @@ function frame(now: number) {
       drawVictory(sctx, game.stateT, [
         `KILLS ${r.kills}/${r.totalKills}   SECRETS ${r.secrets}   DEATHS ${r.deaths}`,
         `TOTAL TIME ${fmtTime(r.time)}   DIFFICULTY ${game.skillName}`,
-        agent ? `${agent.turns.length} TURNS BY ${agent.cfg.model.toUpperCase()}  $${agent.cost.toFixed(2)}` : '',
+        agent ? `${agent.turns.length} TURNS BY ${agent.cfg.model.split('/').pop()!.toUpperCase()}  $${agent.cost.toFixed(2)}` : '',
       ]);
     } else if (game.state === 'title') {
       toMenu();
@@ -383,7 +425,7 @@ requestAnimationFrame(frame);
 
 export interface EpisodeOptions {
   model: string; obsMode: ObsMode; reasoning: 'none' | 'high'; skill: number; level: number;
-  maxTurns: number; seed: number; speed: number; maxDeaths: number; apiKey?: string;
+  maxTurns: number; seed: number; speed: number; maxDeaths: number; apiKey?: string; provider?: Provider;
 }
 
 /** Run one benchmark episode (one level) and resolve with the exported run. Used by bench/bench.mjs. */
@@ -397,7 +439,7 @@ async function runEpisode(o: EpisodeOptions) {
   agent = new ChonkAgent(game, screen, {
     model: o.model, obsMode: o.obsMode, reasoning: o.reasoning, maxTurns: o.maxTurns, skill: o.skill,
     speed: o.speed, singleLevel: true, maxDeaths: o.maxDeaths,
-  }, { apiKey: o.apiKey || null });
+  }, { provider: o.provider ?? 'mistral', apiKey: o.apiKey || null });
   agent.onUpdate = onAgentUpdate;
   agent.beforeCapture = drawGameFrame;
   await agent.run();

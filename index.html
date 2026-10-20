@@ -53,12 +53,19 @@
 
           <details id="setup" open>
             <summary>Setup</summary>
-            <label>Mistral API key
+            <div class="seg" id="provider" role="radiogroup" aria-label="API provider">
+              <button type="button" data-provider="mistral" class="on">Mistral Studio</button>
+              <button type="button" data-provider="openrouter">OpenRouter</button>
+            </div>
+            <label><span id="key-label">Mistral API key</span>
               <input id="api-key" type="password" placeholder="paste your key (kept in this browser only)" autocomplete="off" />
             </label>
-            <div id="proxy-note" class="note hidden">✅ Dev proxy detected: using MISTRAL_STUDIO_API_KEY from .env (leave the field empty).</div>
+            <div id="proxy-note" class="note hidden"></div>
+            <label>Model
+              <select id="model-select"></select>
+            </label>
+            <input id="model" class="hidden" placeholder="custom model id, e.g. mistralai/mistral-large-4-0" />
             <div class="row">
-              <label>Model <input id="model" value="mistral-large-4" /></label>
               <label>Difficulty
                 <select id="difficulty">
                   <option value="0">Easy</option>
@@ -66,8 +73,6 @@
                   <option value="2">Hard</option>
                 </select>
               </label>
-            </div>
-            <div class="row">
               <label>Observation
                 <select id="obs">
                   <option value="vision">Vision only</option>
@@ -75,14 +80,14 @@
                   <option value="radar">Vision + automap + radar</option>
                 </select>
               </label>
+            </div>
+            <div class="row">
               <label>Reasoning
                 <select id="reasoning">
                   <option value="none">off (fast)</option>
                   <option value="high">high (slower, smarter)</option>
                 </select>
               </label>
-            </div>
-            <div class="row">
               <label>Start level
                 <select id="start-level">
                   <option value="0">E1M1 Le Salon</option>
@@ -90,8 +95,8 @@
                   <option value="2">E1M3 La Cave (boss)</option>
                 </select>
               </label>
-              <label>Max turns <input id="max-turns" type="number" value="400" min="1" /></label>
             </div>
+            <label>Max turns <input id="max-turns" type="number" value="400" min="1" /></label>
             <button id="agent-start" class="btn hot big">Start Le Chonk</button>
           </details>
 

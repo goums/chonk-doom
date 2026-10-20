@@ -49,6 +49,7 @@ export interface TurnRecord {
   notes: string;
   usage: { prompt: number; completion: number; cached: number };
   latencyMs: number;
+  costUSD?: number;
   hp: number;
   kills: number;
   error?: string;
@@ -86,7 +87,12 @@ export class ChonkAgent {
     this.client = client;
   }
 
+  /** Real cost reported by the provider (OpenRouter), accumulated per request. */
+  costReported = 0;
+  hasReportedCost = false;
+
   get cost() {
+    if (this.hasReportedCost) return this.costReported;
     const u = this.usage;
     return ((u.prompt - u.cached) * PRICE.input + u.cached * PRICE.cachedInput + u.completion * PRICE.output) / 1e6;
   }
@@ -169,6 +175,22 @@ export class ChonkAgent {
     return 'Nearest unexplored frontier tiles: ' + pts.slice(0, 6).map(([x, y]) => `(${x},${y})`).join(' ');
   }
 
+  /** Items seen so far, with exact coordinates (so the model doesn't have to count automap columns). */
+  private knownItems(): string {
+    const w = this.game.world;
+    const p = w.player;
+    const name: Record<string, string> = {
+      catnip: 'health +10', kibble: 'health +25', tuna: 'health +100', box: 'armor', bullets: 'bullets', shells: 'shells',
+      ammobox: 'ammo box', shotgun: 'SHOTGUN', chaingun: 'CHAINGUN', key_red: 'RED KEY', key_blue: 'BLUE KEY', key_yellow: 'YELLOW KEY',
+    };
+    const its = w.items
+      .filter((i) => !i.taken && w.explored[Math.floor(i.y) * w.W + Math.floor(i.x)])
+      .sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))
+      .slice(0, 8)
+      .map((i) => `${name[i.kind] ?? i.kind} at (${Math.floor(i.x)},${Math.floor(i.y)})`);
+    return its.length ? `Items you have seen (walk onto them to pick up, e.g. go_to): ${its.join('; ')}.` : 'No items seen yet.';
+  }
+
   /** Closed doors seen so far: the most common way forward, so list them explicitly. */
   private knownDoors(): string {
     const w = this.game.world;
@@ -199,6 +221,7 @@ export class ChonkAgent {
       parts.push('Automap (explored area):\n' + automapAscii(w, this.cfg.obsMode === 'radar'));
       parts.push(this.frontier());
       parts.push(this.knownDoors());
+      parts.push(this.knownItems());
     }
     // simple stuck detector
     const p = w.player;
@@ -337,9 +360,10 @@ export class ChonkAgent {
       this.usage.prompt += u.prompt_tokens;
       this.usage.completion += u.completion_tokens;
       this.usage.cached += cached;
+      if (typeof u.cost === 'number') { this.costReported += u.cost; this.hasReportedCost = true; rec.costUSD = u.cost; }
       const msg = resp.choices[0].message;
       const { text, thinking } = splitContent(msg.content);
-      rec.reasoning = thinking;
+      rec.reasoning = thinking || msg.reasoning || '';
       const tc = msg.tool_calls?.[0];
       const act = this.parseAct(tc, text);
       if (!act || !act.actions.length) {
@@ -397,6 +421,7 @@ export class ChonkAgent {
       version: 1,
       date: new Date().toISOString(),
       config: this.cfg,
+      provider: this.client.provider,
       usage: this.usage,
       costUSD: this.cost,
       run: g.run,

@@ -473,7 +473,8 @@ export class World {
     };
     for (const e of this.enemies) {
       if (e.state === 'dead' || e.state === 'dying') continue;
-      const t = test(e.x, e.y, ENEMIES[e.kind].radius + (melee ? 0.25 : 0.05));
+      // forgiving hit tolerance (like DOOM's generous hitboxes), so close-range shots connect
+      const t = test(e.x, e.y, ENEMIES[e.kind].radius + (melee ? 0.25 : 0.16));
       if (t >= 0 && t < wall.dist && t <= range && (!best || t < best.t)) best = { t, e };
     }
     for (const d of this.decor) {
