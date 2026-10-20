@@ -81,6 +81,26 @@ screen.addEventListener('click', () => {
   if (mode === 'menu' && !currentMusic()) playMusic('title');
 });
 
+// ---- touch controls: each button presses / releases a key, so menus, respawn and play all work the same ----
+for (const b of document.querySelectorAll<HTMLButtonElement>('#touchpad .tp')) {
+  const code = b.dataset.key!, key = b.dataset.char ?? code;
+  const send = (type: 'keydown' | 'keyup') => window.dispatchEvent(new KeyboardEvent(type, { code, key }));
+  let down = false;
+  const press = (e: PointerEvent) => { e.preventDefault(); if (down) return; down = true; b.classList.add('on'); try { b.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ } send('keydown'); };
+  const release = () => { if (!down) return; down = false; b.classList.remove('on'); send('keyup'); };
+  b.addEventListener('pointerdown', press);
+  b.addEventListener('pointerup', release);
+  b.addEventListener('pointercancel', release);
+  b.addEventListener('lostpointercapture', release);
+  b.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+// collapsible top menu on small screens
+$('menu-toggle').addEventListener('click', () => {
+  const open = document.body.classList.toggle('menu-open');
+  $('menu-toggle').setAttribute('aria-expanded', String(open));
+});
+$('topnav').addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('.btn')) document.body.classList.remove('menu-open'); });
+
 function humanIntent(): Intent {
   const it = emptyIntent();
   const k = (c: string) => keys.has(c);
@@ -423,6 +443,7 @@ let last = performance.now();
 let titleT = 0;
 
 function frame(now: number) {
+  if (document.body.dataset.mode !== mode) document.body.dataset.mode = mode;
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   titleT += dt;

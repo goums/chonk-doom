@@ -222,7 +222,7 @@ node bench/publish.mjs
 
 The last command rebuilds the charts, the tables above and the site data from the raw logs in `runs/`.
 
-**Play yourself:** arrows move, Space shoots, 1-4 weapons, P pause, Tab map.
+**Play yourself:** arrows move, Space shoots, 1-4 weapons, P pause, Tab map. On phones: on-screen d-pad and SHOOT bar.
 
 ---
 

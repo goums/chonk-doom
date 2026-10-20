@@ -105,6 +105,17 @@ tr.chonk td:first-child { color: var(--yellow); font-weight: 700; }
 .bloopers p { margin: 0; font-size: 14.5px; color: #d4cad8; }
 footer { text-align: center; padding: 30px; color: var(--muted); border-top: 1px solid var(--panel2); }
 
+nav .menu-toggle { display: none; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; font-size: 20px; padding: 4px 12px; cursor: pointer; }
+@media (max-width: 760px) {
+  nav.top { flex-wrap: nowrap; padding: 10px 16px; }
+  nav .menu-toggle { display: block; }
+  nav .links { display: none; position: absolute; top: 100%; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 4px; padding: 10px 16px 16px; background: rgba(36,27,38,0.98); border-bottom: 1px solid var(--panel2); }
+  body.menu-open nav .links { display: flex; }
+  nav .links a { padding: 8px 4px; font-size: 16px; }
+  nav .links .cta, nav .links .gh { text-align: center; }
+  .hero { padding: 30px 16px 20px; gap: 24px; }
+  main { padding: 0 16px 40px; }
+}
 @media (max-width: 900px) {
   .hero, .two { grid-template-columns: 1fr; }
   .hero-stats { grid-template-columns: repeat(2, 1fr); }

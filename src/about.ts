@@ -110,6 +110,10 @@ async function obs() {
   try { const r = await fetch('data/observation.txt'); if (r.ok) $('obs-sample').textContent = await r.text(); } catch { /* ignore */ }
 }
 
+// collapsible menu on small screens
+$('menu-toggle').addEventListener('click', () => $('menu-toggle').setAttribute('aria-expanded', String(document.body.classList.toggle('menu-open'))));
+$('links').addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) document.body.classList.remove('menu-open'); });
+
 try { await document.fonts.load("12px 'Press Start 2P'"); } catch { /* offline */ }
 cast();
 results();

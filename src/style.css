@@ -254,3 +254,38 @@ body.pixel kbd { font-weight: 700; font-size: 14px; }
 #replay-box select { margin-bottom: 8px; }
 #replay-box #replay-start { width: 100%; }
 #replay-box .replay-or { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+/* ---- mobile: collapsible menu + touch controls ---- */
+.menu-toggle { display: none; }
+#touchpad { display: none; width: 100%; max-width: 640px; justify-content: space-between; align-items: center; gap: 16px; padding: 4px 0 10px; user-select: none; -webkit-user-select: none; touch-action: none; }
+#touchpad .tp { -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; -webkit-user-select: none; font-family: 'Fredoka', 'Inter', sans-serif; font-weight: 700; color: #fff; background: #3e3546; border: 2px solid #625565; border-radius: 12px; box-shadow: 0 4px 0 #160f17; cursor: pointer; }
+#touchpad .tp.on { transform: translateY(3px); box-shadow: 0 1px 0 #160f17; background: #625565; }
+#touchpad .dpad { display: grid; grid-template-columns: repeat(3, 64px); grid-template-rows: repeat(2, 64px); gap: 6px; }
+#touchpad .dpad .tp { font-size: 26px; }
+#touchpad .dpad .up { grid-column: 2; grid-row: 1; }
+#touchpad .dpad .left { grid-column: 1; grid-row: 2; }
+#touchpad .dpad .down { grid-column: 2; grid-row: 2; }
+#touchpad .dpad .right { grid-column: 3; grid-row: 2; }
+#touchpad .tp-side { flex: 1; display: flex; flex-direction: column; gap: 8px; max-width: 260px; }
+#touchpad .tp-weapons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+#touchpad .wpn { height: 40px; font-size: 16px; }
+#touchpad .fire { height: 86px; font-size: 22px; letter-spacing: 1px; background: #e83b3b; border-color: #f9c22b; color: #fff; text-shadow: 2px 2px 0 #2e222f; }
+#touchpad .fire.on { background: #b33831; }
+/* shown on touch screens or narrow windows, except while Le Chonk plays */
+@media (pointer: coarse), (max-width: 760px) {
+  #touchpad { display: flex; }
+  body[data-mode="agent"] #touchpad { display: none; }
+  #help { display: none; }
+  #stage-bar { justify-content: center; }
+}
+@media (max-width: 760px) {
+  header { flex-wrap: nowrap; }
+  .logo { font-size: 16px; }
+  .menu-toggle { display: inline-flex; font-size: 20px; padding: 0 14px; }
+  #topnav { display: none; position: absolute; top: 62px; right: 10px; left: 10px; z-index: 20; flex-direction: column; align-items: stretch; gap: 8px; padding: 12px; background: var(--panel); border: 2px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  body.menu-open #topnav { display: flex; }
+  #topnav .btn { width: 100%; justify-content: flex-start; }
+  header { position: relative; }
+  main { padding: 10px 8px; }
+  #touchpad .dpad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(2, 58px); }
+}

@@ -16,7 +16,8 @@
     <div id="app">
       <header>
         <div class="brand"><span class="logo">CHONK DOOM</span></div>
-        <nav>
+        <button id="menu-toggle" class="btn menu-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+        <nav id="topnav">
           <button id="btn-human" class="btn" title="Play the game yourself">Play Yourself</button>
           <button id="btn-agent" class="btn hot" title="Let Mistral Large 4 play">Let Le Chonk Play</button>
           <a id="btn-about" class="btn" href="about.html" title="How it works: harness, benchmark, evals">How It Works</a>
@@ -49,6 +50,23 @@
             <button id="map-btn" class="btn big hidden" title="Toggle the map (Tab)">Map</button>
             <button id="pause-btn" class="btn hot big hidden" title="Pause (P)">Pause</button>
           </div>
+          </div>
+          <div id="touchpad" aria-label="Touch controls">
+            <div class="dpad">
+              <button class="tp up" data-key="ArrowUp" aria-label="Forward">▲</button>
+              <button class="tp left" data-key="ArrowLeft" aria-label="Turn left">◀</button>
+              <button class="tp right" data-key="ArrowRight" aria-label="Turn right">▶</button>
+              <button class="tp down" data-key="ArrowDown" aria-label="Back">▼</button>
+            </div>
+            <div class="tp-side">
+              <div class="tp-weapons">
+                <button class="tp wpn" data-key="Digit1" data-char="1">1</button>
+                <button class="tp wpn" data-key="Digit2" data-char="2">2</button>
+                <button class="tp wpn" data-key="Digit3" data-char="3">3</button>
+                <button class="tp wpn" data-key="Digit4" data-char="4">4</button>
+              </div>
+              <button class="tp fire" data-key="Space" data-char=" " aria-label="Shoot">SHOOT</button>
+            </div>
           </div>
         </section>
 
