@@ -222,23 +222,25 @@ const Act: React.FC = () => {
   );
 };
 
+// real thought bubbles from the replays: two play with game sound only, the boss moments are voiced
+const THINKS = [
+  { id: 'q1', src: CLIPS.L2, from: at(tl3, 2), sec: 4.5 },
+  { id: 'q2', src: CLIPS.L2, from: at(tl3, 6), sec: 4.5 },
+  { id: 'q3', src: CLIPS.L3, from: at(tl4, 17), voice: true },
+  { id: 'q4', src: CLIPS.L3, from: at(tl4, 29, 3.2), voice: true },
+];
+const thinkFrames = (q: (typeof THINKS)[number]) => (q.voice ? len([q.id], 0.5) : Math.round((q.sec ?? 4) * FPS));
 const Thinks: React.FC = () => {
-  const qs = [
-    { id: 'q1', src: CLIPS.L2, from: at(tl3, 2) },
-    { id: 'q2', src: CLIPS.L2, from: at(tl3, 6) },
-    { id: 'q3', src: CLIPS.L3, from: at(tl4, 17) },
-    { id: 'q4', src: CLIPS.L3, from: at(tl4, 29, 3.2) },
-  ];
   let t = 0;
   return (
     <AbsoluteFill>
-      {qs.map((q) => {
-        const d = len([q.id], 0.5);
+      {THINKS.map((q) => {
+        const d = thinkFrames(q);
         const s = (
           <Sequence key={q.id} from={t} durationInFrames={d}>
-            <Footage src={q.src} from={q.from} volume={0.3} />
+            <Footage src={q.src} from={q.from} volume={q.voice ? 0.3 : 0.7} />
             <div style={{ position: 'absolute', right: 40, top: 250 }}><Tag color={C.cyan} style={{ fontSize: 30 }}>🐱 Le Chonk thinks · real thoughts from Mistral Large 4</Tag></div>
-            <Voice id={q.id} delay={0.25} />
+            {q.voice && <Voice id={q.id} delay={0.25} />}
           </Sequence>
         );
         t += d;
@@ -341,7 +343,7 @@ const SCENES: { C: React.FC; frames: number }[] = [
   { C: Freeze, frames: len(['freeze']) },
   { C: Ruler, frames: len(['ruler']) },
   { C: Act, frames: len(['act'], 1.2) },
-  { C: Thinks, frames: ['q1', 'q2', 'q3', 'q4'].reduce((a, id) => a + len([id], 0.5), 0) },
+  { C: Thinks, frames: THINKS.reduce((a, q) => a + thinkFrames(q), 0) },
   { C: Bench, frames: len(['bench'], 1.2) },
   { C: Stack, frames: len(['stack'], 1.0) },
   { C: Outro, frames: len(['outro'], 3.5) },
