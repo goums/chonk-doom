@@ -10,7 +10,8 @@
 The house has been invaded by angry dogs and mice. Le Chonk, a very large and very proud orange tabby, grabs his hairball gun.
 Three levels (Le Salon → La Cuisine → La Cave), colored-collar keys, secret walls, explosive catnip barrels, a sardine shotgun,
 a laser pointer, and **REX**, an armored Doberman boss. Everything (textures, sprites, the Doom-style face, music, sounds) is
-generated procedurally at runtime: there are **no asset files**.
+generated procedurally at runtime: there are **no asset files**. Two graphics styles share the same art code:
+**🎨 Smooth** (default: soft, minimal, anti-aliased vector shapes) and **🕹 Retro** (crunchy 1993 pixels). Use the STYLE button or `?style=retro`.
 
 | | |
 |---|---|

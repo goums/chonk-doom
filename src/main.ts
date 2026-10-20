@@ -1,5 +1,6 @@
 import './style.css';
-import { Renderer, SCREEN_W, SCREEN_H } from './engine/renderer';
+import { STYLE, setStyle } from './art/style';
+import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './game/hud';
 import { emptyIntent, DT, WEAPON_ORDER, SKILLS, type Intent } from './game/world';
@@ -10,9 +11,18 @@ import type { ObsMode } from './agent/perception';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
+document.body.classList.add(STYLE.name);
+$('btn-style').textContent = STYLE.smooth ? '🎨 STYLE: SMOOTH' : '🎨 STYLE: RETRO';
+$('btn-style').addEventListener('click', () => setStyle(STYLE.smooth ? 'retro' : 'smooth'));
+// web fonts must be ready before art with text is generated
+try { await Promise.race([document.fonts.load(`600 12px ${STYLE.font}`), new Promise((r) => setTimeout(r, 2500))]); } catch { /* offline */ }
+
 const screen = $<HTMLCanvasElement>('screen');
+screen.width = SCREEN_W * STYLE.screen;
+screen.height = SCREEN_H * STYLE.screen;
 const sctx = screen.getContext('2d')!;
-sctx.imageSmoothingEnabled = false;
+sctx.imageSmoothingEnabled = STYLE.smooth;
+sctx.setTransform(STYLE.screen, 0, 0, STYLE.screen, 0, 0);
 const renderer = new Renderer();
 const game = new Game();
 renderer.load(game.world);
@@ -354,7 +364,7 @@ function showReplayTurn(i: number) {
 let turboFrame = 0;
 function drawGameFrame() {
   renderer.render();
-  sctx.drawImage(renderer.canvas, 0, 0);
+  sctx.drawImage(renderer.canvas, 0, 0, SCREEN_W, VIEW_H);
   drawHud(sctx, game.world, {
     automap: showAutomap,
     ruler: mode === 'agent',

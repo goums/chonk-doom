@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { World } from '../game/world';
 import { WALL_CHARS, ENEMIES } from '../game/world';
 import { buildTextures, type TextureSet } from '../art/textures';
+import { STYLE } from '../art/style';
 import { buildEnemyFrames, buildItems, buildFx, type EnemyKind, type EnemyFrame, type ItemKind, type FxKind } from '../art/sprites';
 
 export const SCREEN_W = 384;
@@ -16,9 +17,16 @@ export const EYE = 0.58;
 
 function canvasTex(c: HTMLCanvasElement, repeat = false) {
   const t = new THREE.CanvasTexture(c);
-  t.magFilter = THREE.NearestFilter;
-  t.minFilter = THREE.NearestFilter;
-  t.generateMipmaps = false;
+  if (STYLE.smooth) {
+    t.magFilter = THREE.LinearFilter;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.generateMipmaps = true;
+    t.anisotropy = 8;
+  } else {
+    t.magFilter = THREE.NearestFilter;
+    t.minFilter = THREE.NearestFilter;
+    t.generateMipmaps = false;
+  }
   t.colorSpace = THREE.SRGBColorSpace;
   if (repeat) t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
@@ -42,16 +50,24 @@ export class Renderer {
   private exitMeshes: THREE.Mesh[] = [];
 
   constructor() {
-    this.gl = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+    this.gl = new THREE.WebGLRenderer({ antialias: STYLE.smooth, preserveDrawingBuffer: true });
     this.gl.setPixelRatio(1);
-    this.gl.setSize(SCREEN_W, VIEW_H, false);
+    this.gl.setSize(SCREEN_W * STYLE.screen, VIEW_H * STYLE.screen, false);
     this.gl.outputColorSpace = THREE.SRGBColorSpace;
     const vfov = 2 * Math.atan(Math.tan(HFOV / 2) / (SCREEN_W / VIEW_H));
     this.camera = new THREE.PerspectiveCamera((vfov * 180) / Math.PI, SCREEN_W / VIEW_H, 0.05, 60);
     this.scene.add(this.levelGroup);
-    this.scene.fog = new THREE.Fog(0x120a14, 5, 24);
-    this.scene.background = new THREE.Color(0x120a14);
-    this.scene.add(new THREE.AmbientLight(0xffffff, 1.45));
+    if (STYLE.smooth) {
+      // soft, airy look: warm haze instead of darkness
+      this.scene.fog = new THREE.Fog(0xe8d9cf, 7, 30);
+      this.scene.background = new THREE.Color(0xe8d9cf);
+      this.scene.add(new THREE.HemisphereLight(0xfff4e6, 0xb7a6c9, 1.1));
+      this.scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    } else {
+      this.scene.fog = new THREE.Fog(0x120a14, 5, 24);
+      this.scene.background = new THREE.Color(0x120a14);
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.45));
+    }
     this.muzzle = new THREE.PointLight(0xffd27a, 0, 7, 1.5);
     this.scene.add(this.muzzle);
 
@@ -182,7 +198,7 @@ export class Renderer {
   private sprite(id: number, tex: THREE.Texture, x: number, y: number, z: number, h: number, w?: number) {
     let s = this.sprites.get(id);
     if (!s) {
-      s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: false, alphaTest: 0.5, fog: true }));
+      s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: STYLE.smooth, alphaTest: STYLE.smooth ? 0.05 : 0.5, fog: true }));
       s.center.set(0.5, 0);
       this.scene.add(s);
       this.sprites.set(id, s);

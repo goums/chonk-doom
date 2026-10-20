@@ -1,28 +1,52 @@
 // 2D overlay: weapon view, status bar with Le Chonk's face, messages, automap, agent ruler.
 import { SCREEN_W, SCREEN_H, BAR_H, VIEW_H, HFOV } from '../engine/renderer';
 import { text, textWidth, px, makeCanvas, noise, type Ctx } from '../art/pixel';
+import { STYLE } from '../art/style';
 import { buildFaces, FACE_W, FACE_H, type Expression } from '../art/face';
 import { buildWeapons, WEAPON_W, WEAPON_H, type WeaponFrame } from '../art/weapons';
 import { buildItems } from '../art/sprites';
 import { World, WEAPONS, WALL_CHARS, type KeyColor } from './world';
 
-const faces = buildFaces();
-const weapons = buildWeapons();
-const items = buildItems();
+// Art is built lazily (after web fonts are loaded, so smooth-mode text renders correctly).
+let faces: ReturnType<typeof buildFaces>;
+let weapons: ReturnType<typeof buildWeapons>;
+let items: ReturnType<typeof buildItems>;
+let barBg: HTMLCanvasElement;
 
-const barBg = (() => {
+export function initHudArt() {
+  if (faces) return;
+  faces = buildFaces();
+  weapons = buildWeapons();
+  items = buildItems();
   const [c, ctx] = makeCanvas(SCREEN_W, BAR_H);
-  ctx.fillStyle = '#4a3f4f';
-  ctx.fillRect(0, 0, SCREEN_W, BAR_H);
-  noise(ctx, SCREEN_W, BAR_H, 30, 99);
-  ctx.fillStyle = '#7d6b85';
-  ctx.fillRect(0, 0, SCREEN_W, 1);
-  ctx.fillStyle = '#211a24';
-  ctx.fillRect(0, BAR_H - 1, SCREEN_W, 1);
-  return c;
-})();
+  if (STYLE.smooth) {
+    const g = ctx.createLinearGradient(0, 0, 0, BAR_H);
+    g.addColorStop(0, '#3b2a4a');
+    g.addColorStop(1, '#241a2e');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, SCREEN_W, BAR_H);
+    ctx.fillStyle = 'rgba(255,175,0,0.55)';
+    ctx.fillRect(0, 0, SCREEN_W, 0.6);
+  } else {
+    ctx.fillStyle = '#4a3f4f';
+    ctx.fillRect(0, 0, SCREEN_W, BAR_H);
+    noise(ctx, SCREEN_W, BAR_H, 30, 99);
+    ctx.fillStyle = '#7d6b85';
+    ctx.fillRect(0, 0, SCREEN_W, 1);
+    ctx.fillStyle = '#211a24';
+    ctx.fillRect(0, BAR_H - 1, SCREEN_W, 1);
+  }
+  barBg = c;
+}
 
 function panel(ctx: Ctx, x: number, w: number) {
+  if (STYLE.smooth) {
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.beginPath();
+    ctx.roundRect(x + 2, VIEW_H + 4, w - 4, BAR_H - 8, 4);
+    ctx.fill();
+    return;
+  }
   ctx.fillStyle = '#2a2230';
   ctx.fillRect(x + 1, VIEW_H + 3, w - 2, BAR_H - 6);
   ctx.fillStyle = '#16111a';
@@ -76,6 +100,7 @@ export interface HudOptions {
 }
 
 export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
+  initHudArt();
   const p = w.player;
 
   // ---- weapon ----
@@ -90,7 +115,7 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
     const bx = Math.cos(p.bob) * 6 * Math.min(1, p.moving);
     const by = Math.abs(Math.sin(p.bob)) * 5 * Math.min(1, p.moving);
     const sw = p.pendingWeapon ? Math.sin(Math.max(0, p.switchT) * Math.PI * 4) * 40 : 0;
-    ctx.drawImage(weapons[wid][frame], Math.round(SCREEN_W / 2 - WEAPON_W / 2 + bx), Math.round(VIEW_H - WEAPON_H + 8 + by + Math.abs(sw)));
+    ctx.drawImage(weapons[wid][frame], Math.round(SCREEN_W / 2 - WEAPON_W / 2 + bx), Math.round(VIEW_H - WEAPON_H + 8 + by + Math.abs(sw)), WEAPON_W, WEAPON_H);
   }
 
   // crosshair
@@ -148,7 +173,7 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   }
 
   // ---- status bar ----
-  ctx.drawImage(barBg, 0, VIEW_H);
+  ctx.drawImage(barBg, 0, VIEW_H, SCREEN_W, BAR_H);
   const ammoType = WEAPONS[p.weapon].ammo;
   panel(ctx, 0, 60);
   bigNum(ctx, ammoType ? String(p.ammo[ammoType]) : '--', 30, VIEW_H + 7);
@@ -164,10 +189,17 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
     text(ctx, String(i + 1), 133 + i * 10, VIEW_H + 10, cur ? '#fff' : has ? '#ffd23f' : '#5a4c60', 2);
   });
   // face
-  ctx.fillStyle = '#1a1220';
-  ctx.fillRect(172, VIEW_H + 2, 42, BAR_H - 4);
+  if (STYLE.smooth) {
+    ctx.fillStyle = 'rgba(255,130,4,0.18)';
+    ctx.beginPath();
+    ctx.roundRect(173, VIEW_H + 2, 40, BAR_H - 4, 6);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#1a1220';
+    ctx.fillRect(172, VIEW_H + 2, 42, BAR_H - 4);
+  }
   const face = faces.get(faceAnim.pick(w))!;
-  ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2);
+  ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2, FACE_W, FACE_H);
   panel(ctx, 214, 72);
   bigNum(ctx, `${p.armor}%`, 250, VIEW_H + 7);
   text(ctx, 'ARMOR', 240, VIEW_H + 29, '#d8c8e0');
@@ -241,6 +273,21 @@ export function drawAutomap(ctx: Ctx, w: World, opts: { full?: boolean; x?: numb
 let logo: HTMLCanvasElement | null = null;
 function getLogo() {
   if (logo) return logo;
+  if (STYLE.smooth) {
+    const [c, ctx] = makeCanvas(300, 60);
+    const word = 'CHONK DOOM';
+    ctx.font = `700 40px ${STYLE.font}, system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(60,10,0,0.5)';
+    ctx.fillText(word, 152, 9);
+    const g = ctx.createLinearGradient(0, 6, 0, 50);
+    for (const [o, col] of [[0, '#FFD800'], [0.3, '#FFAF00'], [0.55, '#FF8205'], [0.78, '#FA500F'], [1, '#E10500']] as [number, string][]) g.addColorStop(o, col);
+    ctx.fillStyle = g;
+    ctx.fillText(word, 150, 6);
+    logo = c;
+    return c;
+  }
   const [c, ctx] = makeCanvas(300, 60);
   const word = 'CHONK DOOM';
   for (let i = 0; i < 4; i++) text(ctx, word, 150 - textWidth(word, 7) / 2 + i, 6 + i, ['#5a0f14', '#8a1a10', '#c2410c', '#c2410c'][i], 7);
@@ -263,6 +310,7 @@ function getLogo() {
 }
 
 export function drawTitle(ctx: Ctx, t: number, lines: string[], selected: number, footer: string[]) {
+  initHudArt();
   ctx.fillStyle = '#120a14';
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
   // starfield of paw prints
@@ -272,7 +320,7 @@ export function drawTitle(ctx: Ctx, t: number, lines: string[], selected: number
     px(ctx, x, y, i % 5 ? '#3a2a44' : '#6a4a74', 2, 2);
   }
   const l = getLogo();
-  ctx.drawImage(l, (SCREEN_W - 300) / 2, 18 + Math.sin(t * 2) * 2);
+  ctx.drawImage(l, (SCREEN_W - 300) / 2, 18 + Math.sin(t * 2) * 2, 300, 60);
   const sub = 'LE CHONK VS THE DOGS OF HELL';
   text(ctx, sub, (SCREEN_W - textWidth(sub)) / 2, 72, '#ffd23f', 1, '#000');
   // the chonk himself
@@ -289,6 +337,7 @@ export function drawTitle(ctx: Ctx, t: number, lines: string[], selected: number
 }
 
 export function drawIntermission(ctx: Ctx, w: World, nextName: string | null, t: number) {
+  initHudArt();
   ctx.fillStyle = '#1a0d1f';
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
   const title = `${w.level.name} COMPLETE`;
@@ -317,6 +366,7 @@ export function drawIntermission(ctx: Ctx, w: World, nextName: string | null, t:
 }
 
 export function drawVictory(ctx: Ctx, t: number, stats: string[]) {
+  initHudArt();
   ctx.fillStyle = '#0d1a10';
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
   const s = 'THE HOUSE IS SAFE!';

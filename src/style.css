@@ -32,7 +32,8 @@ nav { display: flex; gap: 8px; flex-wrap: wrap; }
 main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 14px; padding: 14px 16px; min-height: 0; }
 #stage { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
 #screen-wrap { position: relative; width: 100%; max-width: calc((100vh - 150px) * 1.6); aspect-ratio: 384 / 240; background: #000; border: 3px solid var(--line); box-shadow: 0 0 0 3px #000, 6px 6px 0 #000; }
-#screen { width: 100%; height: 100%; display: block; image-rendering: pixelated; image-rendering: crisp-edges; cursor: crosshair; }
+#screen { width: 100%; height: 100%; display: block; cursor: crosshair; }
+body.retro #screen { image-rendering: pixelated; image-rendering: crisp-edges; }
 #help { color: var(--muted); font-size: 17px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; max-width: 1000px; }
 #help .keys { display: flex; align-items: center; gap: 6px; }
 #help .k { display: inline-flex; align-items: center; gap: 3px; }
@@ -94,3 +95,26 @@ dialog menu { padding: 0; display: flex; justify-content: flex-end; }
 #replay-list h4 { margin: 4px 0; color: var(--accent2); font-family: 'Press Start 2P'; font-size: 9px; }
 .replay-item { text-align: left; display: flex; flex-direction: column; gap: 4px; }
 .replay-item small { font-family: 'VT323'; font-size: 15px; color: var(--muted); }
+
+/* ---- smooth style: soft, rounded, minimal ---- */
+body.smooth { font-family: 'Fredoka', system-ui, sans-serif; font-size: 16px; }
+body.smooth .logo { font-family: 'Fredoka'; font-weight: 700; font-size: 30px; letter-spacing: 0; filter: drop-shadow(2px 2px 0 rgba(58,10,0,0.5)); }
+body.smooth .btn { font-family: 'Fredoka'; font-weight: 600; font-size: 14px; border-radius: 10px; border-width: 1px; box-shadow: 0 2px 8px rgba(0,0,0,0.35); }
+body.smooth .btn.small { font-size: 12px; }
+body.smooth .panel-title, body.smooth summary, body.smooth dialog h3, body.smooth #replay-list h4 { font-family: 'Fredoka'; font-weight: 700; font-size: 15px; }
+body.smooth #thinking { font-family: 'Fredoka'; font-weight: 600; font-size: clamp(11px, 1.2vw, 15px); border-radius: 10px; border-width: 1px; }
+body.smooth #thinking small { font-family: 'Fredoka'; font-size: 12px; }
+body.smooth #click-hint { font-family: 'Fredoka'; font-weight: 600; font-size: 15px; }
+body.smooth #screen-wrap { border-radius: 14px; overflow: hidden; border-width: 1px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+body.smooth #brain { border-radius: 14px; border-width: 1px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); overflow: hidden; }
+body.smooth #bubble { font-family: 'Fredoka'; font-size: clamp(13px, 1.3vw, 18px); line-height: 1.25; border-radius: 14px; border-width: 2px; }
+body.smooth input, body.smooth select { font-family: 'Fredoka'; font-size: 14px; border-radius: 6px; border-width: 1px; }
+body.smooth label { font-size: 13px; }
+body.smooth .turn { border-radius: 8px; font-size: 14px; }
+body.smooth .turn ol, body.smooth .turn header { font-size: 12px; }
+body.smooth .stat { border-radius: 6px; }
+body.smooth .stat b { font-size: 16px; }
+body.smooth .stat span { font-size: 11px; }
+body.smooth .status { font-size: 14px; }
+body.smooth kbd { font-family: 'Fredoka'; font-weight: 600; font-size: 12px; border-radius: 6px; border-width: 1px; border-bottom-width: 3px; }
+body.smooth #help { font-size: 14px; }

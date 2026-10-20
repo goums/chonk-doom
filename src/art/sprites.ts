@@ -252,7 +252,7 @@ export function buildEnemyFrames(kind: EnemyKind): Record<EnemyFrame, HTMLCanvas
     if (squash < 1) {
       const sh = Math.round(h * squash);
       ctx.drawImage(base, -w * (1 - squash) * 0.25, h - sh, w * (1 + (1 - squash) * 0.5), sh);
-    } else ctx.drawImage(base, 0, 0);
+    } else ctx.drawImage(base, 0, 0, w, h);
     if (tint) {
       ctx.globalCompositeOperation = 'source-atop';
       ctx.fillStyle = tint;

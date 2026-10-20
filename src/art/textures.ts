@@ -1,5 +1,5 @@
 // Procedural wall / floor / ceiling textures (32x32, tiled with NearestFilter).
-import { makeCanvas, noise, px, rng, text, ellipse, poly, line, type Ctx } from './pixel';
+import { makeCanvas, noise, px, rng, text, ellipse, poly, line, pastel, type Ctx } from './pixel';
 
 export const TEX = 32;
 
@@ -95,7 +95,7 @@ function stone(seed: number, base: string) {
 function slime(seed: number) {
   return tex(seed, (ctx, r) => {
     const s = stone(seed + 1, '#4a5a44');
-    ctx.drawImage(s, 0, 0);
+    ctx.drawImage(s, 0, 0, TEX, TEX);
     for (let i = 0; i < 7; i++) {
       const x = Math.floor(r() * TEX);
       const len = 4 + Math.floor(r() * 18);
@@ -143,7 +143,7 @@ function door(seed: number, base: string, stripe: string | null, label: string) 
 function exitSwitch(seed: number, on: boolean) {
   return tex(seed, (ctx) => {
     const m = metal(seed + 3, '#5a5f73');
-    ctx.drawImage(m, 0, 0);
+    ctx.drawImage(m, 0, 0, TEX, TEX);
     px(ctx, 6, 3, '#111', 20, 9);
     text(ctx, 'EXIT', 8, 5, on ? '#4f4' : '#f33');
     // big paw switch
@@ -196,7 +196,7 @@ function bookshelf(seed: number) {
 function poster(seed: number) {
   // "WANTED" poster of a dog on a wood wall
   return tex(seed, (ctx) => {
-    ctx.drawImage(woodPanel(seed + 1, '#8a5a32'), 0, 0);
+    ctx.drawImage(woodPanel(seed + 1, '#8a5a32'), 0, 0, TEX, TEX);
     px(ctx, 5, 3, '#f1e3c6', 22, 26);
     text(ctx, 'BAD', 10, 5, '#a00');
     ellipse(ctx, 16, 18, 6, 5, '#b07a4a');
@@ -260,7 +260,7 @@ function plaster(seed: number, base: string) {
 
 function ceilLight(seed: number) {
   return tex(seed, (ctx) => {
-    ctx.drawImage(plaster(seed, '#b9b2a6'), 0, 0);
+    ctx.drawImage(plaster(seed, '#b9b2a6'), 0, 0, TEX, TEX);
     px(ctx, 6, 6, '#777', 20, 20);
     px(ctx, 8, 8, '#fffbe0', 16, 16);
     px(ctx, 8, 8, '#ffffff', 16, 2);
@@ -269,7 +269,7 @@ function ceilLight(seed: number) {
 
 function beams(seed: number) {
   return tex(seed, (ctx) => {
-    ctx.drawImage(plaster(seed, '#8f8574'), 0, 0);
+    ctx.drawImage(plaster(seed, '#8f8574'), 0, 0, TEX, TEX);
     px(ctx, 0, 12, '#6b4423', TEX, 8);
     px(ctx, 0, 12, '#8a5a32', TEX, 1);
   }, 10);
@@ -282,6 +282,12 @@ export interface TextureSet {
 
 /** Wall chars used in level maps -> texture. Doors/switches are also walls. */
 export function buildTextures(): TextureSet {
+  const set = buildRaw();
+  for (const c of [...Object.values(set.walls), ...Object.values(set.flats)]) pastel(c);
+  return set;
+}
+
+function buildRaw(): TextureSet {
   return {
     walls: {
       '#': brick('#b5452f', '#5b4a44', 1),

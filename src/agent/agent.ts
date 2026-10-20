@@ -270,8 +270,9 @@ export class ChonkAgent {
       this.pendingNote = '';
       const obs = note + (events.length ? `Events since your last turn:\n- ${events.join('\n- ')}\n\n` : '') + obsCore;
       this.beforeCapture();
-      const frame = captureFrame(this.screen, this.cfg.imageScale);
-      const small = captureFrame(this.screen, 1, 0.7);
+      // frames sent to the model are always 768x480 (2x the logical 384x240), whatever the display style
+      const frame = captureFrame(this.screen, (384 * this.cfg.imageScale) / this.screen.width);
+      const small = captureFrame(this.screen, 384 / this.screen.width, 0.7);
       const t0 = performance.now();
       const rec: TurnRecord = {
         turn: this.turns.length + 1, level: g.world.level.id, gameTime: g.world.time, frame: small, observation: obs,

@@ -1,14 +1,30 @@
-// Tiny helpers to draw crisp low-res pixel art procedurally.
+// Tiny helpers to draw art procedurally, in two styles:
+//  - retro: crisp low-res pixel art (hard alpha, 1px outlines, grit)
+//  - smooth: the same drawing code at 4x resolution with anti-aliased vector shapes
 // Everything in CHONK DOOM is generated at runtime: no external art assets.
+import { STYLE } from './style';
 
 export type Ctx = CanvasRenderingContext2D;
 
+/** Canvas whose drawing space is w×h logical units (backed by w*S × h*S pixels in smooth mode). */
 export function makeCanvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
+  const S = STYLE.art;
+  const c = document.createElement('canvas');
+  c.width = Math.round(w * S);
+  c.height = Math.round(h * S);
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  ctx.imageSmoothingEnabled = STYLE.smooth;
+  ctx.scale(S, S);
+  return [c, ctx];
+}
+
+/** Canvas with an exact pixel size (no style scaling). */
+export function rawCanvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   const ctx = c.getContext('2d', { willReadFrequently: true })!;
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = STYLE.smooth;
   return [c, ctx];
 }
 
@@ -26,6 +42,7 @@ export function rng(seed: number) {
 
 /** Remove anti-aliasing: hard alpha threshold so sprites stay pixel-crisp. */
 export function crisp(ctx: Ctx, w: number, h: number, threshold = 110) {
+  if (STYLE.smooth) return;
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
   for (let i = 0; i < d.length; i += 4) {
@@ -41,6 +58,7 @@ export function crisp(ctx: Ctx, w: number, h: number, threshold = 110) {
 
 /** Add a 1px dark outline around opaque pixels (classic sprite look). */
 export function outline(ctx: Ctx, w: number, h: number, color: [number, number, number] = [20, 12, 18]) {
+  if (STYLE.smooth) return softOutline(ctx, color);
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
   const src = new Uint8ClampedArray(d);
@@ -62,6 +80,7 @@ export function outline(ctx: Ctx, w: number, h: number, color: [number, number, 
 
 /** Per-pixel noise to give surfaces a gritty Doom-ish texture. */
 export function noise(ctx: Ctx, w: number, h: number, amount: number, seed: number) {
+  if (STYLE.smooth) return;
   const r = rng(seed);
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
@@ -77,7 +96,37 @@ export function noise(ctx: Ctx, w: number, h: number, amount: number, seed: numb
 
 export function px(ctx: Ctx, x: number, y: number, color: string, w = 1, h = 1) {
   ctx.fillStyle = color;
-  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+  if (STYLE.smooth) ctx.fillRect(x, y, w, h);
+  else ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+/** Smooth mode: a thin, soft dark contour around the drawn shape (keeps sprites readable). */
+function softOutline(ctx: Ctx, color: [number, number, number]) {
+  const c = ctx.canvas;
+  const [tmp, t] = rawCanvas(c.width, c.height);
+  t.drawImage(c, 0, 0);
+  t.globalCompositeOperation = 'source-in';
+  t.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.55)`;
+  t.fillRect(0, 0, c.width, c.height);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'destination-over';
+  const r = Math.max(1, Math.round(STYLE.art * 0.6));
+  for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]) ctx.drawImage(tmp, dx, dy);
+  ctx.restore();
+}
+
+/** Smooth mode: soften a texture towards a pastel version of itself. */
+export function pastel(c: HTMLCanvasElement, k = 0.22) {
+  if (!STYLE.smooth) return c;
+  const ctx = c.getContext('2d')!;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'source-atop';
+  ctx.fillStyle = `rgba(255,246,236,${k})`;
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.restore();
+  return c;
 }
 
 export function ellipse(ctx: Ctx, cx: number, cy: number, rx: number, ry: number, color: string) {
@@ -97,6 +146,16 @@ export function poly(ctx: Ctx, pts: number[], color: string) {
 }
 
 export function line(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, color: string) {
+  if (STYLE.smooth) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x0 + 0.5, y0 + 0.5);
+    ctx.lineTo(x1 + 0.5, y1 + 0.5);
+    ctx.stroke();
+    return;
+  }
   // Bresenham for crisp lines
   x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
@@ -114,7 +173,7 @@ export function line(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, c
 
 /** Flip a canvas horizontally. */
 export function mirror(src: HTMLCanvasElement): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(src.width, src.height);
+  const [c, ctx] = rawCanvas(src.width, src.height);
   ctx.translate(src.width, 0);
   ctx.scale(-1, 1);
   ctx.drawImage(src, 0, 0);
@@ -123,7 +182,7 @@ export function mirror(src: HTMLCanvasElement): HTMLCanvasElement {
 
 /** Tint every opaque pixel towards a color (used for pain flashes). */
 export function tinted(src: HTMLCanvasElement, rgb: [number, number, number], k: number): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(src.width, src.height);
+  const [c, ctx] = rawCanvas(src.width, src.height);
   ctx.drawImage(src, 0, 0);
   const img = ctx.getImageData(0, 0, c.width, c.height);
   const d = img.data;
@@ -154,8 +213,28 @@ const FONT: Record<string, string> = {
   '<': '001010100010001', '(': '010100100100010', ')': '010001001001010', '#': '101111101111101',
 };
 
+const SMOOTH_FONT_PX = 6.2; // logical px per text "scale" unit in smooth mode
+function smoothFont(scale: number) {
+  return `600 ${SMOOTH_FONT_PX * scale}px ${STYLE.font}, system-ui, sans-serif`;
+}
+
 export function text(ctx: Ctx, s: string, x: number, y: number, color: string, scale = 1, shadow?: string) {
   s = s.toUpperCase();
+  if (STYLE.smooth) {
+    ctx.save();
+    ctx.font = smoothFont(scale);
+    ctx.textBaseline = 'top';
+    if (shadow) {
+      ctx.fillStyle = shadow;
+      ctx.globalAlpha = 0.55;
+      ctx.fillText(s, x + scale * 0.5, y + scale * 0.5 - scale * 0.6);
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = color;
+    ctx.fillText(s, x, y - scale * 0.6);
+    ctx.restore();
+    return;
+  }
   if (shadow) text(ctx, s, x + scale, y + scale, shadow, scale);
   ctx.fillStyle = color;
   let cx = x;
@@ -168,6 +247,12 @@ export function text(ctx: Ctx, s: string, x: number, y: number, color: string, s
   }
 }
 
+let measureCtx: Ctx | null = null;
 export function textWidth(s: string, scale = 1) {
+  if (STYLE.smooth) {
+    if (!measureCtx) measureCtx = rawCanvas(1, 1)[1];
+    measureCtx.font = smoothFont(scale);
+    return measureCtx.measureText(s.toUpperCase()).width;
+  }
   return s.length * 4 * scale - scale;
 }

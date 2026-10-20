@@ -131,10 +131,11 @@ export function radarText(w: World) {
 /** Grab the composited game screen as a JPEG data URL, upscaled with nearest-neighbour. */
 export function captureFrame(screen: HTMLCanvasElement, scale = 2, quality = 0.85) {
   const c = document.createElement('canvas');
-  c.width = screen.width * scale;
-  c.height = screen.height * scale;
+  c.width = Math.round(screen.width * scale);
+  c.height = Math.round(screen.height * scale);
   const ctx = c.getContext('2d')!;
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = scale < 1; // downscale smoothly, upscale pixel-perfect
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(screen, 0, 0, c.width, c.height);
   return c.toDataURL('image/jpeg', quality);
 }
