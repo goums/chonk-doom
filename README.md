@@ -130,14 +130,14 @@ Same game, harness and prompt. Only the model changes.
 
 <img src="docs/img/bench-instruct-score.svg" width="720" alt="Instruct league score">
 
-| Model | Score | Levels cleared | Cost / level | s / decision | Aim error |
+| Model | Score | Levels cleared | Cost / level | Decision time | Aim error |
 |---|---|---|---|---|---|
-| **Mistral Large 4** 🐱 | **99** | 3/3 | $0.13 | 5.6 | 6.0° |
-| Qwen3.5 397B | **97** | 3/3 | $0.18 | 5.0 | 5.9° |
-| GLM-5.3 Flash | **97** | 3/3 | $0.03 | 2.2 | 4.9° |
-| Gemma 4 31B | **78** | 2/3 | $0.04 | 3.7 | 3.2° |
-| Kimi K2.6 | **78** | 2/3 | $0.23 | 2.6 | 5.7° |
-| DeepSeek V4.1 Flash | **75** | 2/3 | $0.07 | 2.1 | 9.0° |
+| **Mistral Large 4** 🐱 | **99** | 3/3 | $0.13 | 5.6 s | 6.0° |
+| Qwen3.5 397B | **97** | 3/3 | $0.18 | 5.0 s | 5.9° |
+| GLM-5.3 Flash | **97** | 3/3 | $0.03 | 2.2 s | 4.9° |
+| Gemma 4 31B | **78** | 2/3 | $0.04 | 3.7 s | 3.2° |
+| Kimi K2.6 | **78** | 2/3 | $0.23 | 2.6 s | 5.7° |
+| DeepSeek V4.1 Flash | **75** | 2/3 | $0.07 | 2.1 s | 9.0° |
 
 <img src="docs/img/bench-instruct-cost.svg" width="49%" alt="score vs cost"> <img src="docs/img/bench-instruct-speed.svg" width="49%" alt="score vs speed">
 
@@ -145,14 +145,14 @@ Same game, harness and prompt. Only the model changes.
 
 <img src="docs/img/bench-reasoning-score.svg" width="720" alt="Reasoning league score">
 
-| Model | Score | Levels cleared | Cost / level | s / decision | Aim error |
+| Model | Score | Levels cleared | Cost / level | Decision time | Aim error |
 |---|---|---|---|---|---|
-| GLM-5.3 Flash | **99** | 3/3 | $0.03 | 2.8 | 4.8° |
-| DeepSeek V4.1 Flash | **95** | 3/3 | $0.08 | 7.3 | 4.3° |
-| **Mistral Large 4** 🐱 | **94** | 3/3 | $0.35 | 13.3 | 7.2° |
-| Kimi K2.6 | **93** | 3/3 | $0.31 | 18.1 | 3.3° |
-| Qwen3.5 397B | **77** | 2/3 | $0.31 | 12.1 | 7.1° |
-| Nemotron 3.5 Super VL | **57** | 1/3 | $0.13 | 4.2 | 7.5° |
+| GLM-5.3 Flash | **99** | 3/3 | $0.03 | 2.8 s | 4.8° |
+| DeepSeek V4.1 Flash | **95** | 3/3 | $0.08 | 7.3 s | 4.3° |
+| **Mistral Large 4** 🐱 | **94** | 3/3 | $0.35 | 13.3 s | 7.2° |
+| Kimi K2.6 | **93** | 3/3 | $0.31 | 18.1 s | 3.3° |
+| Qwen3.5 397B | **77** | 2/3 | $0.31 | 12.1 s | 7.1° |
+| Nemotron 3.5 Super VL | **57** | 1/3 | $0.13 | 4.2 s | 7.5° |
 
 <img src="docs/img/bench-reasoning-cost.svg" width="49%" alt="score vs cost"> <img src="docs/img/bench-reasoning-speed.svg" width="49%" alt="score vs speed">
 <!-- bench:end -->

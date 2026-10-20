@@ -53,18 +53,18 @@ function leagueHtml(L: League) {
   let h = `<div class="league"><h3>${esc(L.title)} <span class="muted">· ${esc(L.desc)}</span></h3>`;
   h += `<div class="chart bars">${scoreBars(L.models, 'Chonk score (0-100)')}</div>`;
   h += `<div class="charts2"><div class="chart">${scatter(L.models, 'Score vs cost per level', { key: 'cost', label: 'Cost per level (USD, log scale)', log: true, fmt: money })}</div>` +
-    `<div class="chart">${scatter(L.models, 'Score vs speed', { key: 'secPerTurn', label: 'Seconds per decision', fmt: secs })}</div></div>`;
-  h += `<div class="table-wrap"><table><thead><tr><th>Model</th><th>Score</th><th>Cleared</th><th>Cost / level</th><th>s / decision</th><th>Aim error</th><th>Hit rate</th></tr></thead><tbody>` +
-    L.models.map((m) => `<tr class="${m.chonk ? 'chonk' : ''}"><td>${m.chonk ? '🐱 ' : ''}${esc(m.model)}</td><td><b>${num(m.score)}</b></td><td>${m.cleared}/${m.episodes}</td><td>$${num(m.cost, 2)}</td><td>${num(m.secPerTurn, 1)}</td><td>${m.aimErr === null ? '–' : num(m.aimErr, 1) + '°'}</td><td>${pct(m.hitRate)}</td></tr>`).join('') +
+    `<div class="chart">${scatter(L.models, 'Score vs decision time', { key: 'secPerTurn', label: 'Decision time (s)', fmt: secs })}</div></div>`;
+  h += `<div class="table-wrap"><table><thead><tr><th>Model</th><th>Score</th><th>Cleared</th><th>Cost / level</th><th>Decision time</th><th>Aim error</th><th>Hit rate</th></tr></thead><tbody>` +
+    L.models.map((m) => `<tr class="${m.chonk ? 'chonk' : ''}"><td>${m.chonk ? '🐱 ' : ''}${esc(m.model)}</td><td><b>${num(m.score)}</b></td><td>${m.cleared}/${m.episodes}</td><td>$${num(m.cost, 2)}</td><td>${num(m.secPerTurn, 1)} s</td><td>${m.aimErr === null ? '–' : num(m.aimErr, 1) + '°'}</td><td>${pct(m.hitRate)}</td></tr>`).join('') +
     '</tbody></table></div>';
   h += '<details class="metrics-help"><summary>Per-level details</summary>';
   for (const lvl of levels) {
     const rs = L.rows.filter((r) => r.level === lvl).sort((a, b) => b.score - a.score);
     h += `<h4>Level ${lvl}</h4><div class="table-wrap"><table><thead><tr>
-      <th>Model</th><th>Score</th><th>Cleared</th><th>Turns</th><th>Actions</th><th>Game time</th><th>Wall time</th><th>s/turn</th><th>Tokens in/out</th><th>Cost</th><th>Hit rate</th><th>Aim error</th><th>Damage</th><th>Deaths</th><th>Kills</th>
+      <th>Model</th><th>Score</th><th>Cleared</th><th>Turns</th><th>Actions</th><th>Game time</th><th>Wall time</th><th>Decision time</th><th>Tokens in/out</th><th>Cost</th><th>Hit rate</th><th>Aim error</th><th>Damage</th><th>Deaths</th><th>Kills</th>
     </tr></thead><tbody>` + rs.map((r) => `<tr class="${chonk(r.model) ? 'chonk' : ''}">
       <td>${esc(r.model)}</td><td>${num(r.score)}</td><td><b>${r.cleared}/${r.episodes}</b></td><td>${num(r.turns)}</td><td>${num(r.actions)}</td><td>${mmss(r.gameTime)}</td><td>${mmss(r.wallSec)}</td>
-      <td>${num(r.secPerTurn, 1)}</td><td>${num(r.tokensIn / 1000)}k / ${num(r.tokensOut / 1000, 1)}k</td><td>$${num(r.cost, 3)}</td><td>${pct(r.hitRate)}</td>
+      <td>${num(r.secPerTurn, 1)} s</td><td>${num(r.tokensIn / 1000)}k / ${num(r.tokensOut / 1000, 1)}k</td><td>$${num(r.cost, 3)}</td><td>${pct(r.hitRate)}</td>
       <td>${r.aimErr === null ? '–' : num(r.aimErr, 1) + '°'}</td><td>${num(r.damage)}</td><td>${num(r.deaths, 1)}</td><td>${pct(r.kills)}</td></tr>`).join('') + '</tbody></table></div>';
   }
   return h + '</details></div>';

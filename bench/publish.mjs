@@ -89,7 +89,7 @@ for (const L of LEAGUES) {
   fs.mkdirSync('docs/img', { recursive: true });
   fs.writeFileSync(`docs/img/bench-${L.id}-score.svg`, scoreBars(models, `${L.title}: Chonk score (0-100)`));
   fs.writeFileSync(`docs/img/bench-${L.id}-cost.svg`, scatter(models, `${L.title}: score vs cost per level`, { key: 'cost', label: 'Cost per level (USD, log scale)', log: true, fmt: money }));
-  fs.writeFileSync(`docs/img/bench-${L.id}-speed.svg`, scatter(models, `${L.title}: score vs seconds per decision`, { key: 'secPerTurn', label: 'Seconds per decision', fmt: secs }));
+  fs.writeFileSync(`docs/img/bench-${L.id}-speed.svg`, scatter(models, `${L.title}: score vs decision time`, { key: 'secPerTurn', label: 'Decision time (s)', fmt: secs }));
   console.log(`league ${L.id}: ${eps.length} episodes`);
 }
 // the featured full-game run (hero stats)
@@ -109,9 +109,9 @@ readmeBlock('bench', leagues.map((L) => `### ${L.title} (${L.desc.replace('.', '
 
 <img src="docs/img/bench-${L.id}-score.svg" width="720" alt="${L.title} score">
 
-| Model | Score | Levels cleared | Cost / level | s / decision | Aim error |
+| Model | Score | Levels cleared | Cost / level | Decision time | Aim error |
 |---|---|---|---|---|---|
-${L.models.map((m) => `| ${m.chonk ? `**${m.model}** 🐱` : m.model} | **${f1(m.score, 0)}** | ${m.cleared}/${m.episodes} | $${f1(m.cost, 2)} | ${f1(m.secPerTurn)} | ${m.aimErr === null ? '–' : f1(m.aimErr) + '°'} |`).join('\n')}
+${L.models.map((m) => `| ${m.chonk ? `**${m.model}** 🐱` : m.model} | **${f1(m.score, 0)}** | ${m.cleared}/${m.episodes} | $${f1(m.cost, 2)} | ${f1(m.secPerTurn)} s | ${m.aimErr === null ? '–' : f1(m.aimErr) + '°'} |`).join('\n')}
 
 <img src="docs/img/bench-${L.id}-cost.svg" width="49%" alt="score vs cost"> <img src="docs/img/bench-${L.id}-speed.svg" width="49%" alt="score vs speed">`).join('\n\n'));
 
