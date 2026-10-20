@@ -1,72 +1,65 @@
 [
  {
   "id": "intro",
-  "who": "chonk",
-  "text": "Bonjour! I am Le Chonk. Time to play!",
-  "file": "voice/intro-8f4c41447e.mp3",
-  "sec": 4.49
+  "who": "narrator",
+  "text": "Okay, so... meet Le Chonk. He's a big, very proud orange cat. And today? He's playing DOOM.",
+  "file": "voice/intro-1f8b684bf9.mp3",
+  "sec": 10.04
  },
  {
   "id": "game",
   "who": "narrator",
-  "text": "This is Chonk Doom. A DOOM-like shooter, built so that Mistral Large 4 can play it by itself. Three levels, keys, locked doors, explosive barrels, and Rex, the boss.",
-  "file": "voice/game-546c678da0.mp3",
-  "sec": 14.13
+  "text": "Well, technically, it's Mistral Large 4 doing the playing. We built it a little DOOM-style shooter: three levels, keys, locked doors, a few explosive barrels... and Rex, the boss.",
+  "file": "voice/game-c2df198dcb.mp3",
+  "sec": 14.98
  },
  {
   "id": "freeze",
   "who": "narrator",
-  "text": "Every turn, time freezes. The model gets the frame, plus a short text: health, an automap, the doors and items it has seen.",
-  "file": "voice/freeze-0126690bbe.mp3",
-  "sec": 9.62
+  "text": "Here's the trick. Every turn, time just... stops. The model gets the screen, plus a short note: its health, a map, and the doors and items it's already seen.",
+  "file": "voice/freeze-85f38bc583.mp3",
+  "sec": 13.18
  },
  {
   "id": "ruler",
   "who": "narrator",
-  "text": "A degree ruler under the view turns: where is the enemy, into: turn minus twenty five degrees.",
-  "file": "voice/ruler-17ceae24c0.mp3",
-  "sec": 6.55
+  "text": "See the ruler under the view? It turns \"where's that mouse?\" into something simple, like: turn left, twenty-five degrees.",
+  "file": "voice/ruler-97e167aa73.mp3",
+  "sec": 9.7
  },
  {
   "id": "act",
   "who": "narrator",
-  "text": "It answers with one tool call: a thought, up to eight actions, and its notes. Then time runs again. Getting hurt, or a new enemy, interrupts the plan.",
-  "file": "voice/act-dab41377b8.mp3",
-  "sec": 11.46
+  "text": "Then it answers with one move: a thought, a few actions, and a note to itself. And time starts again. If it gets hurt, or spots a new enemy, it stops... and thinks again.",
+  "file": "voice/act-cd068a2dea.mp3",
+  "sec": 15.33
  },
  {
-  "id": "q3",
-  "who": "chonk",
-  "text": "Sacré bleu! Rex! The giant Doberman boss! Pew pew pew pew!",
-  "file": "voice/q3-bcfad0eb31.mp3",
-  "sec": 5.38
- },
- {
-  "id": "q4",
-  "who": "chonk",
-  "text": "Miaou miaou miaou! Rex is defeated! I am Le Chonk, the hero of the house!",
-  "file": "voice/q4-def1b5aaa7.mp3",
-  "sec": 7.39
+  "id": "thinks",
+  "who": "narrator",
+  "text": "And yes, it talks the whole time, like a very dramatic French cat. These are its real thoughts.",
+  "file": "voice/thinks-72eb0ac6dd.mp3",
+  "sec": 6.94
  },
  {
   "id": "bench",
   "who": "narrator",
-  "text": "We benchmarked Mistral Large 4 against open-weight rivals: Qwen, GLM, Kimi, Gemma and DeepSeek. Same game, same harness, same prompt. On each model's best runs, Large 4 ranks first in the instruct league, at thirteen cents per level.",
-  "file": "voice/bench-20905bcffc.mp3",
-  "sec": 18.2
+  "text": "So, how good is it? We put Mistral Large 4 up against other open models: Kwen, G L M, Kee-mee, Gemma, and DeepSeek. Same game, same rules. On their best runs, Large 4 comes out on top. And it costs about thirteen cents a level.",
+  "file": "voice/bench-4c79826e3c.mp3",
+  "sec": 21.8
  },
  {
   "id": "stack",
   "who": "narrator",
-  "text": "Everything is TypeScript and three dot js. The pixel art, music and sounds are generated in code. Every run is a deterministic replay, and every trace is public.",
-  "file": "voice/stack-7e764245e1.mp3",
-  "sec": 12.22
+  "text": "It's all TypeScript and three J S. The art, the music, the sounds... all made in code. And every single run can be replayed, frame by frame.",
+  "file": "voice/stack-39a909a3cd.mp3",
+  "sec": 15.41
  },
  {
   "id": "outro",
   "who": "narrator",
-  "text": "Play it, or watch Le Chonk play it, from the link below.",
-  "file": "voice/outro-371a6d8cdd.mp3",
-  "sec": 3.18
+  "text": "Want to try it? Play it yourself, or just sit back and watch Le Chonk play. The link's right below.",
+  "file": "voice/outro-3bd8549d68.mp3",
+  "sec": 6.7
  }
 ]

@@ -51,9 +51,13 @@ for (const name of process.argv.slice(2)) {
     rec.start(1000);
     window.__rec = rec;
     // turn timeline: when each decision is shown (for cutting the video on moments)
+    // when each decision's speech bubble appears (turn N = turns already finished + 1)
     window.__turns = [];
-    let n = -1;
-    setInterval(() => { const k = window.chonk.agent?.turns?.length ?? -1; if (k !== n) { n = k; window.__turns.push({ turn: k, t: Date.now() / 1000 }); } }, 50);
+    let last = '';
+    setInterval(() => {
+      const txt = document.getElementById('bubble-text')?.textContent ?? '';
+      if (txt && txt !== last) { last = txt; window.__turns.push({ turn: (window.chonk.agent?.turns?.length ?? 0) + 1, t: Date.now() / 1000 }); }
+    }, 30);
     return Date.now() / 1000;
   });
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
@@ -82,7 +86,7 @@ for (const name of process.argv.slice(2)) {
   const audioOffset = Math.max(0, frames[0].t - audioT0).toFixed(3);
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', path.join(dir, 'list.txt'), '-ss', audioOffset, '-i', webm,
     '-map', '0:v', '-map', '1:a', '-vf', 'fps=30,format=yuv420p', '-c:v', 'libx264', '-crf', '18', '-preset', 'medium', '-c:a', 'aac', '-b:a', '192k', '-shortest', mp4]);
-  fs.writeFileSync(path.join(OUT, `${name}.timeline.json`), JSON.stringify(turns.filter((x) => x.turn >= 0).map((x) => ({ turn: x.turn, sec: +(x.t - frames[0].t).toFixed(2) }))));
+  fs.writeFileSync(path.join(OUT, `${name}.timeline.json`), JSON.stringify(turns.filter((x, i, a) => a.findIndex((y) => y.turn === x.turn) === i).map((x) => ({ turn: x.turn, sec: +(x.t - frames[0].t).toFixed(2) }))));
   fs.rmSync(dir, { recursive: true, force: true });
   console.log(`${name}: ${frames.length} frames, ${((Date.now() - t0) / 1000).toFixed(0)} s -> ${mp4}`);
 }

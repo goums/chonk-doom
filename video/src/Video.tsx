@@ -27,9 +27,9 @@ const V = Object.fromEntries((voice as Line[]).map((l) => [l.id, l])) as Record<
 const LEAD = 0.4; // seconds of silence before each line
 const len = (ids: string[], pad = 0.8) => Math.round((ids.reduce((a, id) => a + V[id].sec + LEAD, 0) + pad) * FPS);
 
-// when a given decision shows up in a recorded replay (timeline = when each turn finished)
+// when a given decision's speech bubble appears in a recorded replay
 type TL = { turn: number; sec: number }[];
-const at = (tl: TL, turn: number, offset = 2.0) => (tl.find((x) => x.turn === turn - 1)?.sec ?? 0) + offset;
+const at = (tl: TL, turn: number, offset = 0.2) => (tl.find((x) => x.turn === turn)?.sec ?? 0) + offset;
 const CLIPS = {
   L1: 'footage/replay-2.mp4', L2: 'footage/replay-3.mp4', L3: 'footage/replay-4.mp4',
 };
@@ -119,11 +119,12 @@ const Intro: React.FC = () => {
 
 const Game: React.FC = () => {
   const d = len(['game']);
+  // the cleanest shooting in the recorded runs
   const cuts = [
-    { src: CLIPS.L1, from: at(tl2, 4), text: '3 levels', sub: 'Le Salon → La Cuisine → La Cave' },
-    { src: CLIPS.L2, from: at(tl3, 2), text: 'DOOM arsenal', sub: 'laser pistol · shotgun · chaingun' },
-    { src: CLIPS.L3, from: at(tl4, 6), text: 'Angry dogs & mice', sub: 'keys · locked doors · explosive barrels' },
-    { src: CLIPS.L3, from: at(tl4, 18), text: 'REX', sub: 'the armored Doberman boss' },
+    { src: CLIPS.L1, from: at(tl2, 16), text: '3 levels', sub: 'Le Salon → La Cuisine → La Cave' },
+    { src: CLIPS.L2, from: at(tl3, 12), text: 'DOOM arsenal', sub: 'laser pistol · shotgun · chaingun' },
+    { src: CLIPS.L3, from: at(tl4, 9), text: 'Angry dogs & mice', sub: 'keys · locked doors · explosive barrels' },
+    { src: CLIPS.L3, from: at(tl4, 28), text: 'REX', sub: 'the armored Doberman boss' },
   ];
   const each = Math.ceil(d / cuts.length);
   return (
@@ -185,15 +186,19 @@ const Ruler: React.FC = () => {
   );
 };
 
+// the real decision of Level 1, turn 6 (6 shots, 6 hits)
 const ACT = `act({
-  thought: "Hssss! Mouse at -30°.
-            Pew pew, then explore south!",
+  thought: "Hssss! A big bad Bulldog at +10°
+    and a squeaky mouse at +5°! I pew pew
+    ze mouse first, zen back up while
+    shooting ze bulldog, miaou!",
   actions: [
-    { type: "attack", degrees: -30, shots: 3 },
-    { type: "turn", degrees: 180 },
-    { type: "explore", tiles: 24 }
+    { type: "attack", degrees: 5, shots: 2 },
+    { type: "attack", degrees: 5, shots: 4 },
+    { type: "move", tiles: -2 },
+    { type: "attack", degrees: 0, shots: 4 }
   ],
-  notes: "Red key unknown. Door at (5,7)."
+  notes: "RED door LOCKED at (22,11)."
 })`;
 
 const Act: React.FC = () => {
@@ -209,11 +214,11 @@ const Act: React.FC = () => {
       </pre>
       <div style={{ position: 'absolute', left: 980, top: 270, width: 850, opacity: fadeIn(f - 20) }}>
         <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: `4px solid ${run ? C.orange : C.line}`, width: 850, height: 531 }}>
-          <OffthreadVideo src={staticFile(CLIPS.L1)} startFrom={Math.round(at(tl2, 3) * FPS)} volume={0.35} style={{ width: 850, height: 531, filter: run ? undefined : 'grayscale(0.8) brightness(0.7)' }} />
+          <OffthreadVideo src={staticFile(CLIPS.L1)} startFrom={Math.round(at(tl2, 6, -5) * FPS)} volume={0.35} style={{ width: 850, height: 531, filter: run ? undefined : 'grayscale(0.8) brightness(0.7)' }} />
           <div style={{ position: 'absolute', left: 16, top: 16, background: run ? C.orange : C.cyan, color: '#160f17', fontFamily: FREDOKA, fontWeight: 700, fontSize: 30, padding: '6px 16px', borderRadius: 8 }}>{run ? '▶ time runs' : '⏸ thinking…'}</div>
         </div>
         <div style={{ marginTop: 26, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-          <Tag delay={6.5 * fps} color={C.red} style={{ fontSize: 32, color: '#fff' }}>INTERRUPTED: new enemy!</Tag>
+          <Tag delay={6.5 * fps} color={C.red} style={{ fontSize: 32, color: '#fff' }}>6 shots · 6 hits</Tag>
           <Tag delay={8 * fps} color={C.yellow} style={{ fontSize: 32 }}>Plan long when calm, short in combat</Tag>
         </div>
       </div>
@@ -222,30 +227,30 @@ const Act: React.FC = () => {
   );
 };
 
-// real thought bubbles from the replays: two play with game sound only, the boss moments are voiced
+// real thought bubbles from the replays, with the game's own sound
 const THINKS = [
   { id: 'q1', src: CLIPS.L2, from: at(tl3, 2), sec: 4.5 },
   { id: 'q2', src: CLIPS.L2, from: at(tl3, 6), sec: 4.5 },
-  { id: 'q3', src: CLIPS.L3, from: at(tl4, 17), voice: true },
-  { id: 'q4', src: CLIPS.L3, from: at(tl4, 29, 3.2), voice: true },
+  { id: 'q3', src: CLIPS.L3, from: at(tl4, 17), sec: 5 },
+  { id: 'q4', src: CLIPS.L3, from: at(tl4, 29), sec: 6 },
 ];
-const thinkFrames = (q: (typeof THINKS)[number]) => (q.voice ? len([q.id], 0.5) : Math.round((q.sec ?? 4) * FPS));
+const thinkFrames = (q: (typeof THINKS)[number]) => Math.round(q.sec * FPS);
 const Thinks: React.FC = () => {
   let t = 0;
   return (
     <AbsoluteFill>
-      {THINKS.map((q) => {
+      {THINKS.map((q, i) => {
         const d = thinkFrames(q);
         const s = (
           <Sequence key={q.id} from={t} durationInFrames={d}>
-            <Footage src={q.src} from={q.from} volume={q.voice ? 0.3 : 0.7} />
+            <Footage src={q.src} from={q.from} volume={i < 2 ? 0.3 : 0.75} />
             <div style={{ position: 'absolute', right: 40, top: 250 }}><Tag color={C.cyan} style={{ fontSize: 30 }}>🐱 Le Chonk thinks · real thoughts from Mistral Large 4</Tag></div>
-            {q.voice && <Voice id={q.id} delay={0.25} />}
           </Sequence>
         );
         t += d;
         return s;
       })}
+      <Voice id="thinks" delay={0.3} />
     </AbsoluteFill>
   );
 };

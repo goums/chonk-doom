@@ -1,58 +1,52 @@
 {
   "voices": {
-    "narrator": "gb_oliver_confident",
-    "chonk": "voice_482"
+    "narrator": "gb_oliver_cheerful"
   },
   "lines": [
     {
       "id": "intro",
-      "who": "chonk",
-      "text": "Bonjour! I am Le Chonk. Time to play!"
+      "who": "narrator",
+      "text": "Okay, so... meet Le Chonk. He's a big, very proud orange cat. And today? He's playing DOOM."
     },
     {
       "id": "game",
       "who": "narrator",
-      "text": "This is Chonk Doom. A DOOM-like shooter, built so that Mistral Large 4 can play it by itself. Three levels, keys, locked doors, explosive barrels, and Rex, the boss."
+      "text": "Well, technically, it's Mistral Large 4 doing the playing. We built it a little DOOM-style shooter: three levels, keys, locked doors, a few explosive barrels... and Rex, the boss."
     },
     {
       "id": "freeze",
       "who": "narrator",
-      "text": "Every turn, time freezes. The model gets the frame, plus a short text: health, an automap, the doors and items it has seen."
+      "text": "Here's the trick. Every turn, time just... stops. The model gets the screen, plus a short note: its health, a map, and the doors and items it's already seen."
     },
     {
       "id": "ruler",
       "who": "narrator",
-      "text": "A degree ruler under the view turns: where is the enemy, into: turn minus twenty five degrees."
+      "text": "See the ruler under the view? It turns \"where's that mouse?\" into something simple, like: turn left, twenty-five degrees."
     },
     {
       "id": "act",
       "who": "narrator",
-      "text": "It answers with one tool call: a thought, up to eight actions, and its notes. Then time runs again. Getting hurt, or a new enemy, interrupts the plan."
+      "text": "Then it answers with one move: a thought, a few actions, and a note to itself. And time starts again. If it gets hurt, or spots a new enemy, it stops... and thinks again."
     },
     {
-      "id": "q3",
-      "who": "chonk",
-      "text": "Sacré bleu! Rex! The giant Doberman boss! Pew pew pew pew!"
-    },
-    {
-      "id": "q4",
-      "who": "chonk",
-      "text": "Miaou miaou miaou! Rex is defeated! I am Le Chonk, the hero of the house!"
+      "id": "thinks",
+      "who": "narrator",
+      "text": "And yes, it talks the whole time, like a very dramatic French cat. These are its real thoughts."
     },
     {
       "id": "bench",
       "who": "narrator",
-      "text": "We benchmarked Mistral Large 4 against open-weight rivals: Qwen, GLM, Kimi, Gemma and DeepSeek. Same game, same harness, same prompt. On each model's best runs, Large 4 ranks first in the instruct league, at thirteen cents per level."
+      "text": "So, how good is it? We put Mistral Large 4 up against other open models: Kwen, G L M, Kee-mee, Gemma, and DeepSeek. Same game, same rules. On their best runs, Large 4 comes out on top. And it costs about thirteen cents a level."
     },
     {
       "id": "stack",
       "who": "narrator",
-      "text": "Everything is TypeScript and three dot js. The pixel art, music and sounds are generated in code. Every run is a deterministic replay, and every trace is public."
+      "text": "It's all TypeScript and three J S. The art, the music, the sounds... all made in code. And every single run can be replayed, frame by frame."
     },
     {
       "id": "outro",
       "who": "narrator",
-      "text": "Play it, or watch Le Chonk play it, from the link below."
+      "text": "Want to try it? Play it yourself, or just sit back and watch Le Chonk play. The link's right below."
     }
   ]
 }

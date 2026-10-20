@@ -15,6 +15,7 @@
       <a class="brand" href="./"><img src="img/le-chonk-angry.png" alt="" /> CHONK DOOM</a>
       <button id="menu-toggle" class="menu-toggle" aria-label="Menu" aria-expanded="false">☰</button>
       <div class="links" id="links">
+        <a href="#video">Video</a>
         <a href="#game">The game</a>
         <a href="#harness">Harness</a>
         <a href="#thinks">Le Chonk thinks</a>
@@ -35,6 +36,7 @@
         <div class="hero-stats" id="hero-stats"></div>
         <div class="hero-cta">
           <a class="btn hot" href="./">🐱 Watch Le Chonk play</a>
+          <a class="btn" href="#video">🎬 Watch the video</a>
           <a class="btn" href="#results">📊 Benchmark</a>
         </div>
       </div>
@@ -42,6 +44,13 @@
     </header>
 
     <main>
+      <section id="video">
+        <h2>The video</h2>
+        <video class="demo" controls preload="metadata" playsinline poster="video/poster.jpg">
+          <source src="video/chonk-doom.mp4" type="video/mp4" />
+        </video>
+      </section>
+
       <section id="game">
         <h2>The game</h2>
         <div class="two">
