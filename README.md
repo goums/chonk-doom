@@ -222,6 +222,15 @@ node bench/publish.mjs
 
 The last command rebuilds the charts, the tables above and the site data from the raw logs in `runs/`.
 
+**Demo video** (`video/`): record the replays, generate the voice-over, render.
+
+```bash
+node video/scripts/capture.mjs replay-2 replay-3 replay-4
+node video/scripts/music.mjs title:70 living:70
+node video/scripts/voice.mjs
+cd video && npm install && npm run render
+```
+
 **Play yourself:** arrows move, Space shoots, 1-4 weapons, P pause, Tab map. On phones: on-screen d-pad and SHOOT bar.
 
 ---
@@ -241,6 +250,7 @@ The last command rebuilds the charts, the tables above and the site data from th
 | Evals | [Evalite](https://www.evalite.dev) on Vitest |
 | Benchmark | [Playwright](https://playwright.dev) headless Chromium, turbo mode |
 | Build / hosting | [Vite](https://vitejs.dev), GitHub Pages via GitHub Actions |
+| Demo video | [Remotion](https://www.remotion.dev), voices by Voxtral TTS (`voxtral-mini-tts-3`), footage from the replays |
 
 ## 🛠 How it was developed
 

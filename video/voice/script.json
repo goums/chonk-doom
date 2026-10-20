@@ -1,0 +1,17 @@
+{
+  "voices": { "narrator": "gb_oliver_confident", "chonk": "voice_482" },
+  "lines": [
+    { "id": "intro", "who": "chonk", "text": "Bonjour! I am Le Chonk. Ze house is full of angry dogs and mice. Time to play!" },
+    { "id": "game", "who": "narrator", "text": "This is Chonk Doom. A DOOM-like shooter, built so that Mistral Large 4 can play it by itself. Three levels, keys, locked doors, explosive barrels, and Rex, the boss." },
+    { "id": "freeze", "who": "narrator", "text": "Every turn, time freezes. The model gets the frame, plus a short text: health, an automap, the doors and items it has seen." },
+    { "id": "ruler", "who": "narrator", "text": "A degree ruler under the view turns: where is the enemy, into: turn minus twenty five degrees." },
+    { "id": "act", "who": "narrator", "text": "It answers with one tool call: a thought, up to eight actions, and its notes. Then time runs again. Getting hurt, or a new enemy, interrupts the plan." },
+    { "id": "q1", "who": "chonk", "text": "Oh là là! I see my beautiful shotgun! Time to grab my new boomstick, mon dieu!" },
+    { "id": "q2", "who": "chonk", "text": "Hssss! That mouse is right in my face, throwing cheese at me! Pew pew pew! Boom, into kibble you go!" },
+    { "id": "q3", "who": "chonk", "text": "Sacré bleu! Rex! The giant Doberman boss! Pew pew pew pew!" },
+    { "id": "q4", "who": "chonk", "text": "Miaou miaou miaou! Rex is defeated! I am Le Chonk, the hero of the house!" },
+    { "id": "bench", "who": "narrator", "text": "We benchmarked Mistral Large 4 against open-weight rivals: Qwen, GLM, Kimi, Gemma and DeepSeek. Same game, same harness, same prompt. On each model's best runs, Large 4 ranks first in the instruct league, at thirteen cents per level." },
+    { "id": "stack", "who": "narrator", "text": "Everything is TypeScript and three dot js. The pixel art, music and sounds are generated in code. Every run is a deterministic replay, and every trace is public." },
+    { "id": "outro", "who": "chonk", "text": "Your turn now! Play, or watch me play, on GitHub. Miaou!" }
+  ]
+}

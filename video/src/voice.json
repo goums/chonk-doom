@@ -1,0 +1,86 @@
+[
+ {
+  "id": "intro",
+  "who": "chonk",
+  "text": "Bonjour! I am Le Chonk. Ze house is full of angry dogs and mice. Time to play!",
+  "file": "voice/intro-92cd62949f.mp3",
+  "sec": 7.84
+ },
+ {
+  "id": "game",
+  "who": "narrator",
+  "text": "This is Chonk Doom. A DOOM-like shooter, built so that Mistral Large 4 can play it by itself. Three levels, keys, locked doors, explosive barrels, and Rex, the boss.",
+  "file": "voice/game-546c678da0.mp3",
+  "sec": 14.13
+ },
+ {
+  "id": "freeze",
+  "who": "narrator",
+  "text": "Every turn, time freezes. The model gets the frame, plus a short text: health, an automap, the doors and items it has seen.",
+  "file": "voice/freeze-0126690bbe.mp3",
+  "sec": 9.62
+ },
+ {
+  "id": "ruler",
+  "who": "narrator",
+  "text": "A degree ruler under the view turns: where is the enemy, into: turn minus twenty five degrees.",
+  "file": "voice/ruler-17ceae24c0.mp3",
+  "sec": 6.55
+ },
+ {
+  "id": "act",
+  "who": "narrator",
+  "text": "It answers with one tool call: a thought, up to eight actions, and its notes. Then time runs again. Getting hurt, or a new enemy, interrupts the plan.",
+  "file": "voice/act-dab41377b8.mp3",
+  "sec": 11.46
+ },
+ {
+  "id": "q1",
+  "who": "chonk",
+  "text": "Oh là là! I see my beautiful shotgun! Time to grab my new boomstick, mon dieu!",
+  "file": "voice/q1-904e899933.mp3",
+  "sec": 7.61
+ },
+ {
+  "id": "q2",
+  "who": "chonk",
+  "text": "Hssss! That mouse is right in my face, throwing cheese at me! Pew pew pew! Boom, into kibble you go!",
+  "file": "voice/q2-02cb806b71.mp3",
+  "sec": 7.5
+ },
+ {
+  "id": "q3",
+  "who": "chonk",
+  "text": "Sacré bleu! Rex! The giant Doberman boss! Pew pew pew pew!",
+  "file": "voice/q3-bcfad0eb31.mp3",
+  "sec": 5.38
+ },
+ {
+  "id": "q4",
+  "who": "chonk",
+  "text": "Miaou miaou miaou! Rex is defeated! I am Le Chonk, the hero of the house!",
+  "file": "voice/q4-def1b5aaa7.mp3",
+  "sec": 7.39
+ },
+ {
+  "id": "bench",
+  "who": "narrator",
+  "text": "We benchmarked Mistral Large 4 against open-weight rivals: Qwen, GLM, Kimi, Gemma and DeepSeek. Same game, same harness, same prompt. On each model's best runs, Large 4 ranks first in the instruct league, at thirteen cents per level.",
+  "file": "voice/bench-20905bcffc.mp3",
+  "sec": 18.2
+ },
+ {
+  "id": "stack",
+  "who": "narrator",
+  "text": "Everything is TypeScript and three dot js. The pixel art, music and sounds are generated in code. Every run is a deterministic replay, and every trace is public.",
+  "file": "voice/stack-7e764245e1.mp3",
+  "sec": 12.22
+ },
+ {
+  "id": "outro",
+  "who": "chonk",
+  "text": "Your turn now! Play, or watch me play, on GitHub. Miaou!",
+  "file": "voice/outro-3c645111be.mp3",
+  "sec": 4.82
+ }
+]

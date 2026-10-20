@@ -23,6 +23,14 @@ export function initAudio() {
   applyVolumes();
 }
 
+/** The final mix as a MediaStream (used to record game audio for the demo video). */
+export function audioStream() {
+  initAudio();
+  const dest = ctx!.createMediaStreamDestination();
+  master.connect(dest);
+  return dest.stream;
+}
+
 export function applyVolumes() {
   if (!ctx) return;
   master.gain.value = audioSettings.muted ? 0 : 1;

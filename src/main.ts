@@ -5,7 +5,7 @@ import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime, faceDataUrl } from './game/hud';
 import { emptyIntent, DT, WEAPON_ORDER, SKILLS, type Intent } from './game/world';
-import { initAudio, playMusic, audioSettings, applyVolumes, currentMusic } from './audio/audio';
+import { initAudio, playMusic, audioSettings, applyVolumes, currentMusic, audioStream } from './audio/audio';
 import { ChonkAgent, type TurnRecord, type AgentConfig } from './agent/agent';
 import { hasDevProxy, PROVIDERS, type Provider } from './agent/mistral';
 import type { ObsMode } from './agent/perception';
@@ -558,4 +558,4 @@ async function snapshotScenario() {
 }
 
 // Expose for automation (benchmark runner / debugging).
-Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode, stageScenario, snapshotScenario, startReplay } });
+Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode, stageScenario, snapshotScenario, startReplay, audioStream, playMusic } });

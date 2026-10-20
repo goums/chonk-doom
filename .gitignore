@@ -7,3 +7,8 @@ runs/
 bench/tmp/
 node_modules/.evalite
 evals/results/latest.*
+video/node_modules
+video/out
+video/public/footage
+video/samples
+video/*.log
