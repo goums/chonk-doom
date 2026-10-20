@@ -57,7 +57,13 @@ export class Renderer {
     const vfov = 2 * Math.atan(Math.tan(HFOV / 2) / (SCREEN_W / VIEW_H));
     this.camera = new THREE.PerspectiveCamera((vfov * 180) / Math.PI, SCREEN_W / VIEW_H, 0.05, 60);
     this.scene.add(this.levelGroup);
-    if (STYLE.smooth) {
+    if (STYLE.ink) {
+      // storybook: flat, warm, watercolor-sunset haze
+      this.scene.fog = new THREE.Fog(0xf6cfa8, 6, 26);
+      this.scene.background = new THREE.Color(0xf6cfa8);
+      this.scene.add(new THREE.HemisphereLight(0xfff1dc, 0xd9a98c, 0.7));
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.35));
+    } else if (STYLE.smooth) {
       // soft, airy look: warm haze instead of darkness
       this.scene.fog = new THREE.Fog(0xe8d9cf, 7, 30);
       this.scene.background = new THREE.Color(0xe8d9cf);

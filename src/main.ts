@@ -1,5 +1,5 @@
 import './style.css';
-import { STYLE, setStyle } from './art/style';
+import { STYLE, STYLE_LABEL, nextStyle } from './art/style';
 import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
 import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './game/hud';
@@ -11,11 +11,11 @@ import type { ObsMode } from './agent/perception';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
-document.body.classList.add(STYLE.name);
-$('btn-style').textContent = STYLE.smooth ? '🎨 STYLE: SMOOTH' : '🎨 STYLE: RETRO';
-$('btn-style').addEventListener('click', () => setStyle(STYLE.smooth ? 'retro' : 'smooth'));
+document.body.classList.add(STYLE.name, STYLE.smooth ? 'hires' : 'lores');
+$('btn-style').textContent = `🎨 ${STYLE_LABEL[STYLE.name]}`;
+$('btn-style').addEventListener('click', nextStyle);
 // web fonts must be ready before art with text is generated
-try { await Promise.race([document.fonts.load(`600 12px ${STYLE.font}`), new Promise((r) => setTimeout(r, 2500))]); } catch { /* offline */ }
+try { await Promise.race([document.fonts.load(`${STYLE.fontWeight} 12px '${STYLE.font}'`), new Promise((r) => setTimeout(r, 2500))]); } catch { /* offline */ }
 
 const screen = $<HTMLCanvasElement>('screen');
 screen.width = SCREEN_W * STYLE.screen;
@@ -30,71 +30,68 @@ game.listeners.push((type) => {
   if (type === 'level') renderer.load(game.world);
 });
 
-type Mode = 'menu' | 'human' | 'agent' | 'replay';
+type Mode = 'menu' | 'human' | 'agent';
 let mode: Mode = 'menu';
 let agent: ChonkAgent | null = null;
+let paused = false;
 let showAutomap = false;
+let difficulty = 1;
 
 // ---------------- input ----------------
 const keys = new Set<string>();
-let mouseDX = 0;
-let mouseFire = false;
-let usePressed = false;
+let firePressed = false; // edge, for menus / respawn
 let weaponPressed: number | null = null;
 let menuSel = 0;
-const MENU = ['NEW GAME', 'LET LE CHONK PLAY', 'SKILL: ', 'SOUND: '];
-let menuSkill = 1;
+const MENU = ['NEW GAME', 'LET LE CHONK PLAY', 'DIFFICULTY: ', 'SOUND: '];
 
 function menuLines() {
-  return MENU.map((m, i) => (i === 2 ? m + SKILLS[menuSkill].name : i === 3 ? m + (audioSettings.muted ? 'OFF' : 'ON') : m));
+  return MENU.map((m, i) => (i === 2 ? m + SKILLS[difficulty].name : i === 3 ? m + (audioSettings.muted ? 'OFF' : 'ON') : m));
 }
 
+function setDifficulty(d: number) {
+  difficulty = (d + SKILLS.length) % SKILLS.length;
+  ($('difficulty') as HTMLSelectElement).value = String(difficulty);
+}
+$('difficulty').addEventListener('change', () => setDifficulty(Number(($('difficulty') as HTMLSelectElement).value)));
+
 window.addEventListener('keydown', (e) => {
-  if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'SELECT') return;
+  const tag = (e.target as HTMLElement).tagName;
+  if (tag === 'INPUT' || tag === 'SELECT') return;
   initAudio();
   if (mode === 'menu' && !currentMusic()) playMusic('title');
-  keys.add(e.code);
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(e.code)) e.preventDefault();
+  if (e.repeat && e.code === 'Space') return;
+  keys.add(e.code);
   if (e.code === 'KeyM') toggleSound();
   if (mode === 'menu') {
-    if (e.code === 'ArrowDown' || e.code === 'KeyS') menuSel = (menuSel + 1) % MENU.length;
-    if (e.code === 'ArrowUp' || e.code === 'KeyW') menuSel = (menuSel + MENU.length - 1) % MENU.length;
+    if (e.code === 'ArrowDown') menuSel = (menuSel + 1) % MENU.length;
+    if (e.code === 'ArrowUp') menuSel = (menuSel + MENU.length - 1) % MENU.length;
     if (e.code === 'Enter' || e.code === 'Space') menuPick();
-    if (menuSel === 2 && (e.code === 'ArrowRight' || e.code === 'ArrowLeft')) menuSkill = (menuSkill + (e.code === 'ArrowRight' ? 1 : 3)) % 4;
+    if (menuSel === 2 && (e.code === 'ArrowRight' || e.code === 'ArrowLeft')) setDifficulty(difficulty + (e.code === 'ArrowRight' ? 1 : -1));
     return;
   }
-  if (e.code === 'Escape' && mode === 'human') toMenu();
+  if (e.code === 'KeyP' || e.code === 'Escape') setPaused(!paused);
   if (e.code === 'Tab') showAutomap = !showAutomap;
-  if (e.code === 'KeyE' || e.code === 'Space') usePressed = true;
+  if (e.code === 'Space' || e.code === 'Enter') firePressed = true;
   const n = Number(e.key);
   if (n >= 1 && n <= 4) weaponPressed = n;
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
+window.addEventListener('blur', () => keys.clear());
 screen.addEventListener('click', () => {
   initAudio();
-  if (mode === 'menu') { if (!currentMusic()) playMusic('title'); return; }
-  if (mode === 'human' && document.pointerLockElement !== screen) lockPointer();
-});
-screen.addEventListener('mousedown', (e) => { if (e.button === 0 && document.pointerLockElement === screen) mouseFire = true; });
-window.addEventListener('mouseup', () => { mouseFire = false; });
-document.addEventListener('mousemove', (e) => { if (document.pointerLockElement === screen) mouseDX += e.movementX; });
-document.addEventListener('pointerlockchange', () => {
-  $('click-hint').classList.toggle('hidden', !(mode === 'human' && document.pointerLockElement !== screen));
+  if (mode === 'menu' && !currentMusic()) playMusic('title');
 });
 
 function humanIntent(): Intent {
   const it = emptyIntent();
   const k = (c: string) => keys.has(c);
-  it.forward = (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0);
+  it.forward = (k('ArrowUp') || k('KeyW') ? 1 : 0) - (k('ArrowDown') || k('KeyS') ? 1 : 0);
   it.strafe = (k('KeyD') ? 1 : 0) - (k('KeyA') ? 1 : 0);
-  if (k('AltLeft') || k('AltRight')) { it.strafe += (k('ArrowRight') ? 1 : 0) - (k('ArrowLeft') ? 1 : 0); }
-  else it.turn = ((k('ArrowRight') ? 1 : 0) - (k('ArrowLeft') ? 1 : 0)) * 3.2 * DT;
-  it.turn += mouseDX * 0.0032;
-  mouseDX = 0;
-  it.fire = mouseFire || k('ControlLeft') || k('ControlRight') || k('KeyF');
+  it.turn = ((k('ArrowRight') ? 1 : 0) - (k('ArrowLeft') ? 1 : 0)) * 3.0 * DT;
+  it.fire = k('Space');
   it.run = k('ShiftLeft') || k('ShiftRight');
-  it.use = usePressed;
-  usePressed = false;
+  it.use = k('KeyE');
   if (weaponPressed) { it.weapon = WEAPON_ORDER[weaponPressed - 1]; weaponPressed = null; }
   return it;
 }
@@ -110,47 +107,56 @@ $('btn-sound').addEventListener('click', () => toggleSound());
 try { if (localStorage.getItem('chonk.muted') === '1') { audioSettings.muted = true; $('btn-sound').textContent = '🔇 SOUND OFF'; } } catch { /* ignore */ }
 
 // ---------------- modes ----------------
+function showBrain(show: boolean) {
+  document.body.classList.toggle('brain-open', show);
+}
+
+function setPaused(p: boolean) {
+  if (mode === 'menu') p = false;
+  paused = p;
+  $('pause-overlay').classList.toggle('hidden', !p);
+  $('pause-btn').textContent = p ? '▶' : '⏸';
+  agent?.pause(p);
+  if (p) keys.clear();
+}
+$('pause-btn').addEventListener('click', () => setPaused(!paused));
+$('resume-btn').addEventListener('click', () => setPaused(false));
+$('quit-btn').addEventListener('click', () => toMenu());
+
 function toMenu() {
   if (agent) agent.stop();
   agent = null;
   mode = 'menu';
+  setPaused(false);
   game.state = 'title';
-  document.exitPointerLock?.();
   playMusic('title');
   hideOverlays();
   setAgentButtons(false);
+  $('pause-btn').classList.add('hidden');
 }
 
 function hideOverlays() {
   $('bubble').classList.add('hidden');
   $('thinking').classList.add('hidden');
-  $('click-hint').classList.add('hidden');
-  document.getElementById('replay-bar')?.remove();
 }
 
 function menuPick() {
   if (menuSel === 0) startHuman();
-  else if (menuSel === 1) startAgent();
-  else if (menuSel === 2) menuSkill = (menuSkill + 1) % 4;
+  else if (menuSel === 1) openAgentSetup();
+  else if (menuSel === 2) setDifficulty(difficulty + 1);
   else toggleSound();
-}
-
-function lockPointer() {
-  try {
-    const r = screen.requestPointerLock() as unknown as Promise<void> | undefined;
-    r?.catch?.(() => {});
-  } catch { /* not allowed here */ }
 }
 
 function startHuman() {
   initAudio();
   if (agent) agent.stop();
   agent = null;
+  showBrain(false);
   hideOverlays();
+  setPaused(false);
   mode = 'human';
-  game.newGame(menuSkill, Number(($('start-level') as HTMLSelectElement).value));
-  lockPointer();
-  $('click-hint').classList.remove('hidden');
+  game.newGame(difficulty, 0);
+  $('pause-btn').classList.remove('hidden');
 }
 
 // ---------------- agent panel ----------------
@@ -161,7 +167,6 @@ let devProxy = false;
 hasDevProxy().then((ok) => { devProxy = ok; $('proxy-note').classList.toggle('hidden', !ok); });
 
 function setAgentButtons(running: boolean) {
-  ($('agent-pause') as HTMLButtonElement).disabled = !running;
   ($('agent-stop') as HTMLButtonElement).disabled = !running;
   ($('agent-export') as HTMLButtonElement).disabled = !agent;
 }
@@ -172,46 +177,52 @@ function setStatus(s: string, err = false) {
   el.classList.toggle('error', err);
 }
 
+/** "Let Le Chonk play": show the brain sidebar with its setup, ready to start. */
+function openAgentSetup() {
+  initAudio();
+  if (mode === 'human') toMenu();
+  showBrain(true);
+  ($('setup') as HTMLDetailsElement).open = true;
+  setStatus(devProxy || keyInput.value.trim() ? 'Ready. Press START LE CHONK.' : 'Paste your Mistral API key, then press START.');
+  if (!devProxy && !keyInput.value.trim()) keyInput.focus();
+}
+
 function startAgent() {
   initAudio();
   const key = keyInput.value.trim();
   if (!key && !devProxy) {
-    setStatus('Paste your Mistral API key first (Setup panel). Get one at console.mistral.ai.', true);
-    ($('setup') as HTMLDetailsElement).open = true;
+    setStatus('Paste your Mistral API key first. Get one at console.mistral.ai.', true);
     keyInput.focus();
     return;
   }
   if (agent) agent.stop();
+  showBrain(true);
   hideOverlays();
-  document.exitPointerLock?.();
+  setPaused(false);
   $('log').innerHTML = '';
-  const skill = Number(($('skill') as HTMLSelectElement).value);
   mode = 'agent';
-  game.newGame(skill, Number(($('start-level') as HTMLSelectElement).value), Math.floor(Math.random() * 1e6));
+  game.newGame(difficulty, Number(($('start-level') as HTMLSelectElement).value), Math.floor(Math.random() * 1e6));
   agent = new ChonkAgent(game, screen, {
     model: $<HTMLInputElement>('model').value.trim() || 'mistral-large-4',
     obsMode: ($('obs') as HTMLSelectElement).value as ObsMode,
     reasoning: ($('reasoning') as HTMLSelectElement).value as 'none' | 'high',
     maxTurns: Number($<HTMLInputElement>('max-turns').value) || 400,
-    skill,
+    skill: difficulty,
     speed: Number(($('speed') as HTMLSelectElement).value),
   }, { apiKey: key || null });
   agent.onUpdate = onAgentUpdate;
   agent.beforeCapture = drawGameFrame;
   setAgentButtons(true);
   ($('setup') as HTMLDetailsElement).open = false;
+  $('pause-btn').classList.remove('hidden');
   agent.run();
 }
 
 $('btn-human').addEventListener('click', startHuman);
-$('btn-agent').addEventListener('click', startAgent);
+$('btn-agent').addEventListener('click', openAgentSetup);
+$('agent-start').addEventListener('click', startAgent);
+$('brain-close').addEventListener('click', () => { if (mode === 'agent') toMenu(); showBrain(false); });
 $('agent-stop').addEventListener('click', () => { agent?.stop(); setAgentButtons(false); ($('agent-export') as HTMLButtonElement).disabled = false; });
-$('agent-pause').addEventListener('click', () => {
-  if (!agent) return;
-  const paused = agent.status === 'paused';
-  agent.pause(!paused);
-  $('agent-pause').textContent = paused ? '⏸ Pause' : '▶ Resume';
-});
 $('speed').addEventListener('change', () => { if (agent) agent.cfg.speed = Number(($('speed') as HTMLSelectElement).value); });
 $('agent-export').addEventListener('click', () => {
   if (!agent) return;
@@ -231,7 +242,7 @@ function describeAction(a: TurnRecord['actions'][number]) {
   return `${a.type}${args ? ' ' + args : ''}`;
 }
 
-function turnHtml(r: TurnRecord, withFrame: boolean) {
+function turnHtml(r: TurnRecord) {
   const items = r.actions.map((a, i) => {
     const res = r.results[i];
     return `<li class="${res?.interrupted ? 'int' : ''}"><span class="act">${esc(describeAction(a))}</span>${res ? ' → ' + esc(res.outcome) : ''}</li>`;
@@ -242,7 +253,7 @@ function turnHtml(r: TurnRecord, withFrame: boolean) {
     ${r.reasoning ? `<details><summary>reasoning</summary><div class="reasoning">${esc(r.reasoning)}</div></details>` : ''}
     ${r.error ? `<div class="err">⚠ ${esc(r.error)}</div>` : ''}
     <ol>${items}${extra}</ol>
-    ${withFrame ? `<details><summary>frame Le Chonk saw</summary><img src="${r.frame}" alt="frame"></details>` : ''}`;
+    <details><summary>frame Le Chonk saw</summary><img src="${r.frame}" alt="frame"></details>`;
 }
 
 const turnEls = new Map<number, HTMLElement>();
@@ -256,7 +267,7 @@ function onAgentUpdate(a: ChonkAgent, rec?: TurnRecord) {
       turnEls.set(rec.turn, el);
       while ($('log').children.length > 120) $('log').lastElementChild!.remove();
     }
-    el.innerHTML = turnHtml(rec, true);
+    el.innerHTML = turnHtml(rec);
     if (rec.thought) {
       const b = $('bubble');
       b.innerHTML = `<b>LE CHONK:</b> ${esc(rec.thought)}`;
@@ -290,76 +301,6 @@ function renderStats() {
 }
 renderStats();
 
-// ---------------- replay viewer ----------------
-interface RunFile { config: { model: string; obsMode: string }; turns: TurnRecord[]; run: unknown; costUSD: number }
-let replay: { run: RunFile; idx: number; img: HTMLImageElement; playing: boolean; t: number } | null = null;
-
-$('btn-replay').addEventListener('click', async () => {
-  ($('replay-dialog') as HTMLDialogElement).showModal();
-  const list = $('replay-list');
-  list.innerHTML = '<p>Loading featured runs…</p>';
-  try {
-    const idx: { file: string; title: string; desc: string }[] = await (await fetch('runs/index.json')).json();
-    list.innerHTML = '<h4>Featured runs by Mistral Large 4</h4>';
-    for (const r of idx) {
-      const b = document.createElement('button');
-      b.className = 'btn small replay-item';
-      b.innerHTML = `${esc(r.title)}<small>${esc(r.desc)}</small>`;
-      b.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        b.textContent = 'Loading…';
-        startReplay(await (await fetch('runs/' + r.file)).json());
-        ($('replay-dialog') as HTMLDialogElement).close();
-      });
-      list.appendChild(b);
-    }
-  } catch {
-    list.innerHTML = '<p>No featured runs bundled yet.</p>';
-  }
-});
-$<HTMLInputElement>('replay-file').addEventListener('change', async (e) => {
-  const f = (e.target as HTMLInputElement).files?.[0];
-  if (!f) return;
-  startReplay(JSON.parse(await f.text()));
-  ($('replay-dialog') as HTMLDialogElement).close();
-});
-
-function startReplay(run: RunFile) {
-  if (agent) agent.stop();
-  agent = null;
-  hideOverlays();
-  mode = 'replay';
-  playMusic(null);
-  replay = { run, idx: 0, img: new Image(), playing: true, t: 0 };
-  const bar = document.createElement('div');
-  bar.id = 'replay-bar';
-  bar.innerHTML = `<button class="btn small" id="rp-play">⏸</button><input type="range" id="rp-slider" min="0" max="${run.turns.length - 1}" value="0"><span id="rp-label"></span>`;
-  $('stage').insertBefore(bar, $('help'));
-  $('rp-play').addEventListener('click', () => { replay!.playing = !replay!.playing; $('rp-play').textContent = replay!.playing ? '⏸' : '▶'; });
-  $('rp-slider').addEventListener('input', (e) => showReplayTurn(Number((e.target as HTMLInputElement).value)));
-  $('log').innerHTML = '';
-  showReplayTurn(0);
-  setStatus(`📼 Replay: ${run.config.model}, ${run.config.obsMode} mode, ${run.turns.length} turns, $${(run.costUSD ?? 0).toFixed(2)}`);
-}
-
-function showReplayTurn(i: number) {
-  if (!replay) return;
-  replay.idx = i;
-  replay.t = 0;
-  const r = replay.run.turns[i];
-  replay.img.src = r.frame;
-  ($('rp-slider') as HTMLInputElement).value = String(i);
-  $('rp-label').textContent = `${i + 1}/${replay.run.turns.length}`;
-  const b = $('bubble');
-  b.innerHTML = `<b>LE CHONK:</b> ${esc(r.thought)}`;
-  b.classList.toggle('hidden', !r.thought);
-  const el = document.createElement('div');
-  el.className = 'turn';
-  el.innerHTML = turnHtml(r, false);
-  $('log').prepend(el);
-  while ($('log').children.length > 60) $('log').lastElementChild!.remove();
-}
-
 // ---------------- main loop ----------------
 let turboFrame = 0;
 function drawGameFrame() {
@@ -384,27 +325,20 @@ function frame(now: number) {
 
   if (mode === 'menu') {
     drawTitle(sctx, titleT, menuLines(), menuSel, ['ARROWS + ENTER TO SELECT', 'A MISTRAL LE CHONK CHALLENGE ENTRY']);
-  } else if (mode === 'replay' && replay) {
-    sctx.fillStyle = '#000';
-    sctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-    if (replay.img.complete) sctx.drawImage(replay.img, 0, 0, SCREEN_W, SCREEN_H);
-    if (replay.playing) {
-      replay.t += dt;
-      if (replay.t > 2.2 && replay.idx < replay.run.turns.length - 1) showReplayTurn(replay.idx + 1);
-    }
   } else {
-    acc += dt;
+    if (!paused) acc += dt;
     while (acc >= DT) {
       acc -= DT;
       if (mode === 'human') {
         if (game.state === 'playing') {
           const it = humanIntent();
-          if (game.world.player.dead && it.use) game.advance();
+          if (game.world.player.dead && firePressed) game.advance();
           game.tick(it);
         } else {
           game.tick(emptyIntent());
-          if (usePressed) { usePressed = false; game.advance(); if (game.state === 'title') toMenu(); }
+          if (firePressed) { game.advance(); if (game.state === 'title') toMenu(); }
         }
+        firePressed = false;
       } else if (mode === 'agent' && agent) {
         // time only flows while one of Le Chonk's actions is executing
         // turbo (benchmarks): simulate as fast as possible, render only when a frame is captured
@@ -426,13 +360,13 @@ function frame(now: number) {
       const r = game.run;
       drawVictory(sctx, game.stateT, [
         `KILLS ${r.kills}/${r.totalKills}   SECRETS ${r.secrets}   DEATHS ${r.deaths}`,
-        `TOTAL TIME ${fmtTime(r.time)}   SKILL ${game.skillName}`,
+        `TOTAL TIME ${fmtTime(r.time)}   DIFFICULTY ${game.skillName}`,
         agent ? `${agent.turns.length} TURNS BY ${agent.cfg.model.toUpperCase()}  $${agent.cost.toFixed(2)}` : '',
       ]);
     } else if (game.state === 'title') {
       toMenu();
     }
-    const thinking = mode === 'agent' && agent && (agent.status === 'thinking') && game.state === 'playing';
+    const thinking = mode === 'agent' && agent && agent.status === 'thinking' && game.state === 'playing' && !paused;
     $('thinking').classList.toggle('hidden', !thinking);
   }
   requestAnimationFrame(frame);
@@ -448,6 +382,7 @@ export interface EpisodeOptions {
 async function runEpisode(o: EpisodeOptions) {
   if (agent) agent.stop();
   hideOverlays();
+  showBrain(true);
   $('log').innerHTML = '';
   mode = 'agent';
   game.newGame(o.skill, o.level, o.seed);
@@ -479,4 +414,4 @@ async function runEpisode(o: EpisodeOptions) {
 }
 
 // Expose for automation (benchmark runner / debugging).
-Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, startReplay, runEpisode } });
+Object.assign(window, { chonk: { game, get agent() { return agent; }, startAgent, startHuman, openAgentSetup, runEpisode } });

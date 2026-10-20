@@ -127,11 +127,11 @@ export const START_INVENTORY: Inventory = {
   hp: 100, armor: 0, ammo: { hairballs: 50, sardines: 0, battery: 0 }, weapons: ['claws', 'hairball'], weapon: 'hairball',
 };
 
+/** Difficulty levels: damage taken multiplier and enemy aggression (attack frequency). */
 export const SKILLS = [
-  { name: "I'M A KITTEN", dmg: 0.5, aggro: 0.7 },
-  { name: 'HOUSE CAT', dmg: 1, aggro: 1 },
-  { name: 'ALLEY CAT', dmg: 1.4, aggro: 1.25 },
-  { name: 'ULTRA-CHONK', dmg: 2, aggro: 1.5 },
+  { name: 'EASY', dmg: 0.5, aggro: 0.7 },
+  { name: 'MEDIUM', dmg: 1, aggro: 1 },
+  { name: 'HARD', dmg: 1.5, aggro: 1.3 },
 ];
 
 export class World {
@@ -159,6 +159,7 @@ export class World {
   rand: () => number;
   messages: { text: string; t: number }[] = [];
   bossId = -1;
+  private bumpT = -99;
 
   constructor(level: LevelDef, inv: Inventory, skill = 1, seed = 1234) {
     this.level = level;
@@ -381,6 +382,14 @@ export class World {
     } else p.firingFor = 0;
 
     if (it.use) this.use();
+    else if (it.forward > 0 && moved < speed * DT * 0.3 && this.time - this.bumpT > 0.6) {
+      // walking into a door or the exit switch uses it (no extra key needed)
+      const r = this.castRay(p.x, p.y, p.angle, 0.75);
+      if (r.dist < 0.75 && (this.door(r.tx, r.ty) && !this.door(r.tx, r.ty)!.secret || this.tile(r.tx, r.ty) === 'E')) {
+        this.bumpT = this.time;
+        this.use();
+      }
+    }
     this.pickups();
   }
 

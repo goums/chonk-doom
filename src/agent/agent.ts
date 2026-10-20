@@ -117,8 +117,10 @@ export class ChonkAgent {
   }
 
   pause(p: boolean) {
+    if (['done', 'error', 'stopped', 'idle'].includes(this.status)) return;
     this.pauseRequested = p;
-    if (p && this.status !== 'stopped') this.status = 'paused';
+    if (p) this.status = 'paused';
+    else if (this.status === 'paused') this.status = this.executing ? 'acting' : 'thinking';
     this.onUpdate(this);
   }
 

@@ -7,6 +7,11 @@ import { buildWeapons, WEAPON_W, WEAPON_H, type WeaponFrame } from '../art/weapo
 import { buildItems } from '../art/sprites';
 import { World, WEAPONS, WALL_CHARS, type KeyColor } from './world';
 
+/** Style-dependent HUD colors. */
+const C = STYLE.ink
+  ? { label: '#6b3b22', value: '#2b1d17', num: '#d62828', numShadow: '', armsCur: '#d62828', armsHas: '#2b1d17', armsNo: '#c9b39a', menu: '#6b3b22', menuSel: '#2b1d17', shadow: '', dim: '#8a5a3a', accent: '#d62828' }
+  : { label: '#d8c8e0', value: '#ffd23f', num: '#ff3b3b', numShadow: '#3a0a0a', armsCur: '#fff', armsHas: '#ffd23f', armsNo: '#5a4c60', menu: '#b8a6c4', menuSel: '#fff', shadow: '#000', dim: '#7d6b85', accent: '#ff7b00' };
+
 // Art is built lazily (after web fonts are loaded, so smooth-mode text renders correctly).
 let faces: ReturnType<typeof buildFaces>;
 let weapons: ReturnType<typeof buildWeapons>;
@@ -19,7 +24,15 @@ export function initHudArt() {
   weapons = buildWeapons();
   items = buildItems();
   const [c, ctx] = makeCanvas(SCREEN_W, BAR_H);
-  if (STYLE.smooth) {
+  if (STYLE.ink) {
+    // a wooden stage plank
+    ctx.fillStyle = '#c98b52';
+    ctx.fillRect(0, 0, SCREEN_W, BAR_H);
+    for (let y = 0; y < BAR_H; y += 10) { ctx.fillStyle = 'rgba(90,50,20,0.25)'; ctx.fillRect(0, y, SCREEN_W, 0.7); }
+    noise(ctx, SCREEN_W, BAR_H, 0, 77);
+    ctx.fillStyle = STYLE.inkColor;
+    ctx.fillRect(0, 0, SCREEN_W, 1.2);
+  } else if (STYLE.smooth) {
     const g = ctx.createLinearGradient(0, 0, 0, BAR_H);
     g.addColorStop(0, '#3b2a4a');
     g.addColorStop(1, '#241a2e');
@@ -40,6 +53,16 @@ export function initHudArt() {
 }
 
 function panel(ctx: Ctx, x: number, w: number) {
+  if (STYLE.ink) {
+    ctx.fillStyle = '#f6e7cf';
+    ctx.beginPath();
+    ctx.roundRect(x + 2, VIEW_H + 4, w - 4, BAR_H - 8, 3);
+    ctx.fill();
+    ctx.strokeStyle = STYLE.inkColor;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+    return;
+  }
   if (STYLE.smooth) {
     ctx.fillStyle = 'rgba(0,0,0,0.22)';
     ctx.beginPath();
@@ -55,9 +78,9 @@ function panel(ctx: Ctx, x: number, w: number) {
   ctx.fillRect(x + 1, VIEW_H + BAR_H - 4, w - 2, 1);
 }
 
-function bigNum(ctx: Ctx, n: string, cx: number, y: number, color = '#ff3b3b') {
+function bigNum(ctx: Ctx, n: string, cx: number, y: number, color = C.num) {
   const w = textWidth(n, 3);
-  text(ctx, n, Math.round(cx - w / 2), y, color, 3, '#3a0a0a');
+  text(ctx, n, Math.round(cx - w / 2), y, color, 3, C.numShadow || undefined);
 }
 
 /** Face state machine, kept per-HUD so the idle glance looks natural. */
@@ -177,19 +200,27 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   const ammoType = WEAPONS[p.weapon].ammo;
   panel(ctx, 0, 60);
   bigNum(ctx, ammoType ? String(p.ammo[ammoType]) : '--', 30, VIEW_H + 7);
-  text(ctx, 'AMMO', 22, VIEW_H + 29, '#d8c8e0');
+  text(ctx, 'AMMO', 22, VIEW_H + 29, C.label);
   panel(ctx, 60, 76);
   bigNum(ctx, `${Math.max(0, p.hp)}%`, 98, VIEW_H + 7);
-  text(ctx, 'HEALTH', 86, VIEW_H + 29, '#d8c8e0');
+  text(ctx, 'HEALTH', 86, VIEW_H + 29, C.label);
   panel(ctx, 128, 44);
-  text(ctx, 'ARMS', 143, VIEW_H + 29, '#d8c8e0');
+  text(ctx, 'ARMS', 143, VIEW_H + 29, C.label);
   ['claws', 'hairball', 'shotgun', 'laser'].forEach((id, i) => {
     const has = p.weapons.has(id as never);
     const cur = p.weapon === id;
-    text(ctx, String(i + 1), 133 + i * 10, VIEW_H + 10, cur ? '#fff' : has ? '#ffd23f' : '#5a4c60', 2);
+    text(ctx, String(i + 1), 133 + i * 10, VIEW_H + 10, cur ? C.armsCur : has ? C.armsHas : C.armsNo, 2);
   });
   // face
-  if (STYLE.smooth) {
+  if (STYLE.ink) {
+    ctx.fillStyle = '#ffe2b8';
+    ctx.beginPath();
+    ctx.roundRect(173, VIEW_H + 2, 40, BAR_H - 4, 6);
+    ctx.fill();
+    ctx.strokeStyle = STYLE.inkColor;
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  } else if (STYLE.smooth) {
     ctx.fillStyle = 'rgba(255,130,4,0.18)';
     ctx.beginPath();
     ctx.roundRect(173, VIEW_H + 2, 40, BAR_H - 4, 6);
@@ -202,7 +233,7 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2, FACE_W, FACE_H);
   panel(ctx, 214, 72);
   bigNum(ctx, `${p.armor}%`, 250, VIEW_H + 7);
-  text(ctx, 'ARMOR', 240, VIEW_H + 29, '#d8c8e0');
+  text(ctx, 'ARMOR', 240, VIEW_H + 29, C.label);
   panel(ctx, 286, 20);
   (['red', 'blue', 'yellow'] as KeyColor[]).forEach((k, i) => {
     if (p.keys.has(k)) ctx.drawImage(items[`key_${k}` as const], 288, VIEW_H + 4 + i * 11, 16, 14);
@@ -215,8 +246,8 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   ];
   rows.forEach(([n, v, m], i) => {
     const y = VIEW_H + 7 + i * 9;
-    text(ctx, n, 312, y, '#d8c8e0');
-    text(ctx, `${v}/${m}`, 334, y, '#ffd23f');
+    text(ctx, n, 312, y, C.label);
+    text(ctx, `${v}/${m}`, 334, y, C.value);
   });
 }
 
@@ -279,8 +310,16 @@ function getLogo() {
     ctx.font = `700 40px ${STYLE.font}, system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(60,10,0,0.5)';
-    ctx.fillText(word, 152, 9);
+    if (STYLE.ink) {
+      ctx.font = `400 46px '${STYLE.font}', system-ui, sans-serif`;
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = STYLE.inkColor;
+      ctx.strokeText(word, 151, 6);
+    } else {
+      ctx.fillStyle = 'rgba(60,10,0,0.5)';
+      ctx.fillText(word, 152, 9);
+    }
     const g = ctx.createLinearGradient(0, 6, 0, 50);
     for (const [o, col] of [[0, '#FFD800'], [0.3, '#FFAF00'], [0.55, '#FF8205'], [0.78, '#FA500F'], [1, '#E10500']] as [number, string][]) g.addColorStop(o, col);
     ctx.fillStyle = g;
@@ -309,39 +348,144 @@ function getLogo() {
   return c;
 }
 
-export function drawTitle(ctx: Ctx, t: number, lines: string[], selected: number, footer: string[]) {
-  initHudArt();
-  ctx.fillStyle = '#120a14';
+// ---- storybook stage: watercolor sunburst, red curtains, wooden floor ----
+let stage: HTMLCanvasElement | null = null;
+function getStage() {
+  if (stage) return stage;
+  const [c, ctx] = makeCanvas(SCREEN_W, SCREEN_H);
+  const cx = SCREEN_W / 2, cy = 105;
+  ctx.fillStyle = '#fbd9a6';
   ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
-  // starfield of paw prints
+  const cols = ['#f6a6a0', '#fcd08a', '#f8b49a', '#fde3a7'];
+  for (let i = 0; i < 24; i++) {
+    const a0 = (i / 24) * Math.PI * 2, a1 = ((i + 1) / 24) * Math.PI * 2;
+    ctx.fillStyle = cols[i % cols.length];
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a0) * 500, cy + Math.sin(a0) * 500);
+    ctx.lineTo(cx + Math.cos(a1) * 500, cy + Math.sin(a1) * 500);
+    ctx.fill();
+  }
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 120);
+  glow.addColorStop(0, 'rgba(255,246,220,0.95)');
+  glow.addColorStop(1, 'rgba(255,246,220,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  noise(ctx, SCREEN_W, SCREEN_H, 0, 4242);
+  // wooden stage floor
+  const fy = 196;
+  ctx.fillStyle = '#d39a62';
+  ctx.fillRect(0, fy, SCREEN_W, SCREEN_H - fy);
+  for (let x = -20; x < SCREEN_W + 20; x += 28) {
+    ctx.strokeStyle = 'rgba(80,40,15,0.45)';
+    ctx.lineWidth = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(cx + (x - cx) * 0.6, fy);
+    ctx.lineTo(x, SCREEN_H);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = STYLE.inkColor;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(SCREEN_W, fy); ctx.stroke();
+  // curtains
+  const curtain = (x0: number, dir: number) => {
+    ctx.fillStyle = '#c92a2a';
+    ctx.beginPath();
+    ctx.moveTo(x0, 0);
+    ctx.lineTo(x0 + dir * 58, 0);
+    ctx.quadraticCurveTo(x0 + dir * 30, 110, x0 + dir * 44, SCREEN_H);
+    ctx.lineTo(x0, SCREEN_H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = STYLE.inkColor;
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    ctx.strokeStyle = '#8f1d1d';
+    ctx.lineWidth = 0.9;
+    for (const k of [0.25, 0.5, 0.75]) {
+      ctx.beginPath();
+      ctx.moveTo(x0 + dir * 58 * k, 8);
+      ctx.quadraticCurveTo(x0 + dir * 40 * k, 120, x0 + dir * 44 * k, SCREEN_H);
+      ctx.stroke();
+    }
+    // golden tie-back
+    ctx.fillStyle = '#f2b134';
+    ctx.beginPath();
+    ctx.ellipse(x0 + dir * 30, 120, 9, 3.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = STYLE.inkColor;
+    ctx.stroke();
+  };
+  curtain(0, 1);
+  curtain(SCREEN_W, -1);
+  // scalloped valance
+  ctx.fillStyle = '#b02121';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  for (let x = 0; x <= SCREEN_W; x += 32) ctx.quadraticCurveTo(x + 16, 22, x + 32, 8);
+  ctx.lineTo(SCREEN_W, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = STYLE.inkColor;
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+  stage = c;
+  return c;
+}
+
+const CONFETTI = ['#e63946', '#4cc9f0', '#ffd166', '#06d6a0', '#ff8fab', '#7b2cbf'];
+function confetti(ctx: Ctx, t: number) {
+  for (let i = 0; i < 34; i++) {
+    const x = (i * 71.3 + Math.sin(t + i) * 8) % SCREEN_W;
+    const y = ((i * 37 + t * (14 + (i % 5) * 4)) % (SCREEN_H + 20)) - 10;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(t * 2 + i);
+    ctx.fillStyle = CONFETTI[i % CONFETTI.length];
+    ctx.fillRect(-1.5, -0.8, 3, 1.6);
+    ctx.restore();
+  }
+}
+
+/** Background for full screens (title / intermission / victory). */
+function screenBg(ctx: Ctx, t: number, color: string) {
+  if (STYLE.ink) {
+    ctx.drawImage(getStage(), 0, 0, SCREEN_W, SCREEN_H);
+    confetti(ctx, t);
+    return;
+  }
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
   for (let i = 0; i < 40; i++) {
     const x = (i * 97 + t * 12 * ((i % 3) + 1)) % SCREEN_W;
     const y = (i * 53) % SCREEN_H;
     px(ctx, x, y, i % 5 ? '#3a2a44' : '#6a4a74', 2, 2);
   }
+}
+
+export function drawTitle(ctx: Ctx, t: number, lines: string[], selected: number, footer: string[]) {
+  initHudArt();
+  screenBg(ctx, t, '#120a14');
   const l = getLogo();
-  ctx.drawImage(l, (SCREEN_W - 300) / 2, 18 + Math.sin(t * 2) * 2, 300, 60);
-  const sub = 'LE CHONK VS THE DOGS OF HELL';
-  text(ctx, sub, (SCREEN_W - textWidth(sub)) / 2, 72, '#ffd23f', 1, '#000');
+  ctx.drawImage(l, (SCREEN_W - 300) / 2, 22 + Math.sin(t * 2) * 2, 300, 60);
   // the chonk himself
   const face = faces.get(`0_${Math.floor(t) % 3 === 0 ? -1 : Math.floor(t) % 3 === 1 ? 0 : 1}_grin`)!;
-  ctx.drawImage(face, SCREEN_W / 2 - 30, 82, 60, 60);
+  ctx.drawImage(face, SCREEN_W / 2 - 32, 80, 64, 64);
   lines.forEach((s, i) => {
     const sel = i === selected;
     const y = 150 + i * 13;
-    const col = sel ? '#fff' : '#b8a6c4';
-    text(ctx, s, (SCREEN_W - textWidth(s, 2)) / 2, y, col, 2, '#000');
-    if (sel && Math.floor(t * 4) % 2) text(ctx, '>', (SCREEN_W - textWidth(s, 2)) / 2 - 14, y, '#ff7b00', 2);
+    const col = sel ? C.menuSel : C.menu;
+    text(ctx, s, (SCREEN_W - textWidth(s, 2)) / 2, y, col, 2, C.shadow || undefined);
+    if (sel && Math.floor(t * 4) % 2) text(ctx, '>', (SCREEN_W - textWidth(s, 2)) / 2 - 14, y, C.accent, 2);
   });
-  footer.forEach((s, i) => text(ctx, s, (SCREEN_W - textWidth(s)) / 2, SCREEN_H - 18 + i * 7, '#7d6b85'));
+  footer.forEach((s, i) => text(ctx, s, (SCREEN_W - textWidth(s)) / 2, SCREEN_H - 18 + i * 7, C.dim));
 }
 
 export function drawIntermission(ctx: Ctx, w: World, nextName: string | null, t: number) {
   initHudArt();
-  ctx.fillStyle = '#1a0d1f';
-  ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  screenBg(ctx, t, '#1a0d1f');
   const title = `${w.level.name} COMPLETE`;
-  text(ctx, title, (SCREEN_W - textWidth(title, 3)) / 2, 24, '#ff7b00', 3, '#000');
+  text(ctx, title, (SCREEN_W - textWidth(title, 3)) / 2, 30, C.accent, 3, C.shadow || undefined);
   const s = w.stats;
   const pct = (a: number, b: number) => (b ? Math.round((100 * a) / b) : 100) + '%';
   const rows: [string, string][] = [
@@ -353,28 +497,27 @@ export function drawIntermission(ctx: Ctx, w: World, nextName: string | null, t:
   ];
   rows.forEach(([k, v], i) => {
     if (t < i * 0.35) return;
-    text(ctx, k, 90, 64 + i * 22, '#ffd23f', 2, '#000');
-    text(ctx, v, 230, 64 + i * 22, '#fff', 2, '#000');
+    text(ctx, k, 90, 64 + i * 22, STYLE.ink ? C.label : '#ffd23f', 2, C.shadow || undefined);
+    text(ctx, v, 230, 64 + i * 22, C.menuSel, 2, C.shadow || undefined);
   });
   ctx.drawImage(faces.get('0_0_grin')!, 330, 70, 40, 40);
   if (nextName) {
     const n = `ENTERING ${nextName}`;
-    text(ctx, n, (SCREEN_W - textWidth(n, 2)) / 2, 190, '#b8a6c4', 2, '#000');
+    text(ctx, n, (SCREEN_W - textWidth(n, 2)) / 2, 180, C.menu, 2, C.shadow || undefined);
   }
-  const c = 'PRESS SPACE / USE TO CONTINUE';
-  if (Math.floor(t * 2) % 2) text(ctx, c, (SCREEN_W - textWidth(c)) / 2, 222, '#7d6b85');
+  const c = 'PRESS SPACE TO CONTINUE';
+  if (Math.floor(t * 2) % 2) text(ctx, c, (SCREEN_W - textWidth(c)) / 2, 222, C.dim);
 }
 
 export function drawVictory(ctx: Ctx, t: number, stats: string[]) {
   initHudArt();
-  ctx.fillStyle = '#0d1a10';
-  ctx.fillRect(0, 0, SCREEN_W, SCREEN_H);
+  screenBg(ctx, t, '#0d1a10');
   const s = 'THE HOUSE IS SAFE!';
-  text(ctx, s, (SCREEN_W - textWidth(s, 3)) / 2, 20, '#9ef01a', 3, '#000');
+  text(ctx, s, (SCREEN_W - textWidth(s, 3)) / 2, 26, STYLE.ink ? C.accent : '#9ef01a', 3, C.shadow || undefined);
   ctx.drawImage(faces.get(`0_0_${Math.floor(t * 2) % 2 ? 'happy' : 'grin'}`)!, SCREEN_W / 2 - 32, 50, 64, 64);
-  stats.forEach((l, i) => text(ctx, l, (SCREEN_W - textWidth(l)) / 2, 130 + i * 9, '#fff', 1, '#000'));
+  stats.forEach((l, i) => text(ctx, l, (SCREEN_W - textWidth(l)) / 2, 130 + i * 9, C.menuSel, 1, C.shadow || undefined));
   const c = 'LE CHONK CAN FINALLY NAP. PRESS SPACE.';
-  text(ctx, c, (SCREEN_W - textWidth(c)) / 2, 222, '#7d6b85');
+  text(ctx, c, (SCREEN_W - textWidth(c)) / 2, 222, C.dim);
 }
 
 export function fmtTime(sec: number) {

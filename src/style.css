@@ -29,7 +29,10 @@ nav { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn.ghost { background: transparent; }
 .btn.small { font-size: 9px; padding: 6px 8px; }
 .btn:disabled { opacity: 0.4; cursor: default; }
-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 14px; padding: 14px 16px; min-height: 0; }
+main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px 16px; min-height: 0; }
+body.brain-open main { grid-template-columns: minmax(0, 1fr) 420px; }
+#brain { display: none !important; }
+body.brain-open #brain { display: flex !important; }
 #stage { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
 #screen-wrap { position: relative; width: 100%; max-width: calc((100vh - 150px) * 1.6); aspect-ratio: 384 / 240; background: #000; border: 3px solid var(--line); box-shadow: 0 0 0 3px #000, 6px 6px 0 #000; }
 #screen { width: 100%; height: 100%; display: block; cursor: crosshair; }
@@ -69,7 +72,7 @@ input, select { font-family: 'VT323', monospace; font-size: 18px; background: #0
 .stat span { font-size: 13px; color: var(--muted); }
 .status { padding: 6px 10px; color: #ffd23f; border-bottom: 2px solid var(--line); font-size: 17px; }
 .status.error { color: var(--bad); }
-#log { overflow-y: auto; flex: 1; padding: 6px 10px; display: flex; flex-direction: column-reverse; gap: 8px; min-height: 120px; }
+#log { overflow-y: auto; flex: 1; padding: 6px 10px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
 .turn { border: 1px solid var(--line); background: #170f1c; padding: 6px 8px; }
 .turn header { display: flex; justify-content: space-between; padding: 0; border: 0; color: var(--muted); font-size: 14px; }
 .turn .thought { color: #fff1d6; margin: 3px 0; line-height: 1.05; }
@@ -118,3 +121,47 @@ body.smooth .stat span { font-size: 11px; }
 body.smooth .status { font-size: 14px; }
 body.smooth kbd { font-family: 'Fredoka'; font-weight: 600; font-size: 12px; border-radius: 6px; border-width: 1px; border-bottom-width: 3px; }
 body.smooth #help { font-size: 14px; }
+
+/* ---- pause ---- */
+#pause-btn { position: absolute; right: 2%; bottom: 20%; width: clamp(48px, 6vw, 72px); height: clamp(48px, 6vw, 72px); border-radius: 50%; border: 3px solid #fff; background: rgba(0,0,0,0.55); color: #fff; font-size: clamp(20px, 2.6vw, 32px); cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,0.5); z-index: 3; }
+#pause-btn:hover { background: rgba(255,130,4,0.85); }
+#pause-overlay { position: absolute; inset: 0; background: rgba(10,5,14,0.6); backdrop-filter: blur(3px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 4; }
+#pause-overlay .pause-title { font-family: 'Press Start 2P', monospace; font-size: clamp(22px, 4vw, 48px); color: #fff; text-shadow: 4px 4px 0 #000; }
+.btn.big { font-size: 16px; padding: 14px 26px; }
+#agent-start { width: 100%; margin: 10px 0 4px; }
+.panel-title { display: flex; justify-content: space-between; align-items: center; }
+.panel-title .x { background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+#help .hint span { font-style: italic; color: #6e5e77; }
+body.smooth #pause-overlay .pause-title { font-family: 'Fredoka'; font-weight: 700; }
+
+/* ---- storybook style: paper, ink and watercolor ---- */
+body.storybook { --bg: #f4e4cc; --panel: #fbf1e1; --panel2: #f6e2c2; --ink: #2b1d17; --muted: #7a5a44; --line: #2b1d17; --accent: #d62828;
+  font-family: 'Patrick Hand', 'Comic Sans MS', cursive; font-size: 19px; color: var(--ink);
+  background: radial-gradient(ellipse at 50% 0%, #fde3b8 0%, #f4e4cc 60%, #ecd3b0 100%); }
+body.storybook #app::before { background: linear-gradient(90deg, #e63946, #ffd166, #06d6a0, #4cc9f0, #ff8fab); }
+body.storybook header { border-bottom: 2px solid var(--ink); }
+body.storybook .logo { font-family: 'Patrick Hand'; font-size: 38px; letter-spacing: 1px; background: none; color: #f28c28; -webkit-text-stroke: 1.5px var(--ink); filter: drop-shadow(2px 2px 0 var(--ink)); }
+body.storybook .btn { font-family: 'Patrick Hand'; font-size: 19px; color: var(--ink); background: #fff7ea; border: 2px solid var(--ink); border-radius: 14px 10px 14px 10px; box-shadow: 3px 3px 0 var(--ink); }
+body.storybook .btn.hot { background: #ffd166; }
+body.storybook .btn.small { font-size: 16px; }
+body.storybook .btn:hover { background: #ffe8b5; }
+body.storybook #screen-wrap { border: 3px solid var(--ink); border-radius: 18px 12px 20px 14px; box-shadow: 6px 6px 0 var(--ink); overflow: hidden; }
+body.storybook #brain { background: #fbf1e1; border: 2px solid var(--ink); border-radius: 16px 12px 16px 12px; box-shadow: 5px 5px 0 var(--ink); overflow: hidden; }
+body.storybook .panel-title, body.storybook summary { font-family: 'Patrick Hand'; font-size: 20px; color: #d62828; }
+body.storybook input, body.storybook select { font-family: 'Patrick Hand'; font-size: 18px; background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 8px; }
+body.storybook .stat { background: #fff7ea; border: 1.5px solid var(--ink); border-radius: 8px; }
+body.storybook .stat b { color: var(--ink); }
+body.storybook .status { color: #b5179e; }
+body.storybook .turn { background: #fff7ea; border: 1.5px solid var(--ink); border-radius: 10px; }
+body.storybook .turn .thought { color: var(--ink); }
+body.storybook .turn li .act { color: #1d6fa5; }
+body.storybook .turn li.int { color: #c2410c; }
+body.storybook #bubble { font-family: 'Patrick Hand'; font-size: clamp(15px, 1.6vw, 22px); background: #fff; border: 3px solid var(--ink); border-radius: 18px 14px 18px 12px; box-shadow: 4px 4px 0 var(--ink); }
+body.storybook #thinking { font-family: 'Patrick Hand'; font-size: clamp(14px, 1.4vw, 19px); color: var(--ink); background: #ffd166; border: 2px solid var(--ink); border-radius: 12px; }
+body.storybook #thinking small { font-family: 'Patrick Hand'; color: #6b3b22; font-size: 15px; }
+body.storybook kbd { font-family: 'Patrick Hand'; font-size: 16px; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-bottom-width: 4px; border-radius: 8px; box-shadow: none; }
+body.storybook #help { color: var(--muted); font-size: 18px; }
+body.storybook #pause-btn { background: #ffd166; color: var(--ink); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+body.storybook #pause-overlay { background: rgba(244,228,204,0.55); }
+body.storybook #pause-overlay .pause-title { font-family: 'Patrick Hand'; color: #f28c28; -webkit-text-stroke: 2px var(--ink); text-shadow: 4px 4px 0 var(--ink); }
+body.storybook .note { color: #2d6a4f; }

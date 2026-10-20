@@ -17,7 +17,7 @@ ACTIONS (inside act.actions, executed in order)
 - {"type":"strafe","tiles":N}: sidestep right (+) or left (-). Great for dodging projectiles.
 - {"type":"attack","degrees":D,"shots":S}: turn by D degrees, then fire S times. Your main combat move. Use degrees 0 to fire straight ahead.
 - {"type":"shoot","shots":S}: fire S times at the crosshair without turning.
-- {"type":"use"}: open the door or press the switch directly in front of you (must face it, within ~1.5 tiles). Locked doors need the matching collar key. Some walls are secret doors: try "use" on suspicious walls.
+- {"type":"use"}: open the door or press the switch directly in front of you (must face it, within ~1.5 tiles). Walking straight into a door or the EXIT switch also uses it. Locked doors need the matching collar key. Some walls are secret doors: try "use" on suspicious walls.
 - {"type":"go_to","x":X,"y":Y}: auto-walk the shortest known path to an EXPLORED tile from the automap. It opens unlocked doors on the way. Best way to travel. It stops if enemies appear.
 - {"type":"weapon","slot":N}: switch weapon (1 claws, 2 hairball gun, 3 sardine shotgun, 4 laser pointer).
 - {"type":"wait","seconds":S}: wait up to 4 seconds (e.g. let enemies come around a corner).

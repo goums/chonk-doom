@@ -1,5 +1,5 @@
 // Procedural wall / floor / ceiling textures (32x32, tiled with NearestFilter).
-import { makeCanvas, noise, px, rng, text, ellipse, poly, line, pastel, type Ctx } from './pixel';
+import { makeCanvas, noise, px, rng, text, ellipse, poly, line, pastel, inkFrame, type Ctx } from './pixel';
 
 export const TEX = 32;
 
@@ -284,6 +284,7 @@ export interface TextureSet {
 export function buildTextures(): TextureSet {
   const set = buildRaw();
   for (const c of [...Object.values(set.walls), ...Object.values(set.flats)]) pastel(c);
+  Object.values(set.walls).forEach((c, i) => inkFrame(c, 100 + i));
   return set;
 }
 

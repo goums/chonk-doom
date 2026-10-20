@@ -7,8 +7,8 @@ import { STYLE } from './style';
 export type Ctx = CanvasRenderingContext2D;
 
 /** Canvas whose drawing space is w×h logical units (backed by w*S × h*S pixels in smooth mode). */
-export function makeCanvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
-  const S = STYLE.art;
+export function makeCanvas(w: number, h: number, scale?: number): [HTMLCanvasElement, Ctx] {
+  const S = scale ?? STYLE.art;
   const c = document.createElement('canvas');
   c.width = Math.round(w * S);
   c.height = Math.round(h * S);
@@ -58,6 +58,7 @@ export function crisp(ctx: Ctx, w: number, h: number, threshold = 110) {
 
 /** Add a 1px dark outline around opaque pixels (classic sprite look). */
 export function outline(ctx: Ctx, w: number, h: number, color: [number, number, number] = [20, 12, 18]) {
+  if (STYLE.ink) return softOutline(ctx, [43, 29, 23], 1, 1.1);
   if (STYLE.smooth) return softOutline(ctx, color);
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
@@ -80,6 +81,7 @@ export function outline(ctx: Ctx, w: number, h: number, color: [number, number, 
 
 /** Per-pixel noise to give surfaces a gritty Doom-ish texture. */
 export function noise(ctx: Ctx, w: number, h: number, amount: number, seed: number) {
+  if (STYLE.ink) return watercolor(ctx, w, h, seed);
   if (STYLE.smooth) return;
   const r = rng(seed);
   const img = ctx.getImageData(0, 0, w, h);
@@ -96,24 +98,91 @@ export function noise(ctx: Ctx, w: number, h: number, amount: number, seed: numb
 
 export function px(ctx: Ctx, x: number, y: number, color: string, w = 1, h = 1) {
   ctx.fillStyle = color;
-  if (STYLE.smooth) ctx.fillRect(x, y, w, h);
-  else ctx.fillRect(Math.round(x), Math.round(y), w, h);
+  if (STYLE.smooth) {
+    ctx.fillRect(x, y, w, h);
+    if (STYLE.ink && w >= 3 && h >= 3 && w * h < 400) {
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      inkStroke(ctx, 0.4);
+    }
+  } else ctx.fillRect(Math.round(x), Math.round(y), w, h);
 }
 
 /** Smooth mode: a thin, soft dark contour around the drawn shape (keeps sprites readable). */
-function softOutline(ctx: Ctx, color: [number, number, number]) {
+function softOutline(ctx: Ctx, color: [number, number, number], alpha = 0.55, radius = 0.6) {
   const c = ctx.canvas;
   const [tmp, t] = rawCanvas(c.width, c.height);
   t.drawImage(c, 0, 0);
   t.globalCompositeOperation = 'source-in';
-  t.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},0.55)`;
+  t.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
   t.fillRect(0, 0, c.width, c.height);
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = 'destination-over';
-  const r = Math.max(1, Math.round(STYLE.art * 0.6));
-  for (const [dx, dy] of [[r, 0], [-r, 0], [0, r], [0, -r]]) ctx.drawImage(tmp, dx, dy);
+  const r = Math.max(1, Math.round(ctx.getTransform().a * radius));
+  const dirs = STYLE.ink ? 12 : 4;
+  for (let i = 0; i < dirs; i++) {
+    const a = (i / dirs) * Math.PI * 2;
+    ctx.drawImage(tmp, Math.round(Math.cos(a) * r), Math.round(Math.sin(a) * r));
+  }
   ctx.restore();
+}
+
+/** Storybook mode: watercolor wash (soft pigment blotches + paper grain) over what is drawn. */
+export function watercolor(ctx: Ctx, w: number, h: number, seed: number) {
+  const r = rng(seed * 7 + 3);
+  ctx.save();
+  ctx.globalCompositeOperation = 'source-atop';
+  for (let i = 0; i < 9; i++) {
+    const x = r() * w, y = r() * h, rad = (0.2 + r() * 0.45) * Math.max(w, h);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    const dark = r() > 0.5;
+    g.addColorStop(0, dark ? 'rgba(120,60,40,0.10)' : 'rgba(255,250,235,0.16)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  }
+  // paper grain
+  for (let i = 0; i < w * h * 0.25; i++) {
+    ctx.fillStyle = r() > 0.5 ? 'rgba(60,30,20,0.06)' : 'rgba(255,255,255,0.08)';
+    ctx.fillRect(r() * w, r() * h, 0.6, 0.6);
+  }
+  ctx.restore();
+}
+
+/** Storybook mode: a slightly wobbly ink frame around a texture (makes 3D edges look drawn). */
+export function inkFrame(c: HTMLCanvasElement, seed: number) {
+  if (!STYLE.ink) return c;
+  const ctx = c.getContext('2d')!;
+  const r = rng(seed);
+  const W = c.width, H = c.height;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.strokeStyle = STYLE.inkColor;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(2, W / 40);
+  const j = () => (r() - 0.5) * W * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(1 + j(), 1 + j());
+  ctx.lineTo(W / 2 + j(), 1 + j());
+  ctx.lineTo(W - 1 + j(), 1 + j());
+  ctx.lineTo(W - 1 + j(), H / 2 + j());
+  ctx.lineTo(W - 1 + j(), H - 1 + j());
+  ctx.lineTo(W / 2 + j(), H - 1 + j());
+  ctx.lineTo(1 + j(), H - 1 + j());
+  ctx.lineTo(1 + j(), H / 2 + j());
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+  return c;
+}
+
+function inkStroke(ctx: Ctx, width = 0.5) {
+  if (!STYLE.ink) return;
+  ctx.strokeStyle = STYLE.inkColor;
+  ctx.lineWidth = width;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
 }
 
 /** Smooth mode: soften a texture towards a pastel version of itself. */
@@ -123,7 +192,7 @@ export function pastel(c: HTMLCanvasElement, k = 0.22) {
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = 'source-atop';
-  ctx.fillStyle = `rgba(255,246,236,${k})`;
+  ctx.fillStyle = STYLE.ink ? `rgba(255,232,200,${k * 0.9})` : `rgba(255,246,236,${k})`;
   ctx.fillRect(0, 0, c.width, c.height);
   ctx.restore();
   return c;
@@ -134,6 +203,7 @@ export function ellipse(ctx: Ctx, cx: number, cy: number, rx: number, ry: number
   ctx.beginPath();
   ctx.ellipse(cx, cy, Math.max(0.5, rx), Math.max(0.5, ry), 0, 0, Math.PI * 2);
   ctx.fill();
+  if (rx >= 1.4 && ry >= 1.4) inkStroke(ctx, Math.min(0.6, Math.max(rx, ry) * 0.12));
 }
 
 export function poly(ctx: Ctx, pts: number[], color: string) {
@@ -143,12 +213,13 @@ export function poly(ctx: Ctx, pts: number[], color: string) {
   for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
   ctx.closePath();
   ctx.fill();
+  inkStroke(ctx, 0.45);
 }
 
 export function line(ctx: Ctx, x0: number, y0: number, x1: number, y1: number, color: string) {
   if (STYLE.smooth) {
     ctx.strokeStyle = color;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = STYLE.ink ? 0.9 : 1;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x0 + 0.5, y0 + 0.5);
@@ -213,9 +284,8 @@ const FONT: Record<string, string> = {
   '<': '001010100010001', '(': '010100100100010', ')': '010001001001010', '#': '101111101111101',
 };
 
-const SMOOTH_FONT_PX = 6.2; // logical px per text "scale" unit in smooth mode
 function smoothFont(scale: number) {
-  return `600 ${SMOOTH_FONT_PX * scale}px ${STYLE.font}, system-ui, sans-serif`;
+  return `${STYLE.fontWeight} ${STYLE.fontScale * scale}px '${STYLE.font}', system-ui, sans-serif`;
 }
 
 export function text(ctx: Ctx, s: string, x: number, y: number, color: string, scale = 1, shadow?: string) {

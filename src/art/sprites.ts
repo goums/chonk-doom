@@ -1,4 +1,5 @@
 // Procedural billboard sprites: enemies, pickups, projectiles, effects.
+import { STYLE } from './style';
 import { makeCanvas, crisp, outline, ellipse, poly, px, line, text, type Ctx } from './pixel';
 
 export type EnemyKind = 'mouse' | 'bulldog' | 'chihuahua' | 'rex';
@@ -246,9 +247,11 @@ function stars(ctx: Ctx, w: number, y: number) {
 export function buildEnemyFrames(kind: EnemyKind): Record<EnemyFrame, HTMLCanvasElement> {
   const { w, h, draw } = DRAWERS[kind];
   const mk = (pose: Partial<Pose>, squash = 1, tint?: string) => {
-    const [base, bctx] = makeCanvas(w, h);
+    // enemies get extra resolution in the hi-res styles: they're often seen up close
+    const S = STYLE.smooth ? STYLE.art * 2 : 1;
+    const [base, bctx] = makeCanvas(w, h, S);
     draw(bctx, { leg: 0, attack: false, pain: false, ko: false, ...pose });
-    const [c, ctx] = makeCanvas(w, h);
+    const [c, ctx] = makeCanvas(w, h, S);
     if (squash < 1) {
       const sh = Math.round(h * squash);
       ctx.drawImage(base, -w * (1 - squash) * 0.25, h - sh, w * (1 + (1 - squash) * 0.5), sh);

@@ -4,23 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CHONK DOOM</title>
-    <meta name="description" content="A retro DOOM-like FPS starring Le Chonk, and a harness that lets Mistral Large 4 play it by itself." />
+    <meta name="description" content="A DOOM-like FPS starring Le Chonk, and a harness that lets Mistral Large 4 play it by itself." />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="app">
       <header>
-        <div class="brand">
-          <span class="logo">CHONK DOOM</span>
-          <span class="tag">Le Chonk vs the dogs of hell, played by <b>Mistral Large 4</b></span>
-        </div>
+        <div class="brand"><span class="logo">CHONK DOOM</span></div>
         <nav>
           <button id="btn-human" class="btn">🎮 Play yourself</button>
           <button id="btn-agent" class="btn hot">🐱 Let Le Chonk play</button>
-          <button id="btn-replay" class="btn">📼 Replay a run</button>
           <button id="btn-style" class="btn" title="Switch graphics style">🎨 STYLE</button>
           <button id="btn-sound" class="btn" title="Toggle sound (M)">🔊 SOUND ON</button>
           <a class="btn ghost" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
@@ -33,38 +29,40 @@
             <canvas id="screen" width="384" height="240"></canvas>
             <div id="bubble" class="hidden"></div>
             <div id="thinking" class="hidden"><span class="paw">🐾</span> LE CHONK IS THINKING<span class="dots"></span><small>time is frozen</small></div>
-            <div id="click-hint" class="hidden">CLICK TO CAPTURE MOUSE</div>
+            <button id="pause-btn" class="hidden" title="Pause (P)">⏸</button>
+            <div id="pause-overlay" class="hidden">
+              <div class="pause-title">PAUSED</div>
+              <button id="resume-btn" class="btn big">▶ Resume</button>
+              <button id="quit-btn" class="btn">Quit to menu</button>
+            </div>
           </div>
           <div id="help">
-            <div class="keys"><span class="k"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span><span>move</span></div>
-            <div class="keys"><span class="k"><kbd>←</kbd><kbd>→</kbd><em>or</em><kbd class="wide">🖱 mouse</kbd></span><span>turn</span></div>
-            <div class="keys"><span class="k"><kbd class="wide">🖱 click</kbd><em>or</em><kbd>Ctrl</kbd></span><span>fire</span></div>
-            <div class="keys"><span class="k"><kbd>E</kbd><em>or</em><kbd class="wide">Space</kbd></span><span>use / open</span></div>
+            <div class="keys"><span class="k"><kbd>↑</kbd><kbd>↓</kbd></span><span>move</span></div>
+            <div class="keys"><span class="k"><kbd>←</kbd><kbd>→</kbd></span><span>turn</span></div>
+            <div class="keys"><span class="k"><kbd class="wide">Space</kbd></span><span>shoot</span></div>
             <div class="keys"><span class="k"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span><span>weapons</span></div>
-            <div class="keys"><span class="k"><kbd class="wide">Shift</kbd></span><span>run</span></div>
-            <div class="keys"><span class="k"><kbd class="wide">Tab</kbd></span><span>automap</span></div>
+            <div class="keys"><span class="k"><kbd>P</kbd></span><span>pause</span></div>
             <div class="keys"><span class="k"><kbd>M</kbd></span><span>mute</span></div>
-            <div class="keys"><span class="k"><kbd class="wide">Esc</kbd></span><span>menu</span></div>
+            <div class="keys hint"><span>walk into doors to open them</span></div>
           </div>
         </section>
 
         <aside id="brain">
-          <div class="panel-title">🧠 CHONK'S BRAIN</div>
+          <div class="panel-title">🧠 CHONK'S BRAIN <button id="brain-close" class="x" title="Close">✕</button></div>
 
           <details id="setup" open>
             <summary>Setup</summary>
             <label>Mistral API key
-              <input id="api-key" type="password" placeholder="paste your key (stored in this browser only)" autocomplete="off" />
+              <input id="api-key" type="password" placeholder="paste your key (kept in this browser only)" autocomplete="off" />
             </label>
             <div id="proxy-note" class="note hidden">✅ Dev proxy detected: using MISTRAL_STUDIO_API_KEY from .env (leave the field empty).</div>
             <div class="row">
               <label>Model <input id="model" value="mistral-large-4" /></label>
-              <label>Skill
-                <select id="skill">
-                  <option value="0">I'm a kitten</option>
-                  <option value="1" selected>House cat</option>
-                  <option value="2">Alley cat</option>
-                  <option value="3">Ultra-chonk</option>
+              <label>Difficulty
+                <select id="difficulty">
+                  <option value="0">Easy</option>
+                  <option value="1" selected>Medium</option>
+                  <option value="2">Hard</option>
                 </select>
               </label>
             </div>
@@ -93,32 +91,22 @@
               </label>
               <label>Max turns <input id="max-turns" type="number" value="400" min="1" /></label>
             </div>
+            <button id="agent-start" class="btn hot big">▶ START LE CHONK</button>
           </details>
 
           <div class="controls">
-            <button id="agent-pause" class="btn small" disabled>⏸ Pause</button>
             <button id="agent-stop" class="btn small" disabled>⏹ Stop</button>
-            <button id="agent-export" class="btn small" disabled>💾 Save run</button>
+            <button id="agent-export" class="btn small" disabled>💾 Save log</button>
             <label class="speed">Speed
               <select id="speed"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>
             </label>
           </div>
 
           <div id="stats" class="stats"></div>
-          <div id="status" class="status">Idle. Press "Let Le Chonk play".</div>
+          <div id="status" class="status">Ready. Press START.</div>
           <div id="log"></div>
         </aside>
       </main>
-
-      <dialog id="replay-dialog">
-        <form method="dialog">
-          <h3>📼 Replay a run</h3>
-          <p>Load a run file saved with "💾 Save run" (or from <code>runs/</code> in the repo).</p>
-          <input id="replay-file" type="file" accept=".json" />
-          <div id="replay-list"></div>
-          <menu><button class="btn small">Close</button></menu>
-        </form>
-      </dialog>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

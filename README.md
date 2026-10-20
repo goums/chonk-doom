@@ -11,13 +11,13 @@ The house has been invaded by angry dogs and mice. Le Chonk, a very large and ve
 Three levels (Le Salon → La Cuisine → La Cave), colored-collar keys, secret walls, explosive catnip barrels, a sardine shotgun,
 a laser pointer, and **REX**, an armored Doberman boss. Everything (textures, sprites, the Doom-style face, music, sounds) is
 generated procedurally at runtime: there are **no asset files**. Two graphics styles share the same art code:
-**🎨 Smooth** (default: soft, minimal, anti-aliased vector shapes) and **🕹 Retro** (crunchy 1993 pixels). Use the STYLE button or `?style=retro`.
+**Smooth** (default: soft, minimal, anti-aliased), **Storybook** (hand-drawn ink outlines, watercolor, paper and a theater stage) and **Retro** (crunchy 1993 pixels). Use the 🎨 button or `?style=storybook|retro`.
 
 | | |
 |---|---|
 | **Complexity** | Real-time 3D first-person shooter: perception from raw pixels, aiming, dodging projectiles, navigation in a maze with doors/keys/secrets, resource management, a boss fight. |
 | **Performance** | Headless benchmark: N episodes per level and per config with completion %, kills %, deaths and cost, plus **ablations** (vision only / + automap / + radar, reasoning on/off) and a scripted-bot baseline. See [Results](#results). |
-| **Reproducibility** | Zero install: open the GitHub Pages site, paste a Mistral key and press **Let Le Chonk play**. Or run `npm run dev` / `npm run bench` locally. Every run can be saved and **replayed** step by step, including the exact frame the model saw and its thoughts. |
+| **Reproducibility** | Zero install: open the GitHub Pages site, paste a Mistral key and press **Let Le Chonk play**. Or run `npm run dev` / `npm run bench` locally. Every turn is logged in the side panel (thought, actions, outcomes, the exact frame the model saw) and the benchmark saves full JSON logs. |
 
 ---
 
@@ -81,7 +81,7 @@ In `vision` and `map` modes, **enemies are only ever perceived through the image
 ### Option A: no install (GitHub Pages)
 1. Open https://goums.github.io/chonk-doom/
 2. In **Chonk's Brain → Setup**, paste your Mistral API key (from [console.mistral.ai](https://console.mistral.ai)). It's stored only in your browser's localStorage and sent only to `api.mistral.ai`, which allows CORS.
-3. Pick the observation mode / reasoning / skill and press **🐱 Let Le Chonk play**.
+3. Press **🐱 Let Le Chonk play**, pick the difficulty / observation mode / reasoning, then **▶ START LE CHONK**.
 
 > The model must be `mistral-large-4` (**not** `mistral-large-latest`). Your workspace needs access to it in Mistral Studio.
 
@@ -101,10 +101,11 @@ npm run bench -- --models mistral-large-4 --obs map --reasoning none --levels 0,
 npm run bench -- --models bot:simple --runs 5                     # scripted baseline
 npm run bench -- --obs vision,map,radar --reasoning none,high     # ablations
 ```
-Each episode is one level, capped at 150/220/260 turns and 3 deaths. Results go to `runs/<date>/`: one JSON per episode (open it with **📼 Replay a run**) plus `summary.md`.
+Each episode is one level, capped at 150/220/260 turns and 3 deaths. Results go to `runs/<date>/`: one JSON log per episode (every turn, with frames) plus `summary.md`.
 
 ### Playing yourself
-WASD to move · mouse / ←→ to turn · click / Ctrl to fire · E / Space to use · 1-4 for weapons · Shift to run · Tab for the automap · M to mute.
+↑↓ to move · ←→ to turn · **Space** to shoot · 1-4 for weapons · P to pause · M to mute. Walk into doors and the EXIT switch to use them.
+Difficulty: **Easy** (×0.5 damage taken, calmer enemies) · **Medium** · **Hard** (×1.5 damage, more aggressive enemies).
 
 ---
 
