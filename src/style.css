@@ -169,33 +169,33 @@ body.storybook .note { color: #2d6a4f; }
 
 /* ---- pixel style (default): modern pixel UI with the Resurrect 64 palette ---- */
 body.pixel { --bg: #2e222f; --panel: #3e3546; --panel2: #45293f; --ink: #ffffff; --muted: #9babb2; --line: #625565; --accent: #fb6b1d; --accent2: #f9c22b;
-  font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 17px; background: #2e222f; }
+  font-family: 'Inter', system-ui, sans-serif; font-size: 15px; background: #241b26; }
 body.pixel #app::before { background: linear-gradient(90deg, #f9c22b, #fb6b1d, #e83b3b, #f04f78, #a884f3, #4d9be6, #1ebc73); height: 4px; }
 body.pixel header { border-bottom: 2px solid #3e3546; }
 body.pixel .logo { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 30px; letter-spacing: 1px; background: linear-gradient(180deg, #f9c22b 0%, #fb6b1d 55%, #e83b3b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(3px 3px 0 #45293f); }
-body.pixel .btn { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 15px; background: #3e3546; color: #fff; border: 2px solid #625565; border-radius: 4px; box-shadow: 0 3px 0 #1b141c; padding: 8px 14px; }
+body.pixel .btn { font-family: 'Inter', system-ui, sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.2px; background: #3e3546; color: #fff; border: 2px solid #625565; border-radius: 4px; box-shadow: 0 3px 0 #1b141c; padding: 8px 14px; }
 body.pixel .btn:hover { border-color: #fb6b1d; }
 body.pixel .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #1b141c; }
 body.pixel .btn.hot { background: #fb6b1d; border-color: #f9c22b; color: #2e222f; }
-body.pixel .btn.big { font-size: 17px; padding: 11px 22px; }
-body.pixel .btn.small { font-size: 13px; padding: 6px 10px; }
+body.pixel .btn.big { font-size: 16px; padding: 11px 22px; }
+body.pixel .btn.small { font-size: 12px; padding: 6px 10px; }
 body.pixel #screen { image-rendering: pixelated; }
 body.pixel #screen-wrap { border: 3px solid #625565; border-radius: 6px; box-shadow: 0 6px 0 #1b141c; overflow: hidden; }
 body.pixel #brain { background: #3e3546; border: 2px solid #625565; border-radius: 6px; box-shadow: 0 6px 0 #1b141c; }
-body.pixel .panel-title, body.pixel summary { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 16px; color: #f9c22b; }
-body.pixel input, body.pixel select { font-family: 'Pixelify Sans'; font-size: 15px; background: #2e222f; border: 2px solid #625565; border-radius: 4px; }
-body.pixel label { font-size: 14px; }
+body.pixel .panel-title, body.pixel summary { font-family: 'Inter'; font-weight: 800; font-size: 14px; letter-spacing: 0.5px; color: #f9c22b; }
+body.pixel input, body.pixel select { font-family: 'Inter'; font-size: 14px; background: #2e222f; border: 2px solid #625565; border-radius: 4px; }
+body.pixel label { font-size: 13px; font-weight: 600; }
 body.pixel .stat { background: #2e222f; border: 1px solid #625565; border-radius: 4px; }
-body.pixel .stat b { font-size: 17px; }
-body.pixel .stat span { font-size: 12px; }
-body.pixel .status { font-size: 15px; color: #f9c22b; }
-body.pixel .turn { background: #2e222f; border-radius: 4px; font-size: 15px; }
-body.pixel .turn ol, body.pixel .turn header { font-size: 13px; }
+body.pixel .stat b { font-size: 16px; font-weight: 700; }
+body.pixel .stat span { font-size: 11px; }
+body.pixel .status { font-size: 14px; font-weight: 600; color: #f9c22b; }
+body.pixel .turn { background: #2e222f; border-radius: 4px; font-size: 14px; }
+body.pixel .turn ol, body.pixel .turn header { font-size: 12px; }
 body.pixel .turn li .act { color: #8fd3ff; }
-body.pixel #bubble { font-family: 'Pixelify Sans'; font-weight: 400; font-size: clamp(14px, 1.45vw, 20px); line-height: 1.2; background: #ffffff; color: #2e222f; border: 3px solid #2e222f; border-radius: 6px; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
+body.pixel #bubble { font-family: 'Inter'; font-weight: 600; font-size: clamp(13px, 1.25vw, 18px); line-height: 1.3; background: #ffffff; color: #2e222f; border: 3px solid #2e222f; border-radius: 6px; box-shadow: 0 4px 0 rgba(0,0,0,0.4); }
 body.pixel #bubble b { color: #fb6b1d; }
-body.pixel #thinking { font-family: 'Pixelify Sans'; font-weight: 400; font-size: clamp(13px, 1.3vw, 17px); color: #2e222f; background: #f9c22b; border: 3px solid #2e222f; border-radius: 6px; }
-body.pixel #thinking small { font-family: 'Pixelify Sans'; font-weight: 400; color: #45293f; font-size: 13px; }
-body.pixel kbd { font-family: 'Pixelify Sans'; font-weight: 400; font-size: 14px; color: #2e222f; background: #c7dcd0; border: 2px solid #2e222f; border-bottom-width: 4px; border-radius: 4px; box-shadow: none; min-width: 26px; height: 28px; line-height: 22px; }
-body.pixel #help { font-size: 16px; color: #9babb2; }
+body.pixel #thinking { font-family: 'Inter'; font-weight: 800; font-size: clamp(12px, 1.1vw, 15px); color: #2e222f; background: #f9c22b; border: 3px solid #2e222f; border-radius: 6px; }
+body.pixel #thinking small { font-family: 'Inter'; font-weight: 600; color: #45293f; font-size: 12px; }
+body.pixel kbd { font-family: 'Inter'; font-weight: 800; font-size: 13px; color: #2e222f; background: #c7dcd0; border: 2px solid #2e222f; border-bottom-width: 4px; border-radius: 4px; box-shadow: none; min-width: 26px; height: 28px; line-height: 22px; }
+body.pixel #help { font-size: 14px; font-weight: 600; color: #c7dcd0; }
 body.pixel .note { color: #1ebc73; }

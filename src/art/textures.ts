@@ -47,21 +47,6 @@ const brick = (base: string, mortar: string, seed: number) =>
     }
   });
 
-function wallpaper(seed: number, bg: string, stripe: string, motif: string) {
-  return tex(seed, (ctx) => {
-    px(ctx, 0, 0, bg, TEX, TEX);
-    for (let x = 0; x < TEX; x += 8) px(ctx, x, 0, stripe, 2, TEX);
-    // little fish motifs (Le Chonk's interior design taste)
-    for (const [fx, fy] of [[3, 6], [19, 22]]) {
-      ellipse(ctx, fx + 4, fy + 2, 3, 2, motif);
-      poly(ctx, [fx, fy + 2, fx - 2, fy, fx - 2, fy + 4], motif);
-      px(ctx, fx + 6, fy + 1, '#222');
-    }
-    px(ctx, 0, 28, shade(bg, 0.5), TEX, 4); // baseboard
-    px(ctx, 0, 28, shade(bg, 0.75), TEX, 1);
-  }, 12);
-}
-
 function woodPanel(seed: number, base: string) {
   return tex(seed, (ctx, r) => {
     px(ctx, 0, 0, base, TEX, TEX);
@@ -135,37 +120,6 @@ function metal(seed: number, base: string) {
   }, 16);
 }
 
-function door(seed: number, base: string, stripe: string | null, label: string) {
-  return tex(seed, (ctx) => {
-    px(ctx, 0, 0, shade(base, 0.5), TEX, TEX);
-    px(ctx, 2, 0, base, 28, TEX);
-    px(ctx, 4, 3, shade(base, 0.8), 24, 11);
-    px(ctx, 4, 17, shade(base, 0.8), 24, 12);
-    px(ctx, 4, 3, shade(base, 1.25), 24, 1);
-    px(ctx, 4, 17, shade(base, 1.25), 24, 1);
-    if (stripe) {
-      px(ctx, 2, 14, stripe, 28, 3);
-      px(ctx, 0, 0, stripe, 2, TEX);
-      px(ctx, 30, 0, stripe, 2, TEX);
-    }
-    // paw print knob
-    ellipse(ctx, 25, 16, 1.6, 1.6, '#f4d35e');
-    if (label) text(ctx, label, 16 - label.length * 2, 7, '#fff', 1, '#000');
-  }, 10);
-}
-
-function exitSwitch(seed: number, on: boolean) {
-  return tex(seed, (ctx) => {
-    const m = metal(seed + 3, '#5a5f73');
-    ctx.drawImage(m, 0, 0, TEX, TEX);
-    px(ctx, 6, 3, '#111', 20, 9);
-    text(ctx, 'EXIT', 8, 5, on ? '#4f4' : '#f33');
-    // big paw switch
-    px(ctx, 11, 14, '#222', 10, 14);
-    px(ctx, 12, on ? 15 : 21, on ? '#4f4' : '#f33', 8, 6);
-  }, 0);
-}
-
 function techPanel(seed: number) {
   return tex(seed, (ctx, r) => {
     px(ctx, 0, 0, '#2b2d42', TEX, TEX);
@@ -178,10 +132,10 @@ function techPanel(seed: number) {
 
 function fridge(seed: number) {
   return tex(seed, (ctx) => {
-    px(ctx, 0, 0, '#e8eef2', TEX, TEX);
-    px(ctx, 0, 12, '#9aa5ad', TEX, 1);
-    px(ctx, 26, 4, '#9aa5ad', 2, 6);
-    px(ctx, 26, 16, '#9aa5ad', 2, 10);
+    px(ctx, 0, 0, '#9babb2', TEX, TEX);
+    px(ctx, 0, 12, '#625565', TEX, 1);
+    px(ctx, 26, 4, '#625565', 2, 6);
+    px(ctx, 26, 16, '#625565', 2, 10);
     // magnets
     ellipse(ctx, 8, 6, 2, 2, '#ff4d6d');
     px(ctx, 12, 20, '#ffd166', 5, 4);
@@ -223,6 +177,78 @@ function poster(seed: number) {
   }, 0);
 }
 
+
+// ---- DOOM-inspired painters ----
+function marble(seed: number, base: string, vein: string) {
+  // green marble with veins and a gold trim (like DOOM's MARBLE walls)
+  return tex(seed, (ctx, r) => {
+    px(ctx, 0, 0, base, TEX, TEX);
+    for (let i = 0; i < 5; i++) {
+      let x = r() * TEX, y = 0;
+      while (y < TEX) {
+        const nx = x + (r() - 0.5) * 6, ny = y + 3 + r() * 3;
+        line(ctx, x, y, nx, ny, i % 2 ? vein : shade(base, 0.7));
+        x = nx; y = ny;
+      }
+    }
+    px(ctx, 0, 0, '#ab947a', TEX, 2);
+    px(ctx, 0, 30, '#ab947a', TEX, 2);
+    px(ctx, 0, 1, '#4c3e24', TEX, 1);
+  }, 10);
+}
+
+function startan(seed: number, base: string) {
+  // brown tech panel (a nod to DOOM's STARTAN): panel seams, a light strip, rivets
+  return tex(seed, (ctx) => {
+    px(ctx, 0, 0, base, TEX, TEX);
+    px(ctx, 0, 0, shade(base, 1.25), TEX, 1);
+    for (const x of [0, 16]) {
+      px(ctx, x, 0, shade(base, 0.6), 1, TEX);
+      px(ctx, x + 1, 0, shade(base, 1.15), 1, TEX);
+    }
+    px(ctx, 0, 11, shade(base, 0.6), TEX, 1);
+    px(ctx, 0, 12, shade(base, 1.15), TEX, 1);
+    px(ctx, 3, 4, '#3e3546', 10, 4);
+    px(ctx, 4, 5, '#f9c22b', 8, 2);
+    px(ctx, 19, 4, '#3e3546', 10, 4);
+    px(ctx, 20, 5, '#4d9be6', 3, 2);
+    for (const [x, y] of [[3, 15], [12, 15], [19, 15], [28, 15], [3, 28], [28, 28]]) px(ctx, x, y, shade(base, 1.4), 1, 1);
+  }, 14);
+}
+
+function doomDoor(seed: number, stripe: string | null) {
+  // big riveted metal door; locked doors get a colored stripe on each side (like DOORRED / DOORBLU)
+  return tex(seed, (ctx) => {
+    const base = '#625565';
+    px(ctx, 0, 0, shade(base, 0.6), TEX, TEX);
+    px(ctx, 3, 0, base, 26, TEX);
+    for (const y of [4, 13, 22]) {
+      px(ctx, 6, y, shade(base, 0.75), 20, 7);
+      px(ctx, 6, y, shade(base, 1.3), 20, 1);
+    }
+    px(ctx, 13, 14, '#9babb2', 6, 5);
+    px(ctx, 14, 15, '#3e3546', 4, 3);
+    for (const [x, y] of [[4, 2], [27, 2], [4, 29], [27, 29]]) px(ctx, x, y, '#c7dcd0', 1, 1);
+    if (stripe) {
+      px(ctx, 0, 0, stripe, 3, TEX);
+      px(ctx, 29, 0, stripe, 3, TEX);
+      px(ctx, 0, 0, shade(stripe, 1.3), 1, TEX);
+      px(ctx, 13, 15, stripe, 6, 3);
+    }
+  }, 10);
+}
+
+function doomExit(seed: number, on: boolean) {
+  return tex(seed, (ctx) => {
+    ctx.drawImage(startan(seed + 1, '#7f708a'), 0, 0, TEX, TEX);
+    px(ctx, 5, 2, '#2e222f', 22, 9);
+    text(ctx, 'EXIT', 8, 4, on ? '#1ebc73' : '#e83b3b');
+    px(ctx, 11, 15, '#2e222f', 10, 13);
+    px(ctx, 12, on ? 16 : 22, on ? '#1ebc73' : '#e83b3b', 8, 5);
+    px(ctx, 12, on ? 16 : 22, on ? '#91db69' : '#f68181', 8, 1);
+  }, 0);
+}
+
 // ---- floors & ceilings ----
 function carpet(seed: number, a: string, b: string) {
   return tex(seed, (ctx, r) => {
@@ -242,7 +268,7 @@ function woodFloor(seed: number) {
   return tex(seed, (ctx, r) => {
     for (let y = 0; y < TEX; y += 4) {
       const off = Math.floor(r() * 24);
-      px(ctx, 0, y, shade('#a0692f', 0.85 + r() * 0.3), TEX, 4);
+      px(ctx, 0, y, shade('#7a4a2a', 0.85 + r() * 0.3), TEX, 4);
       px(ctx, 0, y + 3, '#5a3a18', TEX, 1);
       px(ctx, off, y, '#5a3a18', 1, 3);
     }
@@ -274,7 +300,7 @@ function plaster(seed: number, base: string) {
 
 function ceilLight(seed: number) {
   return tex(seed, (ctx) => {
-    ctx.drawImage(plaster(seed, '#b9b2a6'), 0, 0, TEX, TEX);
+    ctx.drawImage(plaster(seed, '#6b6370'), 0, 0, TEX, TEX);
     px(ctx, 6, 6, '#777', 20, 20);
     px(ctx, 8, 8, '#fffbe0', 16, 16);
     px(ctx, 8, 8, '#ffffff', 16, 2);
@@ -283,7 +309,7 @@ function ceilLight(seed: number) {
 
 function beams(seed: number) {
   return tex(seed, (ctx) => {
-    ctx.drawImage(plaster(seed, '#8f8574'), 0, 0, TEX, TEX);
+    ctx.drawImage(plaster(seed, '#5e5458'), 0, 0, TEX, TEX);
     px(ctx, 0, 12, '#6b4423', TEX, 8);
     px(ctx, 0, 12, '#8a5a32', TEX, 1);
   }, 10);
@@ -303,42 +329,43 @@ export function buildTextures(): TextureSet {
 }
 
 function buildRaw(): TextureSet {
+  // DOOM-like palette: browns, greys, greens, dark reds; a few colorful details for readability
   return {
     walls: {
-      '#': brick('#b5452f', '#5b4a44', 1),
-      B: brick('#4a6fa5', '#2c2f3a', 2),
-      W: wallpaper(3, '#7b4fa8', '#9467c4', '#ffb347'),
-      w: wallpaper(4, '#2e8b7a', '#3aa892', '#ffd6e0'),
-      P: woodPanel(5, '#8a5a32'),
-      T: tiles(6, '#e9f5f2', '#4ecdc4', '#7a8b8a'),
-      S: stone(7, '#7d7a8c'),
-      G: slime(8),
-      M: metal(9, '#6c7a89'),
-      C: techPanel(10),
+      '#': brick('#7a3a2e', '#3e3546', 1), // dark red-brown brick
+      B: stone(2, '#6b6878'), // grey stone blocks
+      W: marble(3, '#374e4a', '#547e64'), // green marble (living room)
+      w: startan(4, '#966c6c'), // brown tech panels
+      P: woodPanel(5, '#5e3a24'), // dark wood
+      T: tiles(6, '#9babb2', '#7f8a90', '#3e3546'), // grimy grey tiles (kitchen)
+      S: stone(7, '#6e5e50'), // brown stone (basement)
+      G: slime(8), // green slime (nukage)
+      M: metal(9, '#5a5560'), // rusty support metal with hazard stripes
+      C: techPanel(10), // computer panels
       F: fridge(11),
       K: bookshelf(12),
       O: poster(13),
-      // doors
-      D: door(20, '#9c6b3e', null, ''),
-      R: door(21, '#9c6b3e', '#e63946', 'R'),
-      U: door(22, '#9c6b3e', '#4361ee', 'B'),
-      Y: door(23, '#9c6b3e', '#ffd166', 'Y'),
+      // doors (DOOM-style metal doors, colored stripes = key color)
+      D: doomDoor(20, null),
+      R: doomDoor(21, '#e83b3b'),
+      U: doomDoor(22, '#4d9be6'),
+      Y: doomDoor(23, '#f9c22b'),
       // exit switch (off/on)
-      E: exitSwitch(30, false),
-      e: exitSwitch(30, true),
+      E: doomExit(30, false),
+      e: doomExit(30, true),
     },
     flats: {
-      carpet: carpet(40, '#9b2335', '#d4a017'),
-      bluecarpet: carpet(41, '#274c77', '#e7ecef'),
+      carpet: carpet(40, '#6e2727', '#9e4539'), // dark red carpet
+      bluecarpet: carpet(41, '#323353', '#484a77'),
       wood: woodFloor(42),
-      checker: tiles(43, '#f4f1de', '#e07a5f', '#555'),
-      concrete: concrete(44, '#7a7672'),
+      checker: tiles(43, '#625565', '#7f708a', '#3e3546'), // stone floor tiles
+      concrete: concrete(44, '#5e5458'),
       water: water(45),
-      plaster: plaster(46, '#c9c1b1'),
+      plaster: plaster(46, '#6b6370'), // grey ceiling
       light: ceilLight(47),
       beams: beams(48),
-      darkconcrete: concrete(49, '#4f4a52'),
-      metal: metal(50, '#4a5260'),
+      darkconcrete: concrete(49, '#3e3546'),
+      metal: metal(50, '#4a4a55'),
     },
   };
 }

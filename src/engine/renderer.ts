@@ -70,11 +70,11 @@ export class Renderer {
       this.scene.add(new THREE.HemisphereLight(0xfff4e6, 0xb7a6c9, 1.1));
       this.scene.add(new THREE.AmbientLight(0xffffff, 0.9));
     } else {
-      // modern pixel: twilight purple atmosphere instead of pitch black, warm key light
-      this.scene.fog = new THREE.Fog(0x45293f, 6, 26);
-      this.scene.background = new THREE.Color(0x45293f);
-      this.scene.add(new THREE.HemisphereLight(0xfff0d0, 0x6b3e75, 0.9));
-      this.scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+      // DOOM-like mood: dark warm haze, contrasty light (but never pitch black, so the model can see)
+      this.scene.fog = new THREE.Fog(0x1e161c, 5, 22);
+      this.scene.background = new THREE.Color(0x1e161c);
+      this.scene.add(new THREE.HemisphereLight(0xffe6c0, 0x3e2e3a, 0.75));
+      this.scene.add(new THREE.AmbientLight(0xffffff, 1.05));
     }
     this.muzzle = new THREE.PointLight(0xffd27a, 0, 7, 1.5);
     this.scene.add(this.muzzle);

@@ -169,6 +169,23 @@ export class ChonkAgent {
     return 'Nearest unexplored frontier tiles: ' + pts.slice(0, 6).map(([x, y]) => `(${x},${y})`).join(' ');
   }
 
+  /** Closed doors seen so far: the most common way forward, so list them explicitly. */
+  private knownDoors(): string {
+    const w = this.game.world;
+    const p = w.player;
+    const ds = [...w.doors.values()]
+      .filter((d) => !d.secret && d.open < 0.9 && w.explored[d.y * w.W + d.x])
+      .sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))
+      .slice(0, 6)
+      .map((d) => {
+        const lock = d.key ? (p.keys.has(d.key) ? `${d.key.toUpperCase()} door, you HAVE the key` : `${d.key.toUpperCase()} door, LOCKED (need the ${d.key} key)`) : 'door';
+        return `(${d.x},${d.y}) ${lock}`;
+      });
+    return ds.length
+      ? `Closed doors you know: ${ds.join('; ')}. Open one with go_to to its coordinates (or walk into it).`
+      : 'No closed doors known.';
+  }
+
   private buildObservation(): string {
     const w = this.game.world;
     const parts: string[] = [];
@@ -181,6 +198,7 @@ export class ChonkAgent {
     if (this.cfg.obsMode !== 'vision') {
       parts.push('Automap (explored area):\n' + automapAscii(w, this.cfg.obsMode === 'radar'));
       parts.push(this.frontier());
+      parts.push(this.knownDoors());
     }
     // simple stuck detector
     const p = w.player;

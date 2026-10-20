@@ -1,5 +1,5 @@
 // First-person weapon sprites: Le Chonk's chonky orange paws holding a classic DOOM arsenal.
-import { makeCanvas, crisp, outline, ellipse, poly, px, line, type Ctx } from './pixel';
+import { makeCanvas, crisp, outline, ellipse, poly, px, line, blob, type Ctx } from './pixel';
 
 export type WeaponId = 'fist' | 'pistol' | 'shotgun' | 'chaingun';
 export type WeaponFrame = 'idle' | 'fire0' | 'fire1';
@@ -8,23 +8,39 @@ export const WEAPON_W = 160;
 export const WEAPON_H = 100;
 
 const ORANGE = '#FF8204';
-const ORANGE_D = '#FA500F';
-const PINK = '#ff8fab';
+const ORANGE_D = '#d4520f';
+const SOCK = '#fdcbb0';
+const SOCK_D = '#cf8f7a';
+const BEAN = '#f68181';
 
-/** A paw seen from above, entering from the bottom of the screen. */
-function paw(ctx: Ctx, x: number, y: number, s = 1, padsUp = false, claws = false) {
-  ellipse(ctx, x, y + 30 * s, 15 * s, 30 * s, ORANGE); // arm
-  ellipse(ctx, x, y, 17 * s, 14 * s, ORANGE); // paw
-  for (const dx of [-6, 0, 6]) line(ctx, x + dx * s, y + 6 * s, x + dx * s, y + 28 * s, ORANGE_D); // tabby stripes
-  if (padsUp) {
-    ellipse(ctx, x, y + 3 * s, 7 * s, 5 * s, PINK);
-    for (const [dx, dy] of [[-10, -6], [-4, -10], [4, -10], [10, -6]]) ellipse(ctx, x + dx * s, y + dy * s, 3 * s, 3 * s, PINK);
-  } else {
-    for (const dx of [-8, -3, 3, 8]) line(ctx, x + dx * s, y - 12 * s, x + dx * s, y - 7 * s, ORANGE_D);
+/**
+ * Le Chonk's paw: an orange tabby arm coming from the bottom of the screen, ending in a cream "sock"
+ * with four toe bumps (very recognisably a cat). `beans` shows the pink pads + claws (punching).
+ */
+function paw(ctx: Ctx, x: number, y: number, s = 1, beans = false, claws = false, arm = true) {
+  // arm with tabby stripes
+  if (arm) blob(ctx, x + 2 * s, y + 30 * s, 12.5 * s, 26 * s, ORANGE, 1.15, 0.72);
+  if (arm) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x + 2 * s, y + 30 * s, 12.5 * s, 26 * s, 0, 0, Math.PI * 2);
+    ctx.clip();
+    for (const dy of [14, 22, 30]) poly(ctx, [x - 14 * s, y + dy * s, x + 16 * s, y + (dy - 5) * s, x + 16 * s, y + (dy - 2) * s, x - 14 * s, y + (dy + 3) * s], ORANGE_D);
+    ctx.restore();
   }
-  if (claws) {
-    for (const dx of [-11, -4, 4, 11]) poly(ctx, [x + dx * s - 1.5, y - 12 * s, x + dx * s + 1.5, y - 12 * s, x + dx * s, y - 22 * s], '#f8f9fa');
-  }
+  // cream sock (the paw itself)
+  blob(ctx, x, y + 4 * s, 12.5 * s, 9.5 * s, SOCK, 1.1, 0.78);
+  // four toe bumps
+  const toes = [-7.5, -2.5, 2.5, 7.5];
+  toes.forEach((dx, i) => {
+    const ty = y - 3 * s + (i === 0 || i === 3 ? 1.8 * s : 0);
+    blob(ctx, x + dx * s, ty, 3.1 * s, 3.4 * s, SOCK, 1.1, 0.8);
+    if (beans) blob(ctx, x + dx * s, ty + 0.6 * s, 1.6 * s, 1.7 * s, BEAN, 1.1, 0.85);
+    if (claws) poly(ctx, [x + dx * s - 1 * s, ty - 2.8 * s, x + dx * s + 1 * s, ty - 2.8 * s, x + dx * s, ty - 7 * s], '#ffffff');
+  });
+  // toe separations
+  for (const dx of [-5, 0, 5]) line(ctx, x + dx * s, y - 1.5 * s, x + dx * s, y + 2 * s, SOCK_D);
+  if (beans) blob(ctx, x, y + 6 * s, 5.5 * s, 4 * s, BEAN, 1.15, 0.85); // big main pad
 }
 
 function flash(ctx: Ctx, x: number, y: number, r: number, c1: string, c2: string) {
@@ -40,16 +56,16 @@ const STEEL = '#625565', STEEL_L = '#9babb2', STEEL_D = '#3e3546', DARK = '#2e22
 const WOOD = '#9e4539', WOOD_L = '#cd683d', WOOD_D = '#6e2727';
 
 function drawFist(ctx: Ctx, f: WeaponFrame) {
-  // Le Chonk punches with his paws (pads out, claws out when hitting)
+  // Le Chonk punches: the paw flies forward, pink beans and claws out
   if (f === 'idle') {
-    paw(ctx, 34, 84);
-    paw(ctx, 126, 84);
+    paw(ctx, 38, 68, 1.05);
+    paw(ctx, 122, 68, 1.05);
   } else if (f === 'fire0') {
-    paw(ctx, 30, 88);
-    paw(ctx, 100, 44, 1.2, true, true);
+    paw(ctx, 32, 84, 1.0);
+    paw(ctx, 94, 36, 1.35, true, true);
   } else {
-    paw(ctx, 30, 88);
-    paw(ctx, 112, 60, 1.1, true, false);
+    paw(ctx, 32, 84, 1.0);
+    paw(ctx, 110, 56, 1.2, true, false);
   }
 }
 
@@ -65,8 +81,8 @@ function drawPistol(ctx: Ctx, f: WeaponFrame) {
   px(ctx, 76, 46 + y, DARK, 8, 2); // ejection port
   ellipse(ctx, 80, 41 + y, 3, 1.6, DARK); // muzzle
   px(ctx, 79, 36 + y, DARK, 2, 4); // front sight
-  paw(ctx, 66, 76 + k, 0.6);
-  paw(ctx, 94, 76 + k, 0.6);
+  paw(ctx, 69, 70 + k, 0.62);
+  paw(ctx, 91, 72 + k, 0.62);
 }
 
 function drawShotgun(ctx: Ctx, f: WeaponFrame) {
@@ -87,29 +103,31 @@ function drawShotgun(ctx: Ctx, f: WeaponFrame) {
   // pump (slides back after a shot)
   poly(ctx, [71, 46 + y + pump, 89, 46 + y + pump, 87, 34 + y + pump, 73, 34 + y + pump], WOOD);
   for (let i = 0; i < 3; i++) px(ctx, 74, 37 + y + pump + i * 3, WOOD_D, 12, 1);
-  paw(ctx, 80, 56 + y + pump, 0.6); // front paw on the pump
-  paw(ctx, 98, 84 + k * 0.5, 0.65);
+  paw(ctx, 80, 41 + y + pump, 0.55, false, false, false); // front paw wrapped on the pump (arm hidden behind the gun)
+  paw(ctx, 98, 80 + k * 0.5, 0.7);
 }
 
 function drawChaingun(ctx: Ctx, f: WeaponFrame) {
   const k = f === 'fire0' ? 3 : f === 'fire1' ? 1 : 0;
   const spin = f === 'fire1' ? 1 : 0;
   const y = k;
-  if (f !== 'idle') flash(ctx, 80, 20 + y, f === 'fire0' ? 13 : 9, '#f9c22b', '#fb6b1d');
-  // housing
-  poly(ctx, [54, 100, 106, 100, 99, 62 + y, 61, 62 + y], STEEL_D);
-  px(ctx, 60, 70 + y, STEEL, 40, 3);
-  // rotating barrel cluster
-  const xs = [67, 73, 81, 87];
+  if (f !== 'idle') flash(ctx, 80, 34 + y, f === 'fire0' ? 13 : 9, '#f9c22b', '#fb6b1d');
+  // chunky housing
+  poly(ctx, [56, 100, 104, 100, 98, 64 + y, 62, 64 + y], STEEL_D);
+  poly(ctx, [56, 100, 61, 100, 66, 64 + y, 62, 64 + y], STEEL);
+  px(ctx, 62, 74 + y, STEEL, 36, 3);
+  // rotating barrel drum (short, thick, like DOOM's)
+  ellipse(ctx, 80, 64 + y, 17, 6, STEEL);
+  const xs = [69, 76.5, 83.5, 91];
   xs.forEach((x, i) => {
     const lit = (i + spin) % 2 === 0;
-    poly(ctx, [x - 2.5, 62 + y, x + 2.5, 62 + y, x + 1.5, 26 + y, x - 1.5, 26 + y], lit ? STEEL_L : STEEL);
-    ellipse(ctx, x, 26 + y, 1.6, 1, DARK);
+    poly(ctx, [x - 3.4, 64 + y, x + 3.4, 64 + y, x + 2.6, 40 + y, x - 2.6, 40 + y], lit ? STEEL_L : STEEL);
+    ellipse(ctx, x, 40 + y, 2.6, 1.3, DARK);
   });
-  px(ctx, 63, 54 + y, STEEL_L, 34, 4); // rear ring
-  px(ctx, 65, 32 + y, STEEL, 30, 3); // front ring
-  paw(ctx, 58, 84, 0.68);
-  paw(ctx, 102, 84, 0.68);
+  ellipse(ctx, 80, 46 + y, 15.5, 3.5, STEEL_D); // front clamp ring
+  px(ctx, 65, 45 + y, STEEL, 30, 2);
+  paw(ctx, 60, 78, 0.7);
+  paw(ctx, 100, 78, 0.7);
 }
 
 /** Scale a drawing about the bottom-centre of the weapon canvas (guns are drawn small, shown chunky). */

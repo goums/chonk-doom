@@ -123,6 +123,7 @@ Automap (explored area):
 22     ...r....
 23     ########
 Nearest unexplored frontier tiles: (6,12) (8,12) (6,13) (8,13) (6,14) (8,14)
+Closed doors you know: (7,11) door; (11,3) door; (18,7) door; (22,11) RED door, LOCKED (need the red key). Open one with go_to to its coordinates (or walk into it).
 Your notes: (empty)
 ```
 

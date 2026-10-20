@@ -371,3 +371,65 @@ export function textWidth(s: string, scale = 1) {
   measureCtx.font = smoothFont(scale);
   return measureCtx.measureText(s.toUpperCase()).width;
 }
+
+// ---------------------------------------------------------------------------
+// Volume shading helpers (light from the top-left, hue-shifted shadows):
+// shapes get a base tone, a darker cool shadow on the lower-right and a warm highlight on the upper-left.
+
+/** Hue-shifted tone: k < 1 darkens towards cool purple, k > 1 lightens towards warm yellow. */
+export function tone(hex: string, k: number) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  if (k < 1) {
+    const t = 1 - k;
+    r = r * k + 40 * t; g = g * k + 28 * t; b = b * k + 60 * t;
+  } else {
+    const t = Math.min(1, k - 1);
+    r += (255 - r) * t * 0.9; g += (244 - g) * t * 0.8; b += (200 - b) * t * 0.55;
+  }
+  return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+}
+
+/** A shaded ellipse ("blob"): base + lower-right shadow + upper-left highlight, clipped to the shape. */
+export function blob(ctx: Ctx, cx: number, cy: number, rx: number, ry: number, base: string, light = 1.22, dark = 0.7) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, Math.max(0.5, rx), Math.max(0.5, ry), 0, 0, Math.PI * 2);
+  ctx.fillStyle = base;
+  ctx.fill();
+  ctx.clip();
+  // crescent shadow: fill all with the shadow tone, then the base again shifted up-left
+  ctx.fillStyle = tone(base, dark);
+  ctx.fillRect(cx - rx - 1, cy - ry - 1, rx * 2 + 2, ry * 2 + 2);
+  ctx.fillStyle = base;
+  ctx.beginPath();
+  ctx.ellipse(cx - rx * 0.1, cy - ry * 0.16, rx * 0.97, ry * 0.93, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = tone(base, light);
+  ctx.beginPath();
+  ctx.ellipse(cx - rx * 0.42, cy - ry * 0.5, rx * 0.26, ry * 0.18, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  if (STYLE.ink && rx >= 1.4 && ry >= 1.4) {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    inkStroke(ctx, Math.min(0.6, Math.max(rx, ry) * 0.12));
+  }
+}
+
+/** A shaded polygon: vertical gradient from highlight (top) to shadow (bottom). */
+export function spoly(ctx: Ctx, pts: number[], base: string, light = 1.25, dark = 0.7) {
+  let y0 = Infinity, y1 = -Infinity;
+  for (let i = 1; i < pts.length; i += 2) { y0 = Math.min(y0, pts[i]); y1 = Math.max(y1, pts[i]); }
+  const g = ctx.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(0, tone(base, light));
+  g.addColorStop(0.35, base);
+  g.addColorStop(1, tone(base, dark));
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(pts[0], pts[1]);
+  for (let i = 2; i < pts.length; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
+  ctx.closePath();
+  ctx.fill();
+  inkStroke(ctx, 0.45);
+}
