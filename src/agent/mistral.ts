@@ -79,9 +79,13 @@ export async function hasDevProxy(provider: Provider): Promise<boolean> {
   }
 }
 
+/** Models that refuse "reasoning off" (learned at runtime from a 400): they get the lowest effort instead. */
+const mandatoryReasoning = new Set<string>();
+
 /** Provider-specific request adjustments (both APIs are OpenAI-like, with small differences). */
 function adapt(provider: Provider, req: ChatRequest): Record<string, unknown> {
   if (provider === 'mistral') return { ...req };
+  const forced = req.reasoning_effort !== 'high' && mandatoryReasoning.has(req.model);
   const { reasoning_effort, tool_choice, ...rest } = req;
   return {
     ...rest,
@@ -92,7 +96,8 @@ function adapt(provider: Provider, req: ChatRequest): Record<string, unknown> {
         : m,
     ),
     tool_choice: tool_choice === 'any' ? 'required' : tool_choice,
-    reasoning: reasoning_effort === 'high' ? { effort: 'high' } : { enabled: false },
+    reasoning: reasoning_effort === 'high' ? { effort: 'high' } : forced ? { effort: 'low' } : { enabled: false },
+    ...(forced ? { max_tokens: Math.max(req.max_tokens ?? 0, 6000) } : {}),
     usage: { include: true }, // ask OpenRouter to report the real cost
   };
 }
@@ -106,16 +111,22 @@ export async function chat(cfg: ClientConfig, req: ChatRequest, signal?: AbortSi
     headers['X-Title'] = 'CHONK DOOM';
     headers['HTTP-Referer'] = 'https://goums.github.io/chonk-doom/';
   }
-  const body = JSON.stringify(adapt(cfg.provider, req));
+  let body = JSON.stringify(adapt(cfg.provider, req));
   let delay = 2000;
   for (let attempt = 0; ; attempt++) {
     const r = await fetch(url, { method: 'POST', headers, body, signal });
     if (r.ok) return r.json();
     const errText = await r.text();
+    if (r.status === 400 && /reasoning is mandatory/i.test(errText) && !mandatoryReasoning.has(req.model)) {
+      mandatoryReasoning.add(req.model);
+      body = JSON.stringify(adapt(cfg.provider, req));
+      continue;
+    }
     // retry rate limits and transient server errors
-    if ((r.status === 429 || r.status >= 500) && attempt < 6) {
-      await new Promise((res) => setTimeout(res, delay));
-      delay *= 1.8;
+    if ((r.status === 429 || r.status >= 500) && attempt < 10) {
+      // rate limits / upstream hiccups: exponential backoff with jitter, capped at 30 s (~4 min total)
+      await new Promise((res) => setTimeout(res, delay * (0.8 + Math.random() * 0.4)));
+      delay = Math.min(30000, delay * 1.8);
       continue;
     }
     let msg = errText;

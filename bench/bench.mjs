@@ -66,7 +66,9 @@ async function worker(id) {
     const e = out.episode;
     const lat = out.turns.filter((t) => t.latencyMs > 0).map((t) => t.latencyMs);
     Object.assign(e, { costUSD: out.costUSD, wallSec: (Date.now() - t0) / 1000, avgLatency: lat.length ? lat.reduce((a, b) => a + b, 0) / lat.length / 1000 : 0, tokens: out.usage.prompt + out.usage.completion, errors: out.turns.filter((t) => t.error).length });
-    fs.writeFileSync(file, JSON.stringify(out));
+    // errored episodes (API failures) are not cached, so a re-run retries them
+    if (!e.error) fs.writeFileSync(file, JSON.stringify(out));
+    else fs.writeFileSync(file.replace(/\.json$/, '.error.json'), JSON.stringify(out));
     results.push(e);
     console.log(`[w${id}] ${name}: ${e.completed ? '✅ EXIT' : '❌'} kills ${e.kills}/${e.totalKills} deaths ${e.deaths} turns ${e.turns} $${out.costUSD.toFixed(3)} ${(Date.now() - t0) / 1000 | 0}s${e.error ? ' ERROR ' + e.error : ''}`);
     await page.close();

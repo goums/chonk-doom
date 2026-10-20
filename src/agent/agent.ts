@@ -256,7 +256,7 @@ export class ChonkAgent {
     if (!raw) return null;
     try {
       const j = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      const actions: Action[] = (Array.isArray(j.actions) ? j.actions : []).slice(0, 5).filter((a: Action) => a && typeof a.type === 'string');
+      const actions: Action[] = (Array.isArray(j.actions) ? j.actions : []).slice(0, 8).filter((a: Action) => a && typeof a.type === 'string');
       return { thought: String(j.thought ?? ''), actions, notes: typeof j.notes === 'string' ? j.notes : undefined };
     } catch {
       return null;

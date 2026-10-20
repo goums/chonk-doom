@@ -160,6 +160,17 @@ class FaceAnim {
   }
 }
 const faceAnim = new FaceAnim();
+let lastFaceKey = '0_0_normal';
+const faceUrls = new Map<string, string>();
+
+/** Le Chonk's current HUD face as an image URL (for the speech-bubble avatar). */
+export function faceDataUrl(key = lastFaceKey) {
+  initHudArt();
+  const k = key.replace(/_(-1|1)_/, '_0_'); // the avatar looks at the viewer
+  let u = faceUrls.get(k);
+  if (!u) { u = (faces.get(k) ?? faces.get('0_0_normal')!).toDataURL(); faceUrls.set(k, u); }
+  return u;
+}
 
 export interface HudOptions {
   automap: boolean;
@@ -266,7 +277,8 @@ export function drawHud(ctx: Ctx, w: World, opt: HudOptions) {
   } else {
     pixelCard(ctx, 174, VIEW_H + 3, 38, BAR_H - 5, '#45293f', '#6b3e75');
   }
-  const face = faces.get(faceAnim.pick(w))!;
+  lastFaceKey = faceAnim.pick(w);
+  const face = faces.get(lastFaceKey)!;
   ctx.drawImage(face, 193 - FACE_W / 2, VIEW_H + (BAR_H - FACE_H) / 2, FACE_W, FACE_H);
   // weapon + ammo
   const def = WEAPONS[p.weapon];

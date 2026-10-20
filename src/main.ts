@@ -3,7 +3,7 @@ import { STYLE } from './art/style';
 import { setBtn } from './icons';
 import { Renderer, SCREEN_W, SCREEN_H, VIEW_H } from './engine/renderer';
 import { Game } from './game/game';
-import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime } from './game/hud';
+import { drawHud, drawTitle, drawIntermission, drawVictory, fmtTime, faceDataUrl } from './game/hud';
 import { emptyIntent, DT, WEAPON_ORDER, SKILLS, type Intent } from './game/world';
 import { initAudio, playMusic, audioSettings, applyVolumes, currentMusic } from './audio/audio';
 import { ChonkAgent, type TurnRecord } from './agent/agent';
@@ -319,9 +319,9 @@ function onAgentUpdate(a: ChonkAgent, rec?: TurnRecord) {
     }
     el.innerHTML = turnHtml(rec);
     if (rec.thought) {
-      const b = $('bubble');
-      b.innerHTML = `<b>LE CHONK:</b> ${esc(rec.thought)}`;
-      b.classList.remove('hidden');
+      $('bubble-text').innerHTML = `<b>Le Chonk</b>${esc(rec.thought)}`;
+      ($('bubble-face') as HTMLImageElement).src = faceDataUrl();
+      $('bubble').classList.remove('hidden');
     }
   }
   const labels: Record<string, string> = {

@@ -3,7 +3,7 @@
 import { World, emptyIntent, WEAPONS, WEAPON_ORDER, WALL_CHARS, DT, type Intent } from '../game/world';
 import { visibleEnemies } from './perception';
 
-export type ActionType = 'turn' | 'move' | 'strafe' | 'attack' | 'shoot' | 'use' | 'go_to' | 'weapon' | 'wait';
+export type ActionType = 'turn' | 'move' | 'strafe' | 'attack' | 'shoot' | 'use' | 'go_to' | 'explore' | 'weapon' | 'wait';
 
 export interface Action {
   type: ActionType;
@@ -30,19 +30,57 @@ function angDiff(a: number, b: number) {
   return Math.atan2(Math.sin(a - b), Math.cos(a - b));
 }
 
-/** BFS over explored, passable tiles. Unlocked doors count as passable (auto-opened on the way). */
-export function findPath(w: World, tx: number, ty: number): [number, number][] | null {
+/** Tiles the player can walk through, as far as they know (explored, no walls, unlocked doors). */
+function passableFn(w: World) {
   const p = w.player;
-  const sx = Math.floor(p.x), sy = Math.floor(p.y);
-  if (tx < 0 || ty < 0 || tx >= w.W || ty >= w.H) return null;
-  const passable = (x: number, y: number) => {
-    if (!w.explored[y * w.W + x]) return false;
+  return (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= w.W || y >= w.H || !w.explored[y * w.W + x]) return false;
     const d = w.door(x, y);
     if (d) return d.secret ? d.open > 0.5 : !d.key || p.keys.has(d.key);
     if (WALL_CHARS.has(w.grid[y][x])) return false;
     if (w.decor.some((o) => o.blocking && !o.dead && Math.floor(o.x) === x && Math.floor(o.y) === y)) return false;
     return true;
   };
+}
+
+/** Shortest known path to the nearest "frontier" tile (a passable tile next to unexplored space), or null. */
+export function pathToFrontier(w: World): [number, number][] | null {
+  const p = w.player;
+  const passable = passableFn(w);
+  const sx = Math.floor(p.x), sy = Math.floor(p.y);
+  const prev = new Int32Array(w.W * w.H).fill(-1);
+  const start = sy * w.W + sx;
+  prev[start] = start;
+  const q = [start];
+  const isFrontier = (x: number, y: number) =>
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+      const nx = x + dx, ny = y + dy;
+      return nx >= 0 && ny >= 0 && nx < w.W && ny < w.H && !w.explored[ny * w.W + nx];
+    });
+  for (let h = 0; h < q.length; h++) {
+    const i = q[h];
+    const x = i % w.W, y = (i / w.W) | 0;
+    if (i !== start && Math.hypot(x + 0.5 - p.x, y + 0.5 - p.y) > 1.2 && isFrontier(x, y)) {
+      const path: [number, number][] = [];
+      for (let j = i; j !== start; j = prev[j]) path.push([j % w.W, (j / w.W) | 0]);
+      return path.reverse();
+    }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, ni = ny * w.W + nx;
+      if (!passable(nx, ny) || prev[ni] >= 0) continue;
+      prev[ni] = i;
+      q.push(ni);
+    }
+  }
+  return null;
+}
+
+/** BFS over explored, passable tiles. Unlocked doors count as passable (auto-opened on the way). */
+export function findPath(w: World, tx: number, ty: number): [number, number][] | null {
+  const p = w.player;
+  const sx = Math.floor(p.x), sy = Math.floor(p.y);
+  if (tx < 0 || ty < 0 || tx >= w.W || ty >= w.H) return null;
+  const passable = passableFn(w);
   if (!passable(tx, ty)) return null;
   const prev = new Int32Array(w.W * w.H).fill(-1);
   const start = sy * w.W + sx;
@@ -95,6 +133,15 @@ export class ActionExecution {
       this.state.stuck = 0;
     }
     if (a.type === 'shoot' || a.type === 'attack') this.state.shots = Math.max(1, Math.min(12, Math.round(Number(a.shots ?? 1))));
+    if (a.type === 'explore') {
+      this.state.legs = 0;
+      this.state.steps = 0;
+      this.state.stuck = 0;
+      this.state.lx = p.x;
+      this.state.ly = p.y;
+      this.state.items0 = this.seenItems();
+      this.state.maxSteps = Math.max(4, Math.min(40, Number(a.tiles ?? 24)));
+    }
     if (a.type === 'go_to') {
       this.path = findPath(w, Math.round(Number(a.x)), Math.round(Number(a.y)));
       if (!this.path) this.finish(`No known path to (${a.x},${a.y}). Target must be an explored floor tile; locked doors need their key.`);
@@ -203,6 +250,8 @@ export class ActionExecution {
       }
       case 'go_to':
         return this.goToStep(it);
+      case 'explore':
+        return this.exploreStep(it);
     }
     this.finish('Unknown action.');
     return null;
@@ -233,17 +282,51 @@ export class ActionExecution {
     return it;
   }
 
+  private seenItems() {
+    const w = this.w;
+    return w.items.filter((i) => !i.taken && w.explored[Math.floor(i.y) * w.W + Math.floor(i.x)]).length;
+  }
+
   private goToStep(it: Intent): Intent | null {
     if (this.checkInterrupt()) return null;
+    const r = this.followPath(it);
+    if (r === 'arrived') { this.finish(`Arrived at (${this.action.x},${this.action.y}).`); return null; }
+    return r === 'blocked' ? null : it;
+  }
+
+  /** Auto-explore: walk to frontier after frontier until something new shows up. */
+  private exploreStep(it: Intent): Intent | null {
+    if (this.checkInterrupt()) return null;
+    const w = this.w;
+    const p = w.player;
+    const where = () => `now at (${Math.floor(p.x)},${Math.floor(p.y)})`;
+    if (this.ticks % 10 === 0 && this.seenItems() > this.state.items0) {
+      this.finish(`Explored ${this.state.steps} tiles and spotted a new item (see the item list), ${where()}.`, true);
+      return null;
+    }
+    if (!this.path || !this.path.length) {
+      if (this.state.steps >= this.state.maxSteps) { this.finish(`Explored ${this.state.steps} tiles, ${where()}.`); return null; }
+      const next = pathToFrontier(w);
+      if (!next) {
+        this.finish(`Nothing left to explore that you can reach (${where()}): look for locked doors, keys, the EXIT, or secret walls.`);
+        return null;
+      }
+      this.path = next.slice(0, Math.max(1, this.state.maxSteps - this.state.steps));
+      this.state.steps += this.path.length;
+      this.state.legs++;
+    }
+    const r = this.followPath(it);
+    return r === 'blocked' ? null : it;
+  }
+
+  /** Follow this.path, opening doors on the way. */
+  private followPath(it: Intent): 'arrived' | 'moving' | 'blocked' {
     const w = this.w;
     const p = w.player;
     const path = this.path!;
     // skip reached waypoints
     while (path.length && Math.hypot(path[0][0] + 0.5 - p.x, path[0][1] + 0.5 - p.y) < (path.length === 1 ? 0.15 : 0.3)) path.shift();
-    if (!path.length) {
-      this.finish(`Arrived at (${this.action.x},${this.action.y}).`);
-      return null;
-    }
+    if (!path.length) return 'arrived';
     const [nx, ny] = path[0];
     // auto-open doors on the path
     const d = w.door(nx, ny);
@@ -253,7 +336,7 @@ export class ActionExecution {
       it.turn = Math.sign(diff) * Math.min(Math.abs(diff), TURN_SPEED * DT);
       if (Math.abs(diff) < 0.05 && !d.opening && this.ticks % 10 === 0) it.use = true;
       if (Math.hypot(nx + 0.5 - p.x, ny + 0.5 - p.y) > 1.2) it.forward = 0.6;
-      return it;
+      return 'moving';
     }
     const want = Math.atan2(ny + 0.5 - p.y, nx + 0.5 - p.x);
     const diff = angDiff(want, p.angle);
@@ -266,9 +349,9 @@ export class ActionExecution {
       this.state.ly = p.y;
       if (this.state.stuck >= 3) {
         this.finish(`BLOCKED on the way at tile (${Math.floor(p.x)},${Math.floor(p.y)}).`, true);
-        return null;
+        return 'blocked';
       }
     }
-    return it;
+    return 'moving';
   }
 }
