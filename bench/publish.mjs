@@ -59,7 +59,13 @@ function episodeOf(run) {
 const leagues = [];
 for (const L of LEAGUES) {
   const files = [...episodeFiles(L.dir), ...(L.extra ? episodeFiles(L.extra.dir).filter((f) => L.extra.match.test(path.basename(f))) : [])];
-  const eps = files.map((f) => episodeOf(readJSON(f)));
+  const all = files.map((f) => episodeOf(readJSON(f)));
+  // each model's best run on each level (highest score, then cheapest)
+  const eps = [];
+  for (const m of new Set(all.map((e) => e.model))) for (const lvl of new Set(all.map((e) => e.level))) {
+    const best = all.filter((e) => e.model === m && e.level === lvl).sort((a, b) => b.score - a.score || a.cost - b.cost)[0];
+    if (best) eps.push(best);
+  }
   if (!eps.length) continue;
   const rows = [];
   for (const model of [...new Set(eps.map((e) => e.model))]) {

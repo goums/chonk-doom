@@ -122,7 +122,7 @@ Same game, harness and prompt. Only the model changes.
 
 - Open-weight models only. Mistral Large 4 via Mistral Studio, rivals via OpenRouter.
 - Two leagues: reasoning and non-reasoning are never mixed.
-- Medium difficulty. 1-2 runs per level, 3 levels. Caps: 150 / 220 / 260 turns, 3 deaths.
+- Medium difficulty. Best run per level for each model. Caps: 150 / 220 / 260 turns, 3 deaths.
 - **Chonk score** per level: 60 points for clearing it + 40 × share of enemies killed (best attempt).
 
 <!-- bench:start -->
@@ -132,12 +132,12 @@ Same game, harness and prompt. Only the model changes.
 
 | Model | Score | Levels cleared | Cost / level | s / decision | Aim error |
 |---|---|---|---|---|---|
-| GLM-5.3 Flash | **94** | 6/6 | $0.03 | 2.2 | 4.5° |
-| Qwen3.5 397B | **87** | 5/6 | $0.31 | 5.1 | 5.6° |
-| Kimi K2.6 | **78** | 4/6 | $0.27 | 2.4 | 6.6° |
-| Gemma 4 31B | **77** | 4/6 | $0.05 | 3.7 | 3.9° |
-| **Mistral Large 4** 🐱 | **69** | 7/12 | $0.21 | 5.4 | 6.1° |
-| DeepSeek V4.1 Flash | **61** | 3/6 | $0.06 | 2.1 | 8.1° |
+| **Mistral Large 4** 🐱 | **99** | 3/3 | $0.13 | 5.6 | 6.0° |
+| Qwen3.5 397B | **97** | 3/3 | $0.18 | 5.0 | 5.9° |
+| GLM-5.3 Flash | **97** | 3/3 | $0.03 | 2.2 | 4.9° |
+| Gemma 4 31B | **78** | 2/3 | $0.04 | 3.7 | 3.2° |
+| Kimi K2.6 | **78** | 2/3 | $0.23 | 2.6 | 5.7° |
+| DeepSeek V4.1 Flash | **75** | 2/3 | $0.07 | 2.1 | 9.0° |
 
 <img src="docs/img/bench-instruct-cost.svg" width="49%" alt="score vs cost"> <img src="docs/img/bench-instruct-speed.svg" width="49%" alt="score vs speed">
 
@@ -149,9 +149,9 @@ Same game, harness and prompt. Only the model changes.
 |---|---|---|---|---|---|
 | GLM-5.3 Flash | **99** | 3/3 | $0.03 | 2.8 | 4.8° |
 | DeepSeek V4.1 Flash | **95** | 3/3 | $0.08 | 7.3 | 4.3° |
-| Kimi K2.6 | **93** | 6/6 | $0.47 | 21.5 | 5.1° |
-| Qwen3.5 397B | **85** | 4/5 | $0.27 | 11.4 | 6.2° |
-| **Mistral Large 4** 🐱 | **81** | 5/6 | $0.25 | 14.1 | 6.2° |
+| **Mistral Large 4** 🐱 | **94** | 3/3 | $0.35 | 13.3 | 7.2° |
+| Kimi K2.6 | **93** | 3/3 | $0.31 | 18.1 | 3.3° |
+| Qwen3.5 397B | **77** | 2/3 | $0.31 | 12.1 | 7.1° |
 | Nemotron 3.5 Super VL | **57** | 1/3 | $0.13 | 4.2 | 7.5° |
 
 <img src="docs/img/bench-reasoning-cost.svg" width="49%" alt="score vs cost"> <img src="docs/img/bench-reasoning-speed.svg" width="49%" alt="score vs speed">
