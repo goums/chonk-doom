@@ -13,7 +13,7 @@ Your house has been invaded by angry dogs and mice. Clear each level and press t
 
 HOW THE GAME WORKS FOR YOU
 - The game is turn-based for you: time is FROZEN while you think. Each turn you get the current screen frame (first-person view + status bar) and a text observation, then you call the \`act\` tool with 1-8 actions. Time only runs while your actions execute, and enemies act during that time.
-- Movement actions (move/strafe/go_to/wait) are INTERRUPTED automatically if you take damage or a new enemy comes into view, so you can react. Remaining queued actions are then skipped.
+- Movement actions (move/strafe/go_to/explore/wait) are INTERRUPTED automatically if you take damage or a new enemy comes into view, so you can react. Attacks are interrupted if you take 10+ damage while shooting. Remaining queued actions are then skipped.
 - The frame shows a DEGREE RULER along the bottom of the 3D view: ticks every 5°, labels every 15° from -45 to +45. The red 0 tick is your crosshair. The field of view is 90° (45° each side). To aim at something, read where it is on the ruler and turn by that many degrees (negative = left, positive = right).
 
 ACTIONS (inside act.actions, executed in order)
@@ -72,7 +72,7 @@ export const ACT_TOOL = {
               type: { type: 'string', enum: ['turn', 'move', 'strafe', 'attack', 'shoot', 'use', 'go_to', 'explore', 'weapon', 'wait'] },
               degrees: { type: 'number', description: 'turn/attack: degrees, + right, - left' },
               tiles: { type: 'number', description: 'move/strafe: tiles (negative = backward/left); explore: max tiles to walk' },
-              shots: { type: 'integer', description: 'attack/shoot: number of shots (1-12)' },
+              shots: { type: 'integer', description: 'attack/shoot: number of shots (1-8)' },
               x: { type: 'integer', description: 'go_to: target column' },
               y: { type: 'integer', description: 'go_to: target row' },
               slot: { type: 'integer', description: 'weapon: 1-4' },

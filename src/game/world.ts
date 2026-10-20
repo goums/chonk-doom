@@ -448,7 +448,7 @@ export class World {
     p.fireT = 0;
     this.stats.shots++;
     sfx(w.sound, w.id === 'chaingun' ? 0.7 : 1);
-    this.wakeByNoise(w.id === 'fist' ? 3 : 14);
+    this.wakeByNoise(w.id === 'fist' ? 3 : 10);
     let hitAny = false;
     for (let i = 0; i < w.pellets; i++) {
       const ang = p.angle + (this.rand() - 0.5) * 2 * w.spread;

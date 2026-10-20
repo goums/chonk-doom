@@ -112,12 +112,14 @@ export class ActionExecution {
   outcome = '';
   interrupted = false;
   private hp0: number;
+  private dmg0: number;
   private seen0: Set<number>;
   private state: Record<string, number> = {};
   private path: [number, number][] | null = null;
 
   constructor(private w: World, public action: Action, private interruptible: boolean) {
     this.hp0 = w.player.hp;
+    this.dmg0 = w.stats.damageTaken;
     this.seen0 = new Set(visibleEnemies(w).map((e) => e.id));
     const a = action;
     const p = w.player;
@@ -132,7 +134,7 @@ export class ActionExecution {
       this.state.y0 = p.y;
       this.state.stuck = 0;
     }
-    if (a.type === 'shoot' || a.type === 'attack') this.state.shots = Math.max(1, Math.min(12, Math.round(Number(a.shots ?? 1))));
+    if (a.type === 'shoot' || a.type === 'attack') this.state.shots = Math.max(1, Math.min(8, Math.round(Number(a.shots ?? 1))));
     if (a.type === 'explore') {
       this.state.legs = 0;
       this.state.steps = 0;
@@ -178,6 +180,20 @@ export class ActionExecution {
     this.done = true;
     this.outcome = outcome;
     this.interrupted = interrupted;
+  }
+
+  /** Combat (attack / shoot) keeps firing through new enemies, but stops on serious damage so Le Chonk can react. */
+  private checkCombatInterrupt(): boolean {
+    const w = this.w;
+    if (w.player.dead) { this.finish('You died.', true); return true; }
+    if (w.completeT >= 0) { this.finish('Level complete!', true); return true; }
+    const dmg = w.stats.damageTaken - this.dmg0;
+    if (dmg >= 10 || (dmg > 0 && w.player.hp < 25)) {
+      const fired = this.state.fired ?? 0;
+      this.finish(`INTERRUPTED after ${fired} shot(s): you took ${dmg} damage (health ${w.player.hp}). React: back off, strafe, or turn to the attacker.`, true);
+      return true;
+    }
+    return false;
   }
 
   /** Common interrupt check for movement-type actions. */
@@ -278,6 +294,7 @@ export class ActionExecution {
     const w = this.w;
     const p = w.player;
     const def = WEAPONS[p.weapon];
+    if (this.checkCombatInterrupt()) return null;
     if (def.ammo && p.ammo[def.ammo] <= 0 && !p.pendingWeapon) {
       this.finish(`Out of ${def.ammo}! (${this.state.fired ?? 0} shots fired)`);
       return null;
