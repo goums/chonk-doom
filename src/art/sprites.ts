@@ -49,51 +49,73 @@ function eyes(ctx: Ctx, lx: number, rx: number, y: number, r: number, pose: Pose
 }
 
 // ---------------- MOUSE (the "zombieman": weak, throws cheese) ----------------
+/** A cheese wedge with holes. */
+function cheese(ctx: Ctx, x: number, y: number, s: number, flip = 1) {
+  spoly(ctx, [x - 5 * s * flip, y + 3 * s, x + 5 * s * flip, y + 3 * s, x + 5 * s * flip, y - 3.5 * s], '#f9c22b');
+  poly(ctx, [x - 5 * s * flip, y + 3 * s, x + 5 * s * flip, y + 3 * s, x + 5 * s * flip, y + 1.8 * s], '#e6904e');
+  ellipse(ctx, x + 2.6 * s * flip, y + 0.4 * s, 0.9 * s, 0.8 * s, '#e6904e');
+  ellipse(ctx, x + 0.4 * s * flip, y + 1.6 * s, 0.6 * s, 0.55 * s, '#e6904e');
+  ellipse(ctx, x + 3.8 * s * flip, y - 1.6 * s, 0.5 * s, 0.5 * s, '#e6904e');
+}
+
 function drawMouse(ctx: Ctx, p: Pose) {
-  const fur = '#9a8aa8', furL = '#d8cce0', pink = '#f6a0b4';
-  // tail
-  ctx.strokeStyle = tone(pink, 0.8);
-  ctx.lineWidth = 1.4;
+  const fur = '#7f708a', furL = '#eaaded', furD = '#45293f', pink = '#f68181', pinkL = '#fca790';
+  // curly tail
+  ctx.strokeStyle = pink;
+  ctx.lineWidth = 1.6;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(20, 31);
-  ctx.bezierCurveTo(28, 30, 29, 22, 25, 17);
+  ctx.moveTo(20, 30);
+  ctx.bezierCurveTo(28, 31, 29.5, 24, 26.5, 21);
+  ctx.bezierCurveTo(24.5, 19, 22.5, 21.5, 24.5, 23);
   ctx.stroke();
-  // feet
-  blob(ctx, 10.5 + p.leg * 1.5, 34, 3.3, 1.7, pink);
-  blob(ctx, 19.5 - p.leg * 1.5, 34, 3.3, 1.7, pink);
-  // body + belly
-  blob(ctx, 15, 25, 7.5, 9, fur);
-  blob(ctx, 15, 27, 4.6, 6.2, furL);
+  // little pink feet
+  blob(ctx, 10.5 + p.leg * 1.4, 34.2, 3.4, 1.6, pink);
+  blob(ctx, 19.5 - p.leg * 1.4, 34.2, 3.4, 1.6, pink);
+  // pear body + belly
+  blob(ctx, 15, 27, 7.4, 7.6, fur, 1);
+  blob(ctx, 15, 28.5, 4.6, 5.2, furL);
   if (p.attack) {
-    // arm raised, cheese wedge ready to throw
-    blob(ctx, 21.5, 13, 2, 4.5, fur);
-    spoly(ctx, [17, 9, 29, 9, 29, 2], '#f9c22b');
-    ellipse(ctx, 25, 7, 1, 0.8, '#e6904e');
-    ellipse(ctx, 27.5, 5, 0.7, 0.6, '#e6904e');
-    blob(ctx, 9, 23, 2, 3, fur);
+    // winding up: arm raised (the cheese is drawn last, above the head)
+    blob(ctx, 23, 17, 2.1, 4.4, fur, 1);
+    blob(ctx, 8.5, 25, 2.2, 3, fur, 1);
   } else {
-    // hugging a piece of cheese
-    blob(ctx, 9.5, 23, 2.2, 3, fur);
-    blob(ctx, 20.5, 23, 2.2, 3, fur);
-    spoly(ctx, [11, 26, 19, 26, 19, 21.5], '#f9c22b');
+    // hugging a big wedge of cheese
+    blob(ctx, 8.6, 26.5, 2.3, 2.6, fur, 1);
+    blob(ctx, 21.4, 26.5, 2.3, 2.6, fur, 1);
+    cheese(ctx, 15, 27.2, 1.15);
   }
-  // ears
-  for (const x of [6.5, 23.5]) {
-    blob(ctx, x, 7, 5, 5, fur);
-    blob(ctx, x, 7.3, 3.1, 3.1, pink, 1.15, 0.85);
+  // huge round ears
+  for (const [x, tilt] of [[5.5, -1], [24.5, 1]] as [number, number][]) {
+    blob(ctx, x, 6.5, 5.6, 5.4, fur, 1);
+    blob(ctx, x + tilt * 0.4, 7, 3.5, 3.4, pinkL, 1.15, 0.85);
   }
-  // head + snout
-  blob(ctx, 15, 13, 7.2, 6, fur);
-  blob(ctx, 15, 16.3, 4, 2.7, furL);
-  eyes(ctx, 12, 18, 12, 1.9, p);
-  blob(ctx, 15, 15, 1.5, 1.1, '#e8577a', 1.4, 0.8);
-  px(ctx, 14, 18.2, '#ffffff', 0.9, 1.8);
-  px(ctx, 15.2, 18.2, '#ffffff', 0.9, 1.8);
-  for (const [x0, x1] of [[11, 6], [19, 24]]) {
-    line(ctx, x0, 16, x1, 15, '#4d3d5a');
-    line(ctx, x0, 17, x1, 18, '#4d3d5a');
+  // big head
+  blob(ctx, 15, 13.5, 8.6, 7.2, fur, 1);
+  // red Rambo bandana with knot tails
+  spoly(ctx, [6.7, 9.6, 23.3, 9.6, 23, 12, 7, 12], '#e83b3b');
+  spoly(ctx, [22.5, 10, 28.5, 8.2 + p.leg * 0.6, 27.5, 11.5], '#b33831');
+  spoly(ctx, [22.5, 11, 27.8, 13.8 - p.leg * 0.6, 25.5, 14.2], '#b33831');
+  // furious eyes
+  eyes(ctx, 11.4, 18.6, 14.3, 2.6, p, '#e83b3b', furD);
+  // pointy snout, nose, buck teeth
+  blob(ctx, 15, 18, 4.4, 3, furL);
+  blob(ctx, 15, 16.6, 1.7, 1.25, '#e8577a', 1.4, 0.8);
+  if (p.attack) {
+    blob(ctx, 15, 20.2, 2.4, 1.5, '#6e2727', 1.2, 0.7);
+    px(ctx, 13.9, 18.9, '#ffffff', 1, 1.6);
+    px(ctx, 15.1, 18.9, '#ffffff', 1, 1.6);
+  } else {
+    px(ctx, 13.9, 19.6, '#ffffff', 1, 1.9);
+    px(ctx, 15.1, 19.6, '#ffffff', 1, 1.9);
   }
+  // light whiskers
+  ctx.lineWidth = 0.55;
+  for (const [x0, x1] of [[11.2, 6], [18.8, 24]]) {
+    line(ctx, x0, 17.4, x1, 16.6, furL);
+    line(ctx, x0, 18.3, x1, 19.2, furL);
+  }
+  if (p.attack) cheese(ctx, 24.5, 9, 0.85);
 }
 
 // ---------------- BULLDOG (the "pinky": tanky melee charger) ----------------
