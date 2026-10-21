@@ -79,7 +79,9 @@ for (const name of process.argv.slice(2)) {
   await page.close();
 
   // variable frame timing -> constant 30 fps
-  const list = frames.map((fr, i) => `file '${fr.f}'\nduration ${((frames[i + 1]?.t ?? fr.t + 1 / 30) - fr.t).toFixed(4)}`).join('\n') + `\nfile '${frames.at(-1).f}'\n`;
+  // frames can arrive out of order: sort, and never write a zero / negative duration
+  frames.sort((a, b) => a.t - b.t);
+  const list = frames.map((fr, i) => `file '${fr.f}'\nduration ${Math.max(0.001, (frames[i + 1]?.t ?? fr.t + 1 / 30) - fr.t).toFixed(4)}`).join('\n') + `\nfile '${frames.at(-1).f}'\n`;
   fs.writeFileSync(path.join(dir, 'list.txt'), list);
   const mp4 = path.join(OUT, `${name}.mp4`);
   // audio started audioOffset seconds before the first video frame
