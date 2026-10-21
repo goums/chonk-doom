@@ -254,6 +254,18 @@ cd video && npm install && npm run render
 | Build / hosting | [Vite](https://vitejs.dev), GitHub Pages via GitHub Actions |
 | Demo video | [Remotion](https://www.remotion.dev), voices by Voxtral TTS (`voxtral-mini-tts-3`), footage from the replays |
 
+## 🔮 Future improvements: cost
+
+A turn is ~5.5k input tokens (prompt + tools ~2k, image ~1.5k, history ~1.4k, observation ~0.6k). Input is ~87% of the cost.
+
+- **Prompt caching:** stable prefix (prompt + tools), append-only history. Only 18% is cached today. ≈ −30%.
+- **Smaller image:** crop the HUD (already in text), downscale to ~512×320. ≈ −15%.
+- **Leaner history:** last turn in full, older turns as one-liners. ≈ −15%.
+- **Fewer calls:** longer calm plans, or a cheaper model / auto-explore for calm turns.
+- **Lighter observation:** send the automap only when it changes.
+
+Goal: ~$0.05–0.08 per level instead of ~$0.13–0.21, checked with the evals and the benchmark.
+
 ## 🛠 How it was developed
 
 - **Team:** 1 human ([@goums](https://github.com/goums)) + **Claude Code** as the coding agent.

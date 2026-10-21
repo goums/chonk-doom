@@ -6,7 +6,7 @@
 
 import { generateText, jsonSchema, tool, type AssistantContent, type ModelMessage, type UserContent } from 'ai';
 import { createMistral } from '@ai-sdk/mistral';
-import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';''
 
 export type Content = string | ({ type: 'text'; text: string } | { type: 'image_url'; image_url: string } | { type: 'thinking'; thinking: unknown })[];
 

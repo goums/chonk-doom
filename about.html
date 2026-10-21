@@ -22,6 +22,7 @@
         <a href="#results">Benchmark</a>
         <a href="#evals">Evals</a>
         <a href="#bloopers">Bloopers</a>
+        <a href="#future">Future</a>
         <a href="#reproduce">Reproduce</a>
         <a class="cta" href="./">🎮 Play / watch</a>
         <a class="gh" href="https://github.com/goums/chonk-doom" target="_blank" rel="noopener">GitHub</a>
@@ -137,6 +138,19 @@
           <article><h4>🐕 Skipping the boss</h4><p>He walked past Rex to the EXIT. Fix: the EXIT stays sealed while Rex lives.</p></article>
           <article><h4>💀 Death spiral</h4><p>He respawned with low health and died again. Fix: respawn at 100 HP, like DOOM.</p></article>
         </div>
+      </section>
+
+      <section id="future">
+        <h2>Future improvements</h2>
+        <p class="intro">A turn is ~5.5k input tokens. Input is ~87% of the cost. Ideas to cut it:</p>
+        <ul class="facts">
+          <li>💾 <b>Prompt caching:</b> stable prefix, append-only history. Only 18% cached today. ≈ −30%.</li>
+          <li>🖼️ <b>Smaller image:</b> crop the HUD, downscale to ~512×320. ≈ −15%.</li>
+          <li>📜 <b>Leaner history:</b> last turn in full, older ones as one-liners. ≈ −15%.</li>
+          <li>📞 <b>Fewer calls:</b> longer calm plans, or a cheaper model for calm turns.</li>
+          <li>🗺️ <b>Lighter observation:</b> automap only when it changes.</li>
+        </ul>
+        <p class="note">Goal: ~$0.05–0.08 per level instead of ~$0.13–0.21, checked with the evals and the benchmark.</p>
       </section>
 
       <section id="reproduce">
